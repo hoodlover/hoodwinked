@@ -3144,7 +3144,12 @@ function Phone({
    ========================================================================== */
 type Role = "host" | "play" | "both";
 
-function parseURLParams(search: string): { room: string | null; role: Role; local: boolean } {
+function makeHostToken(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID().replace(/-/g, "");
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+}
+
+function parseURLParams(search: string): { room: string | null; role: Role; local: boolean; hostToken: string | null } {
   const p = new URLSearchParams(search);
   const room = p.get("room");
   const rawRole = p.get("role");
@@ -3152,7 +3157,8 @@ function parseURLParams(search: string): { room: string | null; role: Role; loca
   return {
     room: room ? room.toUpperCase() : null,
     role,
-    local: p.get("local") === "1"
+    local: p.get("local") === "1",
+    hostToken: p.get("host")
   };
 }
 
@@ -3166,7 +3172,7 @@ export default function Parlor() {
   );
   if (search == null) return <ParlorBoot />;
   const params = parseURLParams(search);
-  if (params.room) return <MultiplayerParlor room={params.room} role={params.role} />;
+  if (params.room) return <MultiplayerParlor room={params.room} role={params.role} hostToken={params.hostToken} />;
   if (params.local) return <LocalParlor />;
   return <ParlorLanding />;
 }
@@ -3197,9 +3203,15 @@ function ParlorLanding() {
   const cleanJoinCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
   const start = () => {
     const c = makeRoomCode();
+    const hostToken = makeHostToken();
     setCode(c);
     if (typeof window !== "undefined") {
-      window.location.href = `/?room=${c}&role=host`;
+      try {
+        localStorage.setItem(`hoodwinked:host:${c}`, hostToken);
+      } catch {
+        // ignore storage failures; the URL still carries the host token
+      }
+      window.location.href = `/?room=${c}&role=host&host=${hostToken}`;
     }
   };
   const join = (e?: React.FormEvent) => {
@@ -3631,7 +3643,7 @@ function getDeviceId(): string {
   }
 }
 
-function MultiplayerParlor({ room, role }: { room: string; role: Role }) {
+function MultiplayerParlor({ room, role, hostToken }: { room: string; role: Role; hostToken: string | null }) {
   const [state, setState] = useState<State | null>(null);
   const [connected, setConnected] = useState(false);
   const [deviceId] = useState(() => getDeviceId());
@@ -3641,6 +3653,15 @@ function MultiplayerParlor({ room, role }: { room: string; role: Role }) {
       return localStorage.getItem("parlor:muted") === "1";
     } catch {
       return false;
+    }
+  });
+  const [effectiveHostToken] = useState(() => {
+    if (hostToken) return hostToken;
+    if (typeof window === "undefined" || role !== "host") return null;
+    try {
+      return localStorage.getItem(`hoodwinked:host:${room}`);
+    } catch {
+      return null;
     }
   });
   useEffect(() => {
@@ -3676,7 +3697,7 @@ function MultiplayerParlor({ room, role }: { room: string; role: Role }) {
 
   const dispatch = (action: Action) => {
     if (socket.readyState !== WebSocket.OPEN) return;
-    socket.send(JSON.stringify({ type: "ACTION", action }));
+    socket.send(JSON.stringify({ type: "ACTION", action, hostToken: effectiveHostToken ?? undefined }));
   };
 
   const prevPhase = useRef<Phase | null>(null);

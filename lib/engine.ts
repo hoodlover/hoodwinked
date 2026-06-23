@@ -405,7 +405,7 @@ export type Action =
 /* ---- HELPERS ------------------------------------------------------------- */
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const makeRoomCode = () =>
-  Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
+  Array.from({ length: 5 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
 
 export function pickPrompt(used: string[]): string {
   const pool = PROMPTS.filter((p) => !used.includes(p));

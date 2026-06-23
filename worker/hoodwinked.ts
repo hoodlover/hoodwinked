@@ -10,7 +10,27 @@ type Env = {
 };
 
 type ServerMsg = { type: "STATE"; state: State };
-type ClientMsg = { type: "ACTION"; action: Action };
+type ClientMsg = { type: "ACTION"; action: Action; hostToken?: string };
+
+const HOST_ACTIONS = new Set<Action["type"]>([
+  "TOGGLE_MODE",
+  "SET_MODE",
+  "START_GAME",
+  "FORCE_VOTING",
+  "FORCE_REVEAL",
+  "NEXT_REVEAL",
+  "NEXT_ROUND",
+  "NEXT_QUIP",
+  "PLAY_AGAIN",
+  "RESET",
+  "REQUEST_PICTURE_IMAGE",
+  "SET_PICTURE_IMAGE",
+  "SET_PICTURE_IMAGE_ERROR"
+]);
+
+function isHostAction(action: Action): boolean {
+  return HOST_ACTIONS.has(action.type);
+}
 
 type DurableObjectNamespace = {
   idFromName(name: string): DurableObjectId;
@@ -36,6 +56,7 @@ declare class WebSocketPair {
 
 export class HoodwinkedRoom {
   private state: State;
+  private hostToken: string | null = null;
   private readonly sockets = new Set<WebSocket>();
 
   constructor(private readonly durableState: DurableObjectState) {
@@ -64,6 +85,11 @@ export class HoodwinkedRoom {
         return;
       }
       if (msg.type !== "ACTION") return;
+      if (isHostAction(msg.action)) {
+        if (!msg.hostToken) return;
+        if (!this.hostToken) this.hostToken = msg.hostToken;
+        if (msg.hostToken !== this.hostToken) return;
+      }
       this.state = reducer(this.state, msg.action);
       this.broadcast({ type: "STATE", state: this.state });
     });
