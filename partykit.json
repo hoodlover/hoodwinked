@@ -1,0 +1,6 @@
+{
+  "$schema": "https://www.partykit.io/schema.json",
+  "name": "hoodwinked",
+  "main": "party/hoodwinked.ts",
+  "compatibilityDate": "2024-09-01"
+}
