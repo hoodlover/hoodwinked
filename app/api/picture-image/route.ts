@@ -20,8 +20,13 @@ function cleanText(value: unknown, fallback = ""): string {
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
+    const isProduction = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
     return NextResponse.json(
-      { error: "OPENAI_API_KEY is not configured. Add it to .env.local to generate reveal images." },
+      {
+        error: isProduction
+          ? "OPENAI_API_KEY is not configured in the deployed environment. Add it in Vercel Project Settings -> Environment Variables, then redeploy."
+          : "OPENAI_API_KEY is not configured. Add it to .env.local, then restart the dev server."
+      },
       { status: 503 }
     );
   }
