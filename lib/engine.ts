@@ -19,7 +19,7 @@ export const TRIVIA_BASE_POINTS = 100;
 export const TRIVIA_SPEED_BONUS_MAX = 50;
 
 // Picture Reveal
-export const PICTURE_GUESS_SECONDS = 30;
+export const PICTURE_GUESS_SECONDS = 40;
 export const PICTURE_BASE_POINTS = 150;
 
 // Wheel of Fortune
@@ -585,7 +585,7 @@ function startRound(state: State, roundNum: number): State {
       return {
         ...base,
         prompt: null,
-        phaseDeadline: deadline(PICTURE_GUESS_SECONDS),
+        phaseDeadline: null,
         picture: { items, guesses: {} }
       };
     }
@@ -891,7 +891,14 @@ export function reducer(state: State, action: Action): State {
             }
           : pic
       );
-      return { ...state, picture: { ...state.picture, items } };
+      return {
+        ...state,
+        phaseDeadline:
+          state.phase === "writing" && !state.phaseDeadline
+            ? deadline(PICTURE_GUESS_SECONDS)
+            : state.phaseDeadline,
+        picture: { ...state.picture, items }
+      };
     }
 
     case "SET_PICTURE_IMAGE_ERROR": {
@@ -908,7 +915,14 @@ export function reducer(state: State, action: Action): State {
             }
           : pic
       );
-      return { ...state, picture: { ...state.picture, items } };
+      return {
+        ...state,
+        phaseDeadline:
+          state.phase === "writing" && !state.phaseDeadline
+            ? deadline(PICTURE_GUESS_SECONDS)
+            : state.phaseDeadline,
+        picture: { ...state.picture, items }
+      };
     }
 
     case "SUBMIT_PICTURE": {

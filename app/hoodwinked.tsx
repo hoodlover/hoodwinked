@@ -2213,8 +2213,8 @@ function PictureWritingCard({
       });
   }, [dispatch, item]);
   if (!item) return null;
-  const elapsedFrac = phaseTotal > 0 ? 1 - remaining / (phaseTotal * 1000) : 0;
-  const blurPx = Math.max(0, 30 * Math.pow(1 - elapsedFrac, 1.6));
+  const elapsedFrac = state.phaseDeadline && phaseTotal > 0 ? 1 - remaining / (phaseTotal * 1000) : 0;
+  const blurPx = elapsedFrac >= 0.96 ? 0 : Math.max(6, 42 * Math.pow(1 - elapsedFrac, 0.7));
   const correctCount = Object.values(state.picture.guesses).filter((g) => g.correct).length;
   return (
     <div className="fadeup" style={{ textAlign: "center", padding: "10px 0" }}>
