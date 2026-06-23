@@ -2791,13 +2791,15 @@ function Phone({
   state,
   dispatch,
   onRemove,
-  fullSize = false
+  fullSize = false,
+  connected = true
 }: {
   deviceId: string;
   state: State;
   dispatch: React.Dispatch<Action>;
   onRemove: () => void;
   fullSize?: boolean;
+  connected?: boolean;
 }) {
   const player = state.players[deviceId];
   const [name, setName] = useState(() => readSavedName(deviceId));
@@ -2805,7 +2807,7 @@ function Phone({
 
   const joinWithName = (raw: string) => {
     const trimmed = raw.trim();
-    if (!trimmed) return;
+    if (!trimmed || !connected) return;
     saveName(deviceId, trimmed);
     dispatch({ type: "JOIN", id: deviceId, name: trimmed });
   };
@@ -2927,12 +2929,17 @@ function Phone({
           />
           <button
             onClick={() => joinWithName(name)}
-            disabled={state.phase !== "lobby" || !name.trim()}
+            disabled={!connected || state.phase !== "lobby" || !name.trim()}
             className="body"
-            style={phoneBtn(state.phase === "lobby" && !!name.trim(), C.gold, fullSize)}
+            style={phoneBtn(connected && state.phase === "lobby" && !!name.trim(), C.gold, fullSize)}
           >
-            {state.phase === "lobby" ? "Join" : "Game in progress"}
+            {!connected ? "Connecting..." : state.phase === "lobby" ? "Join" : "Game in progress"}
           </button>
+          {!connected && (
+            <div className="body" style={{ color: C.coral, fontSize: 11, lineHeight: 1.35, marginTop: 8 }}>
+              Hold tight. Your phone is still connecting to the room.
+            </div>
+          )}
         </div>
       )}
 
@@ -3557,7 +3564,18 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
     typeof window === "undefined" ? "" : window.location.origin
   );
   const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const joinUrl = origin ? `${origin}/?room=${room}&role=play` : "";
+  const copyJoinUrl = () => {
+    if (!joinUrl || typeof navigator === "undefined" || !navigator.clipboard) return;
+    navigator.clipboard
+      .writeText(joinUrl)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1400);
+      })
+      .catch(() => setCopied(false));
+  };
   useEffect(() => {
     if (!joinUrl) return;
     let cancelled = false;
@@ -3632,6 +3650,22 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
         <code style={{ color: C.cream, fontSize: 11, wordBreak: "break-all" }}>
           {joinUrl || `?room=${room}&role=play`}
         </code>
+        <div className="flex flex-wrap" style={{ gap: 8, marginTop: 10 }}>
+          <button onClick={copyJoinUrl} className="body" style={devBtn} disabled={!joinUrl}>
+            {copied ? "Copied" : "Copy join link"}
+          </button>
+          {joinUrl && typeof navigator !== "undefined" && "share" in navigator && (
+            <button
+              onClick={() => {
+                navigator.share?.({ title: "Join Hoodwinked", text: `Join room ${room}`, url: joinUrl }).catch(() => {});
+              }}
+              className="body"
+              style={devBtn}
+            >
+              Share
+            </button>
+          )}
+        </div>
         <div style={{ marginTop: 8, color: connected ? C.mint : C.coral }}>
           {connected ? "● connected to room" : "○ reconnecting…"}
         </div>
@@ -3909,6 +3943,7 @@ function MultiplayerParlor({
                 state={state}
                 dispatch={dispatch}
                 fullSize
+                connected={connected}
                 onRemove={() => {
                   // No-op in multiplayer — close the tab to leave.
                 }}
