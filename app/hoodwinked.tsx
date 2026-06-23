@@ -3185,7 +3185,7 @@ function parsePathRoom(pathname: string): { room: string | null; role: Role | nu
     return { room: cleanRoomCode(second), role: "host" };
   }
   if (parts.length === 1) {
-    return { room: cleanRoomCode(first), role: "play" };
+    return { room: cleanRoomCode(first), role: "both" };
   }
   return { room: null, role: null };
 }
@@ -3606,7 +3606,9 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
   const [copied, setCopied] = useState(false);
   const [copiedBoard, setCopiedBoard] = useState(false);
   const joinUrl = origin ? `${origin}/${room}` : "";
+  const phoneUrl = origin ? `${origin}/join/${room}` : "";
   const boardUrl = origin ? `${origin}/room/${room}` : "";
+  const qrTarget = phoneUrl || joinUrl;
   const copyJoinUrl = () => {
     if (!joinUrl || typeof navigator === "undefined" || !navigator.clipboard) return;
     navigator.clipboard
@@ -3628,10 +3630,10 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
       .catch(() => setCopiedBoard(false));
   };
   useEffect(() => {
-    if (!joinUrl) return;
+    if (!qrTarget) return;
     let cancelled = false;
     import("qrcode").then(({ default: QRCode }) =>
-      QRCode.toDataURL(joinUrl, {
+      QRCode.toDataURL(qrTarget, {
         margin: 1,
         width: 220,
         color: { dark: "#1f3320", light: "#FBF3E4" }
@@ -3646,7 +3648,7 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
     return () => {
       cancelled = true;
     };
-  }, [joinUrl]);
+  }, [qrTarget]);
   return (
     <div
       className="flex flex-wrap items-center justify-center"
@@ -3696,10 +3698,16 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
           {PLAY_URL}
         </div>
         <div className="body" style={{ color: C.creamDim, fontSize: 12, marginBottom: 8 }}>
-          Phone players can scan or enter <b style={{ color: C.cream, letterSpacing: 2 }}>{room}</b>
+          Remote players can open this on a computer and enter <b style={{ color: C.cream, letterSpacing: 2 }}>{room}</b>
         </div>
         <code style={{ color: C.cream, fontSize: 11, wordBreak: "break-all" }}>
           {joinUrl || `/${room}`}
+        </code>
+        <div className="body" style={{ color: C.creamDim, fontSize: 12, marginTop: 10 }}>
+          Phone-only controller:
+        </div>
+        <code style={{ color: C.cream, fontSize: 11, wordBreak: "break-all" }}>
+          {phoneUrl || `/join/${room}`}
         </code>
         <div className="body" style={{ color: C.creamDim, fontSize: 12, marginTop: 10 }}>
           Board screen for another computer:
@@ -3709,7 +3717,7 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
         </code>
         <div className="flex flex-wrap" style={{ gap: 8, marginTop: 10 }}>
           <button onClick={copyJoinUrl} className="body" style={devBtn} disabled={!joinUrl}>
-            {copied ? "Copied" : "Copy phone link"}
+            {copied ? "Copied" : "Copy PC player link"}
           </button>
           <button onClick={copyBoardUrl} className="body" style={devBtn} disabled={!boardUrl}>
             {copiedBoard ? "Copied" : "Copy board link"}
