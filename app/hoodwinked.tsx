@@ -418,9 +418,9 @@ function Board({
       <div className="board-inner" style={{ padding: "16px 8px 8px" }}>
         <div className="flex items-center justify-between board-header" style={{ marginBottom: 14 }}>
           <div className="flex items-center" style={{ gap: 10 }}>
-            <BrandLogo size={54} compact />
+            <BrandLogo size={108} compact />
             <div>
-              <div className="disp" style={{ fontSize: 22, fontWeight: 800, color: C.gold, letterSpacing: 1 }}>
+              <div className="disp" style={{ fontSize: 24, fontWeight: 800, color: C.gold, letterSpacing: 1 }}>
                 HOODWINKED
               </div>
               <div className="body" style={{ color: C.creamDim, fontSize: 10, fontWeight: 800, letterSpacing: 1.4 }}>
