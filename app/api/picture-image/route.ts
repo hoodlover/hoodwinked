@@ -17,20 +17,32 @@ function cleanText(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value.trim().slice(0, 800) : fallback;
 }
 
+function buildPrompt(answer: string, hint: string, customPrompt: string): string {
+  return (
+    customPrompt ||
+    [
+      `Create a premium party-game reveal image whose answer is "${answer}".`,
+      hint ? `Subtle clue to emphasize: ${hint}.` : "",
+      "Make the subject recognizable after blur fades: centered composition, high contrast, rich color, cinematic lighting.",
+      "Do not include text, labels, captions, logos, UI, watermarks, or written hints."
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+}
+
+function freeImageFallback(prompt: string, answer: string) {
+  const seed = encodeURIComponent(`hoodwinked-${answer.toLowerCase().replace(/\s+/g, "-")}`);
+  const encodedPrompt = encodeURIComponent(prompt);
+  return {
+    src: `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&safe=true&seed=${seed}`,
+    provider: "pollinations",
+    revisedPrompt: prompt
+  };
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    const isProduction = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
-    return NextResponse.json(
-      {
-        error: isProduction
-          ? "OPENAI_API_KEY is not configured in the deployed environment. Add it in Vercel Project Settings -> Environment Variables, then redeploy."
-          : "OPENAI_API_KEY is not configured. Add it to .env.local, then restart the dev server."
-      },
-      { status: 503 }
-    );
-  }
-
   let body: unknown;
   try {
     body = await request.json();
@@ -47,16 +59,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing picture answer." }, { status: 400 });
   }
 
-  const prompt =
-    customPrompt ||
-    [
-      `Create a premium party-game reveal image whose answer is "${answer}".`,
-      hint ? `Subtle clue to emphasize: ${hint}.` : "",
-      "Make the subject recognizable after blur fades: centered composition, high contrast, rich color, cinematic lighting.",
-      "Do not include text, labels, captions, logos, UI, watermarks, or written hints."
-    ]
-      .filter(Boolean)
-      .join(" ");
+  const prompt = buildPrompt(answer, hint, customPrompt);
+
+  if (!apiKey || process.env.IMAGE_PROVIDER === "free") {
+    const response = freeImageFallback(prompt, answer);
+    return NextResponse.json({
+      ...response,
+      warning: !apiKey ? "Using free image fallback because OPENAI_API_KEY is not configured." : undefined
+    });
+  }
 
   const response = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
@@ -86,10 +97,13 @@ export async function POST(request: Request) {
     ]
       .filter(Boolean)
       .join(" ");
-    return NextResponse.json(
-      { error: detail },
-      { status: response.status }
-    );
+    if (process.env.IMAGE_PROVIDER !== "openai") {
+      return NextResponse.json({
+        ...freeImageFallback(prompt, answer),
+        warning: detail
+      });
+    }
+    return NextResponse.json({ error: detail }, { status: response.status });
   }
 
   const image = payload.data?.[0];
