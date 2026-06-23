@@ -211,6 +211,73 @@ export const PICTURE_ITEMS: PictureItem[] = [
     answer: "giraffe",
     hint: "Long neck",
     imagePrompt: "A crisp editorial wildlife photograph of a giraffe standing against a clean savanna backdrop, no text."
+  },
+  {
+    id: "p6",
+    answer: "hamburger",
+    aliases: ["burger", "cheeseburger"],
+    hint: "Cookout food",
+    imagePrompt: "A dramatic close-up food photograph of a juicy hamburger on a dark plate, sharp centered subject, no text."
+  },
+  {
+    id: "p7",
+    answer: "basketball",
+    aliases: ["basket ball"],
+    hint: "Orange game ball",
+    imagePrompt: "A polished sports photograph of a basketball on a hardwood court under arena lights, no logos, no text."
+  },
+  {
+    id: "p8",
+    answer: "fire truck",
+    aliases: ["firetruck", "fire engine"],
+    hint: "Emergency vehicle",
+    imagePrompt: "A clean cinematic photograph of a red fire truck parked outside a station, recognizable shape, no words or markings."
+  },
+  {
+    id: "p9",
+    answer: "snowman",
+    aliases: ["snow man"],
+    hint: "Winter friend",
+    imagePrompt: "A charming winter photograph of a snowman in fresh snow with a simple scarf, centered, no text."
+  },
+  {
+    id: "p10",
+    answer: "dinosaur",
+    aliases: ["t rex", "trex", "tyrannosaurus"],
+    hint: "Ancient creature",
+    imagePrompt: "A cinematic museum-style image of a dinosaur silhouette in misty jungle light, recognizable, no text."
+  },
+  {
+    id: "p11",
+    answer: "cupcake",
+    aliases: ["cup cake"],
+    hint: "Small dessert",
+    imagePrompt: "A bright bakery photograph of a frosted cupcake with sprinkles on a simple counter, no text."
+  },
+  {
+    id: "p12",
+    answer: "roller coaster",
+    aliases: ["rollercoaster"],
+    hint: "Theme park ride",
+    imagePrompt: "A vivid amusement park photograph of a roller coaster track with a car cresting a hill, no signs or text."
+  },
+  {
+    id: "p13",
+    answer: "pineapple",
+    hint: "Tropical fruit",
+    imagePrompt: "A sharp studio photograph of a whole pineapple on a colorful table, high contrast, no text."
+  },
+  {
+    id: "p14",
+    answer: "submarine",
+    hint: "Underwater vehicle",
+    imagePrompt: "A cinematic underwater scene with a yellow submarine clearly visible in blue water, no text."
+  },
+  {
+    id: "p15",
+    answer: "taco",
+    hint: "Folded food",
+    imagePrompt: "A mouthwatering food photograph of a taco with colorful toppings on a dark table, centered, no text."
   }
 ];
 
@@ -229,7 +296,19 @@ export const WHEEL_PUZZLES: WheelPuzzle[] = [
   { id: "w5", category: "Person", text: "ALBERT EINSTEIN" },
   { id: "w6", category: "Phrase", text: "EASY AS PIE" },
   { id: "w7", category: "Song", text: "BOHEMIAN RHAPSODY" },
-  { id: "w8", category: "Book", text: "TO KILL A MOCKINGBIRD" }
+  { id: "w8", category: "Book", text: "TO KILL A MOCKINGBIRD" },
+  { id: "w9", category: "Phrase", text: "BITE THE BULLET" },
+  { id: "w10", category: "Food", text: "CHICKEN AND WAFFLES" },
+  { id: "w11", category: "Place", text: "GRAND CANYON" },
+  { id: "w12", category: "Thing", text: "REMOTE CONTROL" },
+  { id: "w13", category: "Person", text: "TAYLOR SWIFT" },
+  { id: "w14", category: "Phrase", text: "HIT THE ROAD" },
+  { id: "w15", category: "Movie", text: "JURASSIC PARK" },
+  { id: "w16", category: "Thing", text: "BIRTHDAY CAKE" },
+  { id: "w17", category: "Place", text: "LAS VEGAS" },
+  { id: "w18", category: "Phrase", text: "UNDER PRESSURE" },
+  { id: "w19", category: "Food", text: "MACARONI AND CHEESE" },
+  { id: "w20", category: "Thing", text: "SUNGLASSES" }
 ];
 
 /* ---- CONTENT: FAMILY FEUD ------------------------------------------------ */
@@ -294,6 +373,171 @@ export const FEUD_QUESTIONS: FeudQuestion[] = [
       { text: "Cooler", points: 14 },
       { text: "Umbrella", points: 12 },
       { text: "Sunglasses", points: 10, aliases: ["shades"] }
+    ]
+  },
+  {
+    id: "f6",
+    prompt: "Name something people forget when leaving the house",
+    answers: [
+      { text: "Keys", points: 34, aliases: ["car keys", "house keys"] },
+      { text: "Phone", points: 28, aliases: ["cell phone"] },
+      { text: "Wallet", points: 18, aliases: ["purse"] },
+      { text: "Lunch", points: 10 },
+      { text: "Glasses", points: 8, aliases: ["sunglasses"] }
+    ]
+  },
+  {
+    id: "f7",
+    prompt: "Name something you do at a wedding",
+    answers: [
+      { text: "Dance", points: 30 },
+      { text: "Eat", points: 24, aliases: ["dinner", "meal"] },
+      { text: "Take pictures", points: 18, aliases: ["photos", "pictures"] },
+      { text: "Cry", points: 12 },
+      { text: "Toast", points: 9, aliases: ["speech"] }
+    ]
+  },
+  {
+    id: "f8",
+    prompt: "Name something kids hide from their parents",
+    answers: [
+      { text: "Bad grades", points: 30, aliases: ["grades", "report card"] },
+      { text: "Candy", points: 22, aliases: ["sweets"] },
+      { text: "Broken things", points: 18, aliases: ["broken vase", "mess"] },
+      { text: "Phone", points: 12 },
+      { text: "Money", points: 8 }
+    ]
+  },
+  {
+    id: "f9",
+    prompt: "Name something you hear at a baseball game",
+    answers: [
+      { text: "Cheering", points: 30, aliases: ["cheers", "crowd"] },
+      { text: "Crack of the bat", points: 22, aliases: ["bat", "hit"] },
+      { text: "Umpire", points: 18, aliases: ["you're out", "out"] },
+      { text: "Organ music", points: 12, aliases: ["music"] },
+      { text: "Hot dog vendor", points: 8, aliases: ["vendor"] }
+    ]
+  },
+  {
+    id: "f10",
+    prompt: "Name something that makes people scream",
+    answers: [
+      { text: "Spider", points: 28, aliases: ["bug"] },
+      { text: "Scary movie", points: 24, aliases: ["horror movie"] },
+      { text: "Roller coaster", points: 20 },
+      { text: "Surprise", points: 14 },
+      { text: "Mouse", points: 8 }
+    ]
+  },
+  {
+    id: "f11",
+    prompt: "Name something you put on a hot dog",
+    answers: [
+      { text: "Ketchup", points: 30, aliases: ["catsup"] },
+      { text: "Mustard", points: 28 },
+      { text: "Relish", points: 14 },
+      { text: "Onions", points: 12, aliases: ["onion"] },
+      { text: "Chili", points: 10 }
+    ]
+  },
+  {
+    id: "f12",
+    prompt: "Name something people do on New Year's Eve",
+    answers: [
+      { text: "Watch fireworks", points: 30, aliases: ["fireworks"] },
+      { text: "Kiss", points: 22 },
+      { text: "Count down", points: 20, aliases: ["countdown"] },
+      { text: "Party", points: 16 },
+      { text: "Make resolutions", points: 8, aliases: ["resolution"] }
+    ]
+  },
+  {
+    id: "f13",
+    prompt: "Name a place people fall asleep by accident",
+    answers: [
+      { text: "Couch", points: 32, aliases: ["sofa"] },
+      { text: "Car", points: 20 },
+      { text: "Class", points: 16, aliases: ["school"] },
+      { text: "Movie theater", points: 12, aliases: ["movies"] },
+      { text: "Church", points: 8 }
+    ]
+  },
+  {
+    id: "f14",
+    prompt: "Name something you do when your phone battery is low",
+    answers: [
+      { text: "Charge it", points: 40, aliases: ["plug it in", "charger"] },
+      { text: "Turn on low power mode", points: 18, aliases: ["battery saver"] },
+      { text: "Close apps", points: 14 },
+      { text: "Panic", points: 12 },
+      { text: "Borrow a charger", points: 8 }
+    ]
+  },
+  {
+    id: "f15",
+    prompt: "Name something you might find in a junk drawer",
+    answers: [
+      { text: "Batteries", points: 28, aliases: ["battery"] },
+      { text: "Rubber bands", points: 20, aliases: ["rubber band"] },
+      { text: "Pens", points: 18, aliases: ["pen", "pencil"] },
+      { text: "Keys", points: 14 },
+      { text: "Tape", points: 10 }
+    ]
+  },
+  {
+    id: "f16",
+    prompt: "Name something people do while waiting in line",
+    answers: [
+      { text: "Check phone", points: 36, aliases: ["phone", "scroll"] },
+      { text: "Talk", points: 18, aliases: ["chat"] },
+      { text: "Complain", points: 16 },
+      { text: "People watch", points: 12 },
+      { text: "Read", points: 8 }
+    ]
+  },
+  {
+    id: "f17",
+    prompt: "Name a smell that makes people hungry",
+    answers: [
+      { text: "Bacon", points: 30 },
+      { text: "Popcorn", points: 22 },
+      { text: "Fresh bread", points: 20, aliases: ["bread"] },
+      { text: "Pizza", points: 14 },
+      { text: "Barbecue", points: 10, aliases: ["bbq"] }
+    ]
+  },
+  {
+    id: "f18",
+    prompt: "Name something people decorate",
+    answers: [
+      { text: "Christmas tree", points: 30, aliases: ["tree"] },
+      { text: "House", points: 22, aliases: ["home"] },
+      { text: "Cake", points: 18 },
+      { text: "Bedroom", points: 12, aliases: ["room"] },
+      { text: "Car", points: 8 }
+    ]
+  },
+  {
+    id: "f19",
+    prompt: "Name something that ruins a picnic",
+    answers: [
+      { text: "Rain", points: 34, aliases: ["storm"] },
+      { text: "Bugs", points: 24, aliases: ["ants", "mosquitoes"] },
+      { text: "Wind", points: 14 },
+      { text: "Forgotten food", points: 10, aliases: ["no food"] },
+      { text: "Heat", points: 8 }
+    ]
+  },
+  {
+    id: "f20",
+    prompt: "Name something you might hear in an airport",
+    answers: [
+      { text: "Flight announcement", points: 32, aliases: ["announcement"] },
+      { text: "Boarding call", points: 22, aliases: ["boarding"] },
+      { text: "Crying baby", points: 16, aliases: ["baby"] },
+      { text: "Rolling luggage", points: 12, aliases: ["suitcase"] },
+      { text: "Security alert", points: 8, aliases: ["security"] }
     ]
   }
 ];
@@ -445,9 +689,17 @@ export function buildQuipPrompts(playerIds: string[], used: string[]): QuipPromp
 export const joinedIds = (s: State) => Object.keys(s.players);
 export const deadline = (seconds: number) => Date.now() + seconds * 1000;
 
+function shuffled<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 export function pickN<T extends { id: string }>(pool: T[], n: number): T[] {
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(n, shuffled.length));
+  return shuffled(pool).slice(0, Math.min(n, pool.length));
 }
 
 export function normalizeGuess(s: string): string {
