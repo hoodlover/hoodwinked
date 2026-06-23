@@ -3151,7 +3151,7 @@ function makeHostToken(): string {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
 }
 
-function parseURLParams(search: string): { room: string | null; role: Role; local: boolean; hostToken: string | null } {
+function parseURLParams(search: string): { room: string | null; role: Role; local: boolean; hostToken: string | null; test: boolean } {
   const p = new URLSearchParams(search);
   const room = p.get("room");
   const rawRole = p.get("role");
@@ -3160,7 +3160,8 @@ function parseURLParams(search: string): { room: string | null; role: Role; loca
     room: room ? room.toUpperCase() : null,
     role,
     local: p.get("local") === "1",
-    hostToken: p.get("host")
+    hostToken: p.get("host"),
+    test: p.get("test") === "1"
   };
 }
 
@@ -3174,7 +3175,7 @@ export default function Parlor() {
   );
   if (search == null) return <ParlorBoot />;
   const params = parseURLParams(search);
-  if (params.room) return <MultiplayerParlor room={params.room} role={params.role} hostToken={params.hostToken} />;
+  if (params.room) return <MultiplayerParlor room={params.room} role={params.role} hostToken={params.hostToken} testMode={params.test} />;
   if (params.local) return <LocalParlor />;
   return <ParlorLanding />;
 }
@@ -3656,7 +3657,17 @@ function getDeviceId(): string {
   }
 }
 
-function MultiplayerParlor({ room, role, hostToken }: { room: string; role: Role; hostToken: string | null }) {
+function MultiplayerParlor({
+  room,
+  role,
+  hostToken,
+  testMode
+}: {
+  room: string;
+  role: Role;
+  hostToken: string | null;
+  testMode: boolean;
+}) {
   const [state, setState] = useState<State | null>(null);
   const [connected, setConnected] = useState(false);
   const [deviceId] = useState(() => getDeviceId());
@@ -3713,6 +3724,83 @@ function MultiplayerParlor({ room, role, hostToken }: { room: string; role: Role
     socket.send(JSON.stringify({ type: "ACTION", action, hostToken: effectiveHostToken ?? undefined }));
   };
 
+  const addTestPlayers = () => {
+    ["test-1", "test-2", "test-3"].forEach((id, i) => {
+      if (state?.players[id]) return;
+      dispatch({ type: "JOIN", id, name: ["Scout", "Rook", "Vega"][i] });
+    });
+  };
+
+  const fillTestAnswers = () => {
+    if (!state || state.phase !== "writing") return;
+    const ids = joinedIds(state);
+    if (state.mode === "quiplash") {
+      let i = 0;
+      state.quipPrompts.forEach((q) => {
+        q.writers.forEach((w) => {
+          if (q.answers[w] == null) {
+            dispatch({ type: "SUBMIT_QUIP", promptId: q.id, playerId: w, text: BOT_ANSWERS[i++ % BOT_ANSWERS.length] });
+          }
+        });
+      });
+      return;
+    }
+    if (state.mode === "trivia") {
+      const q = state.trivia.questions[state.round - 1];
+      if (!q) return;
+      ids.forEach((pid) => {
+        if (!state.trivia.answers[pid]) dispatch({ type: "SUBMIT_TRIVIA", playerId: pid, choice: q.correctIndex, at: Date.now() });
+      });
+      return;
+    }
+    if (state.mode === "picture") {
+      const item = state.picture.items[state.round - 1];
+      if (!item) return;
+      ids.forEach((pid) => {
+        if (!state.picture.guesses[pid]?.correct) dispatch({ type: "SUBMIT_PICTURE", playerId: pid, text: item.answer, at: Date.now() });
+      });
+      return;
+    }
+    if (state.mode === "wheel") {
+      const puzzle = state.wheel.puzzles[state.round - 1];
+      const solver = ids[0];
+      if (puzzle && solver) dispatch({ type: "SOLVE_WHEEL", playerId: solver, text: puzzle.text });
+      return;
+    }
+    if (state.mode === "feud") {
+      const q = state.feud.questions[state.round - 1];
+      if (!q) return;
+      ids.forEach((pid, i) => {
+        const answer = q.answers[i % q.answers.length];
+        if (answer) dispatch({ type: "SUBMIT_FEUD", playerId: pid, text: answer.text, at: Date.now() + i });
+      });
+      return;
+    }
+    ids.forEach((pid, i) => {
+      if (state.answers[pid] == null) dispatch({ type: "SUBMIT_ANSWER", playerId: pid, text: BOT_ANSWERS[i % BOT_ANSWERS.length] });
+    });
+  };
+
+  const fillTestVotes = () => {
+    if (!state || state.phase !== "voting") return;
+    if (state.mode === "quiplash") {
+      const prompt = state.quipPrompts[state.quipIndex];
+      if (!prompt) return;
+      const promptVotes = state.quipVotes[prompt.id] ?? {};
+      joinedIds(state).forEach((pid) => {
+        if (prompt.writers.includes(pid) || promptVotes[pid] != null) return;
+        dispatch({ type: "VOTE_QUIP", promptId: prompt.id, voterId: pid, ownerId: prompt.writers[0] });
+      });
+      return;
+    }
+    const owners = Object.keys(state.answers);
+    joinedIds(state).forEach((pid) => {
+      if (state.votes[pid] != null) return;
+      const choice = owners.find((owner) => owner !== pid);
+      if (choice) dispatch({ type: "VOTE", voterId: pid, ownerId: choice });
+    });
+  };
+
   const prevPhase = useRef<Phase | null>(null);
   useEffect(() => {
     if (!state) return;
@@ -3758,6 +3846,44 @@ function MultiplayerParlor({ room, role, hostToken }: { room: string; role: Role
       <div style={{ maxWidth: 880, margin: "0 auto" }}>
         {role !== "play" && (
           <Board state={state} dispatch={dispatch} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
+        )}
+        {role !== "play" && testMode && (
+          <div
+            className="flex flex-wrap items-center justify-center"
+            style={{
+              gap: 8,
+              margin: "14px auto 0",
+              padding: 10,
+              maxWidth: 720,
+              border: `1px dashed ${C.line}`,
+              borderRadius: 10,
+              background: `${C.bgDeep}88`
+            }}
+          >
+            <span className="body" style={{ color: C.creamDim, fontSize: 11, fontWeight: 800, letterSpacing: 1.4 }}>
+              TEST TOOLS
+            </span>
+            {state.phase === "lobby" && (
+              <button onClick={addTestPlayers} className="body" style={devBtn}>
+                Add test players
+              </button>
+            )}
+            {state.phase === "writing" && (
+              <button onClick={fillTestAnswers} className="body" style={devBtn}>
+                Fill answers
+              </button>
+            )}
+            {state.phase === "voting" && (
+              <button onClick={fillTestVotes} className="body" style={devBtn}>
+                Fill votes
+              </button>
+            )}
+            {state.phase === "writing" && (
+              <button onClick={() => dispatch({ type: "FORCE_VOTING" })} className="body" style={devBtn}>
+                End round
+              </button>
+            )}
+          </div>
         )}
         {role !== "host" && (
           <>
