@@ -3152,19 +3152,52 @@ function Phone({
    MAIN
    ========================================================================== */
 type Role = "host" | "play" | "both";
+type RouteParams = {
+  room: string | null;
+  role: Role;
+  local: boolean;
+  hostToken: string | null;
+  test: boolean;
+};
 
 function makeHostToken(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID().replace(/-/g, "");
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
 }
 
-function parseURLParams(search: string): { room: string | null; role: Role; local: boolean; hostToken: string | null; test: boolean } {
+function cleanRoomCode(value: string | null): string | null {
+  const code = value?.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6) ?? "";
+  return code || null;
+}
+
+function parsePathRoom(pathname: string): { room: string | null; role: Role | null } {
+  const parts = pathname.split("/").filter(Boolean);
+  if (!parts.length) return { room: null, role: null };
+
+  const [first, second] = parts;
+  if ((first === "join" || first === "play") && second) {
+    return { room: cleanRoomCode(second), role: "play" };
+  }
+  if (first === "host" && second) {
+    return { room: cleanRoomCode(second), role: "host" };
+  }
+  if ((first === "room" || first === "board") && second) {
+    return { room: cleanRoomCode(second), role: "host" };
+  }
+  if (parts.length === 1) {
+    return { room: cleanRoomCode(first), role: "play" };
+  }
+  return { room: null, role: null };
+}
+
+function parseURLParams(search: string, pathname: string): RouteParams {
   const p = new URLSearchParams(search);
-  const room = p.get("room");
-  const rawRole = p.get("role");
-  const role: Role = rawRole === "host" || rawRole === "play" ? rawRole : "both";
+  const pathRoom = parsePathRoom(pathname);
+  const room = cleanRoomCode(p.get("room")) ?? pathRoom.room;
+  const rawRole = p.get("role")?.toLowerCase().replace(/[^a-z]/g, "");
+  const role: Role = rawRole === "host" || rawRole === "play" ? rawRole : pathRoom.role ?? "both";
   return {
-    room: room ? room.toUpperCase() : null,
+    room,
     role,
     local: p.get("local") === "1",
     hostToken: p.get("host"),
@@ -3172,16 +3205,22 @@ function parseURLParams(search: string): { room: string | null; role: Role; loca
   };
 }
 
+function getLocationSnapshot() {
+  if (typeof window === "undefined") return null;
+  return `${window.location.pathname}${window.location.search}`;
+}
+
 export default function Parlor() {
-  const search = useSyncExternalStore(
+  const location = useSyncExternalStore(
     () => () => {
       // URL changes in this prototype are full navigations; no live subscription needed.
     },
-    () => window.location.search,
+    getLocationSnapshot,
     () => null
   );
-  if (search == null) return <ParlorBoot />;
-  const params = parseURLParams(search);
+  if (location == null) return <ParlorBoot />;
+  const url = new URL(location, "https://playhoodwinked.com");
+  const params = parseURLParams(url.search, url.pathname);
   if (params.room) return <MultiplayerParlor room={params.room} role={params.role} hostToken={params.hostToken} testMode={params.test} />;
   if (params.local) return <LocalParlor />;
   return <ParlorLanding />;
@@ -3221,13 +3260,13 @@ function ParlorLanding() {
       } catch {
         // ignore storage failures; the URL still carries the host token
       }
-      window.location.href = `/?room=${c}&role=host&host=${hostToken}`;
+      window.location.href = `/host/${c}?host=${hostToken}`;
     }
   };
   const join = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!cleanJoinCode) return;
-    window.location.href = `/?room=${cleanJoinCode}&role=play`;
+    window.location.href = `/${cleanJoinCode}`;
   };
   return (
     <div
@@ -3565,7 +3604,9 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
   );
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const joinUrl = origin ? `${origin}/?room=${room}&role=play` : "";
+  const [copiedBoard, setCopiedBoard] = useState(false);
+  const joinUrl = origin ? `${origin}/${room}` : "";
+  const boardUrl = origin ? `${origin}/room/${room}` : "";
   const copyJoinUrl = () => {
     if (!joinUrl || typeof navigator === "undefined" || !navigator.clipboard) return;
     navigator.clipboard
@@ -3575,6 +3616,16 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
         setTimeout(() => setCopied(false), 1400);
       })
       .catch(() => setCopied(false));
+  };
+  const copyBoardUrl = () => {
+    if (!boardUrl || typeof navigator === "undefined" || !navigator.clipboard) return;
+    navigator.clipboard
+      .writeText(boardUrl)
+      .then(() => {
+        setCopiedBoard(true);
+        setTimeout(() => setCopiedBoard(false), 1400);
+      })
+      .catch(() => setCopiedBoard(false));
   };
   useEffect(() => {
     if (!joinUrl) return;
@@ -3645,14 +3696,23 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
           {PLAY_URL}
         </div>
         <div className="body" style={{ color: C.creamDim, fontSize: 12, marginBottom: 8 }}>
-          Enter room code <b style={{ color: C.cream, letterSpacing: 2 }}>{room}</b>
+          Phone players can scan or enter <b style={{ color: C.cream, letterSpacing: 2 }}>{room}</b>
         </div>
         <code style={{ color: C.cream, fontSize: 11, wordBreak: "break-all" }}>
-          {joinUrl || `?room=${room}&role=play`}
+          {joinUrl || `/${room}`}
+        </code>
+        <div className="body" style={{ color: C.creamDim, fontSize: 12, marginTop: 10 }}>
+          Board screen for another computer:
+        </div>
+        <code style={{ color: C.cream, fontSize: 11, wordBreak: "break-all" }}>
+          {boardUrl || `/room/${room}`}
         </code>
         <div className="flex flex-wrap" style={{ gap: 8, marginTop: 10 }}>
           <button onClick={copyJoinUrl} className="body" style={devBtn} disabled={!joinUrl}>
-            {copied ? "Copied" : "Copy join link"}
+            {copied ? "Copied" : "Copy phone link"}
+          </button>
+          <button onClick={copyBoardUrl} className="body" style={devBtn} disabled={!boardUrl}>
+            {copiedBoard ? "Copied" : "Copy board link"}
           </button>
           {joinUrl && typeof navigator !== "undefined" && "share" in navigator && (
             <button
