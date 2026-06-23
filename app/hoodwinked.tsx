@@ -313,10 +313,12 @@ function Bulbs({ count = 14 }: { count?: number }) {
 
 function BrandLogo({
   size = 120,
-  compact = false
+  compact = false,
+  responsive = false
 }: {
   size?: number;
   compact?: boolean;
+  responsive?: boolean;
 }) {
   return (
     // Static public asset; next/image optimization adds little for this small app shell logo.
@@ -328,8 +330,8 @@ function BrandLogo({
       height={size}
       style={{
         display: "block",
-        width: size,
-        height: size,
+        width: responsive ? `min(${size}px, 58vw)` : size,
+        height: responsive ? "auto" : size,
         objectFit: "contain",
         margin: compact ? 0 : "0 auto",
         filter: "drop-shadow(0 14px 26px rgba(0,0,0,.38))"
@@ -3234,14 +3236,25 @@ function ParlorLanding() {
     >
       <style>{FONT_CSS}</style>
       <div style={{ width: "100%", maxWidth: 560 }}>
-        <BrandLogo size={190} />
+        <BrandLogo size={248} responsive />
         <div className="body" style={{ color: C.creamDim, fontSize: 12, fontWeight: 800, letterSpacing: 2, marginBottom: 10 }}>
           {PLAY_URL}
         </div>
         <div className="disp" style={{ fontSize: "clamp(42px, 12vw, 66px)", fontWeight: 800, color: C.gold, letterSpacing: 4, lineHeight: 0.95 }}>
           HOODWINKED
         </div>
-        <div className="body" style={{ color: C.creamDim, marginTop: 10, marginBottom: 28, fontSize: 14 }}>
+        <div
+          className="disp"
+          style={{
+            color: C.cream,
+            marginTop: 12,
+            marginBottom: 30,
+            fontSize: "clamp(18px, 4.6vw, 28px)",
+            fontWeight: 800,
+            lineHeight: 1.15,
+            textShadow: `0 0 18px ${C.gold}33`
+          }}
+        >
           Fool the room. Win the night.
         </div>
 
