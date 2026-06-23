@@ -61,41 +61,43 @@ const C = {
   creamDim: "#B9C3B0"
 };
 
+const PLAY_URL = "playhoodwinked.com";
+
 /* ---- MODE INFO ----------------------------------------------------------- */
-const MODE_INFO: Record<Mode, { label: string; emoji: string; blurb: string; min: number }> = {
+const MODE_INFO: Record<Mode, { label: string; code: string; blurb: string; min: number }> = {
   classic: {
     label: "Classic",
-    emoji: "🎭",
+    code: "01",
     blurb: "Everyone answers the same prompt. Vote for your favorite.",
     min: 2
   },
   quiplash: {
     label: "Quiplash",
-    emoji: "⚡",
+    code: "02",
     blurb: "Each prompt is given to two players. Everyone else votes between the answers.",
     min: 3
   },
   trivia: {
     label: "Trivia",
-    emoji: "🧠",
+    code: "03",
     blurb: "Tap the correct multiple-choice answer. Faster = more points.",
     min: 2
   },
   picture: {
     label: "Picture Reveal",
-    emoji: "🖼️",
+    code: "04",
     blurb: "Guess the image as it reveals. First correct guess wins.",
     min: 2
   },
   wheel: {
     label: "Wheel",
-    emoji: "🎡",
+    code: "05",
     blurb: "Guess letters to reveal the puzzle, then solve it for bonus points.",
     min: 2
   },
   feud: {
     label: "Family Feud",
-    emoji: "👨‍👩‍👧",
+    code: "06",
     blurb: "Guess the top survey answers. Higher-ranked answers = more points.",
     min: 2
   }
@@ -309,6 +311,33 @@ function Bulbs({ count = 14 }: { count?: number }) {
   );
 }
 
+function BrandLogo({
+  size = 120,
+  compact = false
+}: {
+  size?: number;
+  compact?: boolean;
+}) {
+  return (
+    // Static public asset; next/image optimization adds little for this small app shell logo.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/hwlogo.png"
+      alt="Hoodwinked"
+      width={size}
+      height={size}
+      style={{
+        display: "block",
+        width: size,
+        height: size,
+        objectFit: "contain",
+        margin: compact ? 0 : "0 auto",
+        filter: "drop-shadow(0 14px 26px rgba(0,0,0,.38))"
+      }}
+    />
+  );
+}
+
 /* ---- THE BOARD (the TV / shared screen) ---------------------------------- */
 function Board({
   state,
@@ -386,8 +415,16 @@ function Board({
       <Bulbs />
       <div className="board-inner" style={{ padding: "16px 8px 8px" }}>
         <div className="flex items-center justify-between board-header" style={{ marginBottom: 14 }}>
-          <div className="disp" style={{ fontSize: 26, fontWeight: 800, color: C.gold, letterSpacing: 1 }}>
-            HOODWINKED
+          <div className="flex items-center" style={{ gap: 10 }}>
+            <BrandLogo size={54} compact />
+            <div>
+              <div className="disp" style={{ fontSize: 22, fontWeight: 800, color: C.gold, letterSpacing: 1 }}>
+                HOODWINKED
+              </div>
+              <div className="body" style={{ color: C.creamDim, fontSize: 10, fontWeight: 800, letterSpacing: 1.4 }}>
+                {PLAY_URL}
+              </div>
+            </div>
           </div>
           {state.phase !== "lobby" && state.phase !== "gameover" && (
             <div className="body" style={{ color: C.creamDim, fontSize: 13, fontWeight: 600 }}>
@@ -412,6 +449,19 @@ function Board({
             >
               <span suppressHydrationWarning>{muted ? "🔇" : "🔊"}</span>
             </button>
+            {state.phase !== "lobby" && state.phase !== "gameover" && (
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined" && !window.confirm("Start a new game for everyone?")) return;
+                  dispatch({ type: "PLAY_AGAIN" });
+                }}
+                aria-label="Start a new game"
+                title="Start a new game"
+                style={iconBtn}
+              >
+                ↺
+              </button>
+            )}
             <div className="body" style={{ color: C.creamDim, fontSize: 13 }}>
               Room <b style={{ color: C.cream, letterSpacing: 3 }}>{state.roomCode}</b>
             </div>
@@ -458,7 +508,7 @@ function Board({
         {state.phase === "lobby" && (
           <div className="popin" style={{ textAlign: "center", padding: "26px 0 18px" }}>
             <div className="body" style={{ color: C.creamDim, fontSize: 14, marginBottom: 6 }}>
-              Join on your phone with the code
+              Go to <span style={{ color: C.cream, fontWeight: 800 }}>{PLAY_URL}</span> and enter code
             </div>
             <div
               className="disp"
@@ -512,7 +562,7 @@ function Board({
             </div>
             <div
               className="flex flex-wrap justify-center"
-              style={{ gap: 8, margin: "0 auto 14px", maxWidth: 520 }}
+              style={{ gap: 10, margin: "0 auto 16px", maxWidth: 650 }}
             >
               {ALL_MODES.map((m) => {
                 const info = MODE_INFO[m];
@@ -524,15 +574,35 @@ function Board({
                     className="disp"
                     style={modeChip(active)}
                   >
-                    <span style={{ marginRight: 6 }}>{info.emoji}</span>
-                    {info.label}
+                    <span
+                      className="body"
+                      style={{
+                        color: active ? C.bgDeep : C.gold,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: 1.4
+                      }}
+                    >
+                      {info.code}
+                    </span>
+                    <span>{info.label}</span>
+                    <span
+                      className="body"
+                      style={{
+                        color: active ? C.bgDeep : C.creamDim,
+                        fontSize: 10,
+                        fontWeight: 700
+                      }}
+                    >
+                      {info.min}+ players
+                    </span>
                   </button>
                 );
               })}
             </div>
             <div
               className="body"
-              style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, maxWidth: 460, margin: "0 auto 14px" }}
+              style={{ color: C.creamDim, fontSize: 13, lineHeight: 1.5, maxWidth: 500, margin: "0 auto 14px" }}
             >
               {MODE_INFO[state.mode].blurb}
             </div>
@@ -543,7 +613,7 @@ function Board({
                 <button
                   onClick={() => dispatch({ type: "START_GAME" })}
                   disabled={!enabled}
-                  className="disp glow"
+                  className="disp"
                   style={hostBtn(enabled)}
                 >
                   {enabled ? "Start the show" : `Need ${min}+ players`}
@@ -1251,7 +1321,7 @@ function Board({
             <div style={{ textAlign: "center", marginTop: 20 }}>
               <button
                 onClick={() => dispatch({ type: "NEXT_ROUND" })}
-                className="disp glow"
+                className="disp"
                 style={hostBtn(true)}
               >
                 {state.round >= state.totalRounds ? "Final results" : "Next round"}
@@ -2718,12 +2788,14 @@ function Phone({
   deviceId,
   state,
   dispatch,
-  onRemove
+  onRemove,
+  fullSize = false
 }: {
   deviceId: string;
   state: State;
   dispatch: React.Dispatch<Action>;
   onRemove: () => void;
+  fullSize?: boolean;
 }) {
   const player = state.players[deviceId];
   const [name, setName] = useState(() => readSavedName(deviceId));
@@ -2756,17 +2828,40 @@ function Phone({
 
   const hasAnswered = player && state.answers[player.id] != null;
   const hasVoted = player && state.votes[player.id] != null;
+  const gaveUp = !!(player && state.giveUps[player.id]);
+  const playerDoneWriting = !!player && (
+    (state.mode === "classic" && hasAnswered) ||
+    (state.mode === "quiplash" &&
+      state.quipPrompts
+        .filter((q) => q.writers.includes(player.id))
+        .every((q) => q.answers[player.id] != null)) ||
+    (state.mode === "trivia" && !!state.trivia.answers[player.id]) ||
+    (state.mode === "picture" && !!state.picture.guesses[player.id]?.correct) ||
+    (state.mode === "wheel" && state.wheel.solved) ||
+    false
+  );
+  const canGiveUp = !!player && state.phase === "writing" && !gaveUp && !playerDoneWriting;
+
+  const confirmPlayAgain = () => {
+    if (typeof window !== "undefined" && !window.confirm("Start a new game for everyone?")) return;
+    dispatch({ type: "PLAY_AGAIN" });
+  };
+  const confirmGiveUp = () => {
+    if (typeof window !== "undefined" && !window.confirm("Give up on this round?")) return;
+    if (player) dispatch({ type: "GIVE_UP", playerId: player.id });
+  };
 
   return (
     <div
       style={{
-        width: 188,
+        width: fullSize ? "min(100%, 460px)" : 188,
         flexShrink: 0,
         background: C.bgDeep,
         border: `1px solid ${player ? player.color : C.line}`,
-        borderRadius: 20,
-        padding: 12,
+        borderRadius: fullSize ? 18 : 20,
+        padding: fullSize ? 18 : 12,
         position: "relative",
+        minHeight: fullSize ? "calc(100vh - 120px)" : undefined,
         boxShadow: player
           ? `0 0 0 1px ${player.color}22, 0 8px 24px rgba(0,0,0,.3)`
           : "0 8px 24px rgba(0,0,0,.3)"
@@ -2774,27 +2869,48 @@ function Phone({
     >
       <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
         <span className="body" style={{ fontSize: 10, color: C.creamDim, letterSpacing: 1 }}>
-          📱 phone
+          PLAYER
         </span>
-        <button
-          onClick={onRemove}
-          className="body"
-          style={{
-            background: "none",
-            border: "none",
-            color: C.creamDim,
-            cursor: "pointer",
-            fontSize: 12
-          }}
-        >
-          ✕
-        </button>
+        <div className="flex items-center" style={{ gap: 8 }}>
+          {player && state.phase !== "lobby" && state.phase !== "gameover" && (
+            <button
+              onClick={confirmPlayAgain}
+              className="body"
+              title="Start a new game"
+              aria-label="Start a new game"
+              style={iconBtn}
+            >
+              ↺
+            </button>
+          )}
+          {!fullSize && (
+            <button
+              onClick={onRemove}
+              className="body"
+              style={{
+                background: "none",
+                border: "none",
+                color: C.creamDim,
+                cursor: "pointer",
+                fontSize: 12
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {!player && (
         <div>
-          <div className="disp" style={{ color: C.gold, fontWeight: 800, fontSize: 15, marginBottom: 6 }}>
-            Join {state.roomCode}
+          <div className="body" style={{ color: C.creamDim, fontWeight: 800, fontSize: 10, letterSpacing: 1.4, marginBottom: 4 }}>
+            {PLAY_URL}
+          </div>
+          <div className="disp" style={{ color: C.gold, fontWeight: 800, fontSize: 18, marginBottom: 4 }}>
+            Room {state.roomCode}
+          </div>
+          <div className="body" style={{ color: C.creamDim, fontSize: 11, lineHeight: 1.35, marginBottom: 8 }}>
+            Enter your name to join the game.
           </div>
           <input
             value={name}
@@ -2811,7 +2927,7 @@ function Phone({
             onClick={() => joinWithName(name)}
             disabled={state.phase !== "lobby" || !name.trim()}
             className="body"
-            style={phoneBtn(state.phase === "lobby" && !!name.trim(), C.gold)}
+            style={phoneBtn(state.phase === "lobby" && !!name.trim(), C.gold, fullSize)}
           >
             {state.phase === "lobby" ? "Join" : "Game in progress"}
           </button>
@@ -2844,7 +2960,7 @@ function Phone({
             </div>
           )}
 
-          {state.phase === "writing" && state.mode === "classic" &&
+          {state.phase === "writing" && !gaveUp && state.mode === "classic" &&
             (hasAnswered ? (
               <div className="body" style={{ ...phoneNote, color: player.color }}>
                 Locked in ✓
@@ -2866,31 +2982,50 @@ function Phone({
                   }
                   disabled={!draft.trim()}
                   className="body"
-                  style={phoneBtn(!!draft.trim(), player.color)}
+                  style={phoneBtn(!!draft.trim(), player.color, fullSize)}
                 >
                   Send it
                 </button>
               </div>
             ))}
 
-          {state.phase === "writing" && state.mode === "quiplash" && (
+          {state.phase === "writing" && !gaveUp && state.mode === "quiplash" && (
             <QuipWritingPhone state={state} dispatch={dispatch} player={player} />
           )}
 
-          {state.phase === "writing" && state.mode === "trivia" && (
+          {state.phase === "writing" && !gaveUp && state.mode === "trivia" && (
             <TriviaPhone state={state} dispatch={dispatch} player={player} />
           )}
 
-          {state.phase === "writing" && state.mode === "picture" && (
+          {state.phase === "writing" && !gaveUp && state.mode === "picture" && (
             <PicturePhone state={state} dispatch={dispatch} player={player} />
           )}
 
-          {state.phase === "writing" && state.mode === "wheel" && (
+          {state.phase === "writing" && !gaveUp && state.mode === "wheel" && (
             <WheelPhone state={state} dispatch={dispatch} player={player} />
           )}
 
-          {state.phase === "writing" && state.mode === "feud" && (
+          {state.phase === "writing" && !gaveUp && state.mode === "feud" && (
             <FeudPhone state={state} dispatch={dispatch} player={player} />
+          )}
+
+          {state.phase === "writing" && gaveUp && (
+            <div className="body" style={{ ...phoneNote, color: C.creamDim, marginTop: 10 }}>
+              You gave up this round. Waiting for the room...
+            </div>
+          )}
+
+          {canGiveUp && (
+            <button
+              onClick={confirmGiveUp}
+              className="body"
+              style={{
+                ...secondaryPhoneBtn,
+                marginTop: 12
+              }}
+            >
+              I give up
+            </button>
           )}
 
           {state.phase === "voting" && state.mode === "classic" &&
@@ -3051,9 +3186,7 @@ function ParlorBoot() {
       }}
     >
       <style>{FONT_CSS}</style>
-      <div className="disp" style={{ fontSize: 28, fontWeight: 800, color: C.gold }}>
-        HOODWINKED
-      </div>
+      <BrandLogo size={156} />
     </div>
   );
 }
@@ -3088,57 +3221,84 @@ function ParlorLanding() {
       }}
     >
       <style>{FONT_CSS}</style>
-      <div style={{ maxWidth: 460 }}>
-        <div className="disp" style={{ fontSize: "clamp(40px, 12vw, 60px)", fontWeight: 800, color: C.gold, letterSpacing: 4 }}>
+      <div style={{ width: "100%", maxWidth: 560 }}>
+        <BrandLogo size={190} />
+        <div className="body" style={{ color: C.creamDim, fontSize: 12, fontWeight: 800, letterSpacing: 2, marginBottom: 10 }}>
+          {PLAY_URL}
+        </div>
+        <div className="disp" style={{ fontSize: "clamp(42px, 12vw, 66px)", fontWeight: 800, color: C.gold, letterSpacing: 4, lineHeight: 0.95 }}>
           HOODWINKED
         </div>
-        <div className="body" style={{ color: C.creamDim, marginTop: 8, marginBottom: 26, fontSize: 14 }}>
+        <div className="body" style={{ color: C.creamDim, marginTop: 10, marginBottom: 28, fontSize: 14 }}>
           Fool the room. Win the night.
         </div>
-        <button onClick={start} className="disp glow" style={hostBtn(true)}>
-          {code ? `Opening ${code}…` : "Start a room"}
-        </button>
-        <form onSubmit={join} style={{ margin: "24px auto 0", maxWidth: 320 }}>
-          <div className="body" style={{ color: C.creamDim, fontSize: 12, marginBottom: 8, fontWeight: 700 }}>
-            Already have a room code?
-          </div>
-          <div className="flex" style={{ gap: 8 }}>
-            <input
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
-              placeholder="CODE"
-              inputMode="text"
-              autoCapitalize="characters"
-              className="disp"
-              style={{
-                ...inputStyle,
-                textAlign: "center",
-                fontSize: 20,
-                fontWeight: 800,
-                letterSpacing: 4,
-                textTransform: "uppercase",
-                height: 46
-              }}
-            />
-            <button
-              type="submit"
-              disabled={!cleanJoinCode}
-              className="disp"
-              style={{
-                ...phoneBtn(!!cleanJoinCode, C.gold),
-                width: 92,
-                marginTop: 0,
-                height: 46,
-                borderRadius: 10
-              }}
-            >
-              Join
+
+        <div
+          style={{
+            display: "grid",
+            gap: 12,
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            textAlign: "left"
+          }}
+        >
+          <section style={landingPanel}>
+            <div className="body" style={eyebrowStyle}>HOST</div>
+            <div className="disp" style={{ color: C.cream, fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
+              Start a room
+            </div>
+            <div className="body" style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, marginBottom: 16 }}>
+              Put this screen on the TV. Players join from {PLAY_URL}.
+            </div>
+            <button onClick={start} className="disp" style={{ ...hostBtn(true), width: "100%" }}>
+              {code ? `Opening ${code}...` : "Start room"}
             </button>
-          </div>
-        </form>
+          </section>
+
+          <form onSubmit={join} style={landingPanel}>
+            <div className="body" style={eyebrowStyle}>PLAYERS</div>
+            <div className="disp" style={{ color: C.cream, fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
+              Join a game
+            </div>
+            <div className="body" style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, marginBottom: 12 }}>
+              Go to {PLAY_URL} and enter the code on the TV.
+            </div>
+            <div className="flex" style={{ gap: 8 }}>
+              <input
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
+                placeholder="CODE"
+                inputMode="text"
+                autoCapitalize="characters"
+                className="disp"
+                style={{
+                  ...inputStyle,
+                  textAlign: "center",
+                  fontSize: 20,
+                  fontWeight: 800,
+                  letterSpacing: 4,
+                  textTransform: "uppercase",
+                  height: 46
+                }}
+              />
+              <button
+                type="submit"
+                disabled={!cleanJoinCode}
+                className="disp"
+                style={{
+                  ...phoneBtn(!!cleanJoinCode, C.gold),
+                  width: 92,
+                  marginTop: 0,
+                  height: 46,
+                  borderRadius: 10
+                }}
+              >
+                Join
+              </button>
+            </div>
+          </form>
+        </div>
+
         <div className="body" style={{ color: C.creamDim, fontSize: 12, marginTop: 24, lineHeight: 1.6 }}>
-          The host opens the room on a TV / laptop. Players can scan the QR or enter the code here.
-          <br />
           <Link
             href="/?local=1"
             style={{ color: C.line, textDecoration: "none", borderBottom: `1px dotted ${C.line}` }}
@@ -3395,7 +3555,14 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
   return (
     <div
       className="flex flex-wrap items-center justify-center"
-      style={{ marginTop: 24, gap: 22, padding: "16px 12px" }}
+      style={{
+        marginTop: 24,
+        gap: 22,
+        padding: "18px 14px",
+        border: `1px solid ${C.line}`,
+        borderRadius: 18,
+        background: `${C.bgDeep}66`
+      }}
     >
       {qrUrl ? (
         // Tiny local QR data URL — next/image's optimizer would be wasted overhead here.
@@ -3427,8 +3594,14 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
         className="body"
         style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.6, textAlign: "left", maxWidth: 360 }}
       >
-        <div style={{ color: C.cream, fontSize: 13, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>
-          PLAYERS JOIN HERE
+        <div style={{ color: C.gold, fontSize: 12, fontWeight: 800, letterSpacing: 2, marginBottom: 5 }}>
+          PLAYER ENTRY
+        </div>
+        <div className="disp" style={{ color: C.cream, fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
+          {PLAY_URL}
+        </div>
+        <div className="body" style={{ color: C.creamDim, fontSize: 12, marginBottom: 8 }}>
+          Enter room code <b style={{ color: C.cream, letterSpacing: 2 }}>{room}</b>
         </div>
         <code style={{ color: C.cream, fontSize: 11, wordBreak: "break-all" }}>
           {joinUrl || `?room=${room}&role=play`}
@@ -3533,9 +3706,7 @@ function MultiplayerParlor({ room, role }: { room: string; role: Role }) {
       >
         <style>{FONT_CSS}</style>
         <div>
-          <div className="disp" style={{ fontSize: 28, fontWeight: 800, color: C.gold }}>
-            HOODWINKED
-          </div>
+          <BrandLogo size={150} />
           <div className="body" style={{ marginTop: 10, color: C.creamDim }}>
             {connected ? "Loading room…" : `Connecting to ${room}…`}
           </div>
@@ -3557,11 +3728,16 @@ function MultiplayerParlor({ room, role }: { room: string; role: Role }) {
         {role !== "host" && (
           <>
             <div style={{ margin: "26px 2px 12px" }} className="flex items-center justify-between">
-              <div
-                className="disp"
-                style={{ color: C.creamDim, fontWeight: 600, fontSize: 14, letterSpacing: 1 }}
-              >
-                YOUR PHONE
+              <div>
+                <div
+                  className="disp"
+                  style={{ color: C.cream, fontWeight: 800, fontSize: 15, letterSpacing: 0.5 }}
+                >
+                  Player Console
+                </div>
+                <div className="body" style={{ color: C.creamDim, fontSize: 11, marginTop: 2 }}>
+                  {PLAY_URL}
+                </div>
               </div>
               <div className="body" style={{ color: C.creamDim, fontSize: 11 }}>
                 {connected ? "connected" : "reconnecting…"}
@@ -3572,6 +3748,7 @@ function MultiplayerParlor({ room, role }: { room: string; role: Role }) {
                 deviceId={deviceId}
                 state={state}
                 dispatch={dispatch}
+                fullSize
                 onRemove={() => {
                   // No-op in multiplayer — close the tab to leave.
                 }}
@@ -3586,28 +3763,49 @@ function MultiplayerParlor({ room, role }: { room: string; role: Role }) {
 }
 
 /* ---- style helpers ------------------------------------------------------- */
+const landingPanel: React.CSSProperties = {
+  background: `linear-gradient(180deg, ${C.surface} 0%, ${C.bgDeep} 100%)`,
+  border: `1px solid ${C.line}`,
+  borderRadius: 8,
+  padding: 16,
+  boxShadow: "0 12px 34px rgba(0,0,0,.24)"
+};
+const eyebrowStyle: React.CSSProperties = {
+  color: C.gold,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: 2,
+  marginBottom: 6
+};
 const modeChip = (active: boolean): React.CSSProperties => ({
-  fontSize: 13,
-  fontWeight: 700,
-  padding: "8px 14px",
-  background: active ? C.gold : C.surface2,
+  display: "inline-flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  gap: 3,
+  minWidth: 128,
+  fontSize: 15,
+  fontWeight: 800,
+  padding: "10px 12px",
+  background: active ? `linear-gradient(180deg, ${C.gold} 0%, ${C.goldDim} 100%)` : C.surface2,
   color: active ? C.bgDeep : C.creamDim,
   border: `1px solid ${active ? C.gold : C.line}`,
-  borderRadius: 999,
+  borderRadius: 8,
   cursor: active ? "default" : "pointer",
-  letterSpacing: 0.3,
-  boxShadow: active ? `0 0 14px ${C.gold}55` : "none"
+  letterSpacing: 0,
+  textAlign: "left",
+  boxShadow: active ? `0 12px 26px rgba(0,0,0,.28), 0 0 0 1px ${C.gold}44` : "none"
 });
 const hostBtn = (enabled: boolean): React.CSSProperties => ({
-  fontSize: 17,
+  fontSize: 16,
   fontWeight: 800,
   padding: "12px 28px",
-  borderRadius: 999,
-  border: "none",
+  borderRadius: 8,
+  border: `1px solid ${enabled ? C.gold : C.line}`,
   cursor: enabled ? "pointer" : "not-allowed",
-  background: enabled ? C.gold : C.surface2,
+  background: enabled ? `linear-gradient(180deg, ${C.gold} 0%, ${C.goldDim} 100%)` : C.surface2,
   color: enabled ? C.bgDeep : C.creamDim,
-  letterSpacing: 0.5
+  letterSpacing: 0.2,
+  boxShadow: enabled ? "0 10px 24px rgba(0,0,0,.28)" : "none"
 });
 const ghostBtn: React.CSSProperties = {
   display: "block",
@@ -3639,18 +3837,41 @@ const inputStyle: React.CSSProperties = {
   fontSize: 13,
   outline: "none"
 };
-const phoneBtn = (enabled: boolean, color: string): React.CSSProperties => ({
+const phoneBtn = (enabled: boolean, color: string, large = false): React.CSSProperties => ({
   width: "100%",
   marginTop: 6,
-  padding: "8px 10px",
+  padding: large ? "13px 14px" : "8px 10px",
   borderRadius: 10,
   border: "none",
   background: enabled ? color : C.surface2,
   color: enabled ? C.bgDeep : C.creamDim,
   fontWeight: 700,
-  fontSize: 13,
+  fontSize: large ? 16 : 13,
   cursor: enabled ? "pointer" : "not-allowed"
 });
+const secondaryPhoneBtn: React.CSSProperties = {
+  width: "100%",
+  padding: "12px 14px",
+  borderRadius: 10,
+  border: `1px solid ${C.line}`,
+  background: "transparent",
+  color: C.creamDim,
+  fontWeight: 800,
+  fontSize: 14,
+  cursor: "pointer"
+};
+const iconBtn: React.CSSProperties = {
+  width: 30,
+  height: 30,
+  borderRadius: 8,
+  border: `1px solid ${C.line}`,
+  background: C.surface,
+  color: C.gold,
+  cursor: "pointer",
+  fontSize: 16,
+  fontWeight: 800,
+  lineHeight: 1
+};
 const phoneNote: React.CSSProperties = {
   color: C.creamDim,
   fontSize: 12,

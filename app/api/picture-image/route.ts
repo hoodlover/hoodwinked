@@ -5,10 +5,10 @@ export const maxDuration = 60;
 
 type ImageResponse = {
   data?: Array<{ b64_json?: string; revised_prompt?: string }>;
-  error?: { message?: string };
+  error?: { message?: string; code?: string; type?: string };
 };
 
-const DEFAULT_MODEL = "gpt-image-1.5";
+const DEFAULT_MODEL = "gpt-image-2";
 const DEFAULT_SIZE = "1024x1024";
 const DEFAULT_QUALITY = "low";
 const DEFAULT_FORMAT = "webp";
@@ -71,10 +71,18 @@ export async function POST(request: Request) {
     })
   });
 
+  const requestId = response.headers.get("x-request-id") ?? undefined;
   const payload = (await response.json().catch(() => ({}))) as ImageResponse;
   if (!response.ok) {
+    const detail = [
+      payload.error?.message ?? "OpenAI image generation failed.",
+      payload.error?.code ? `code: ${payload.error.code}` : "",
+      requestId ? `request: ${requestId}` : ""
+    ]
+      .filter(Boolean)
+      .join(" ");
     return NextResponse.json(
-      { error: payload.error?.message ?? "OpenAI image generation failed." },
+      { error: detail },
       { status: response.status }
     );
   }

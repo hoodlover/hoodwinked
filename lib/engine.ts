@@ -363,6 +363,7 @@ export type State = {
   lastPoints: Record<string, number>;
   phaseDeadline: number | null;
   typing: Record<string, number>;
+  giveUps: Record<string, boolean>;
   mode: Mode;
   quipPrompts: QuipPrompt[];
   quipIndex: number;
@@ -386,6 +387,7 @@ export type Action =
   | { type: "PLAY_AGAIN" }
   | { type: "RESET" }
   | { type: "TYPING"; playerId: string; at: number }
+  | { type: "GIVE_UP"; playerId: string }
   | { type: "TOGGLE_MODE" }
   | { type: "SET_MODE"; mode: Mode }
   | { type: "SUBMIT_QUIP"; promptId: string; playerId: string; text: string }
@@ -511,6 +513,7 @@ export function makeInitialState(): State {
     lastPoints: {},
     phaseDeadline: null,
     typing: {},
+    giveUps: {},
     mode: "classic",
     quipPrompts: [],
     quipIndex: 0,
@@ -538,7 +541,8 @@ function startRound(state: State, roundNum: number): State {
     revealOrder: [],
     revealIndex: 0,
     lastPoints: {},
-    typing: {}
+    typing: {},
+    giveUps: {}
   };
   switch (state.mode) {
     case "classic": {
@@ -727,6 +731,60 @@ export function reducer(state: State, action: Action): State {
       return { ...state, typing: { ...state.typing, [action.playerId]: action.at } };
     }
 
+    case "GIVE_UP": {
+      if (state.phase !== "writing") return state;
+      if (!state.players[action.playerId]) return state;
+      const giveUps = { ...state.giveUps, [action.playerId]: true };
+
+      if (state.mode === "classic") {
+        const answers = { ...state.answers };
+        if (!answers[action.playerId]) answers[action.playerId] = "(gave up)";
+        const done = joinedIds(state).every((id) => answers[id] != null || giveUps[id]);
+        if (done) {
+          joinedIds(state).forEach((id) => {
+            if (!answers[id]) answers[id] = "(gave up)";
+          });
+          return { ...state, giveUps, answers, phase: "voting", votes: {}, phaseDeadline: deadline(VOTING_SECONDS) };
+        }
+        return { ...state, giveUps, answers };
+      }
+
+      if (state.mode === "quiplash") {
+        const quipPrompts = state.quipPrompts.map((q) => {
+          if (!q.writers.includes(action.playerId) || q.answers[action.playerId] != null) return q;
+          return { ...q, answers: { ...q.answers, [action.playerId]: "(gave up)" } };
+        });
+        const allLocked = quipPrompts.every((q) => q.writers.every((w) => q.answers[w] != null));
+        if (allLocked) {
+          return {
+            ...state,
+            giveUps,
+            quipPrompts,
+            phase: "voting",
+            quipIndex: 0,
+            quipVotes: {},
+            phaseDeadline: deadline(VOTING_SECONDS)
+          };
+        }
+        return { ...state, giveUps, quipPrompts };
+      }
+
+      const next = { ...state, giveUps };
+      if (state.mode === "trivia" && joinedIds(state).every((id) => next.trivia.answers[id] || giveUps[id])) {
+        return tallyTrivia(next);
+      }
+      if (state.mode === "picture" && joinedIds(state).every((id) => next.picture.guesses[id]?.correct || giveUps[id])) {
+        return tallyPicture(next);
+      }
+      if (state.mode === "wheel" && joinedIds(state).every((id) => giveUps[id])) {
+        return tallyWheel(next);
+      }
+      if (state.mode === "feud" && joinedIds(state).every((id) => giveUps[id])) {
+        return tallyFeud(next);
+      }
+      return next;
+    }
+
     case "SUBMIT_QUIP": {
       if (state.phase !== "writing" || state.mode !== "quiplash") return state;
       const quipPrompts = state.quipPrompts.map((q) => {
@@ -799,7 +857,7 @@ export function reducer(state: State, action: Action): State {
         [action.playerId]: { choice: action.choice, at: action.at }
       };
       const next = { ...state, trivia: { ...state.trivia, answers } };
-      if (Object.keys(answers).length >= joinedIds(state).length) {
+      if (joinedIds(state).every((id) => answers[id] != null || state.giveUps[id])) {
         return tallyTrivia(next);
       }
       return next;
@@ -865,7 +923,7 @@ export function reducer(state: State, action: Action): State {
         [action.playerId]: { text: action.text.trim(), at: action.at, correct }
       };
       const next = { ...state, picture: { ...state.picture, guesses } };
-      const allCorrect = joinedIds(state).every((id) => guesses[id]?.correct);
+      const allCorrect = joinedIds(state).every((id) => guesses[id]?.correct || state.giveUps[id]);
       if (allCorrect) return tallyPicture(next);
       return next;
     }
