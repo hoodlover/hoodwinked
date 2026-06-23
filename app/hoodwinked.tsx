@@ -1,17 +1,27 @@
 "use client";
 
-import React, { useReducer, useState, useEffect, useRef } from "react";
+import React, { useReducer, useState, useEffect, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePartySocket } from "partysocket/react";
 import {
+  ALL_MODES,
+  FEUD_GUESS_SECONDS,
+  PICTURE_GUESS_SECONDS,
   POINTS_PER_VOTE,
+  TRIVIA_ANSWER_SECONDS,
   VOTING_SECONDS,
+  WHEEL_GUESS_SECONDS,
+  WHEEL_LETTER_BUDGET,
   WRITING_SECONDS,
   joinedIds,
   makeInitialState,
   makeRoomCode,
+  matchesAnswer,
   reducer,
+  wheelDisplay,
+  wheelLettersSpent,
   type Action,
+  type Mode,
   type Phase,
   type Player,
   type State
@@ -49,6 +59,46 @@ const C = {
   mint: "#A6E27A",
   cream: "#FBF3E4",
   creamDim: "#B9C3B0"
+};
+
+/* ---- MODE INFO ----------------------------------------------------------- */
+const MODE_INFO: Record<Mode, { label: string; emoji: string; blurb: string; min: number }> = {
+  classic: {
+    label: "Classic",
+    emoji: "🎭",
+    blurb: "Everyone answers the same prompt. Vote for your favorite.",
+    min: 2
+  },
+  quiplash: {
+    label: "Quiplash",
+    emoji: "⚡",
+    blurb: "Each prompt is given to two players. Everyone else votes between the answers.",
+    min: 3
+  },
+  trivia: {
+    label: "Trivia",
+    emoji: "🧠",
+    blurb: "Tap the correct multiple-choice answer. Faster = more points.",
+    min: 2
+  },
+  picture: {
+    label: "Picture Reveal",
+    emoji: "🖼️",
+    blurb: "Guess the image as it reveals. First correct guess wins.",
+    min: 2
+  },
+  wheel: {
+    label: "Wheel",
+    emoji: "🎡",
+    blurb: "Guess letters to reveal the puzzle, then solve it for bonus points.",
+    min: 2
+  },
+  feud: {
+    label: "Family Feud",
+    emoji: "👨‍👩‍👧",
+    blurb: "Guess the top survey answers. Higher-ranked answers = more points.",
+    min: 2
+  }
 };
 
 /* ---- PERSISTED NAMES ----------------------------------------------------- */
@@ -293,7 +343,19 @@ function Board({
   }, [now, state.phaseDeadline, state.phase, dispatch]);
 
   const phaseTotal =
-    state.phase === "writing" ? WRITING_SECONDS : state.phase === "voting" ? VOTING_SECONDS : 0;
+    state.phase === "writing"
+      ? state.mode === "trivia"
+        ? TRIVIA_ANSWER_SECONDS
+        : state.mode === "picture"
+          ? PICTURE_GUESS_SECONDS
+          : state.mode === "wheel"
+            ? WHEEL_GUESS_SECONDS
+            : state.mode === "feud"
+              ? FEUD_GUESS_SECONDS
+              : WRITING_SECONDS
+      : state.phase === "voting"
+        ? VOTING_SECONDS
+        : 0;
   const remaining = state.phaseDeadline ? Math.max(0, state.phaseDeadline - now) : 0;
   const remainingPct = phaseTotal ? (remaining / (phaseTotal * 1000)) * 100 : 0;
   const remainingSec = Math.ceil(remaining / 1000);
@@ -449,34 +511,33 @@ function Board({
               ))}
             </div>
             <div
-              className="flex justify-center"
-              style={{ gap: 0, margin: "0 auto 18px", maxWidth: 360 }}
+              className="flex flex-wrap justify-center"
+              style={{ gap: 8, margin: "0 auto 14px", maxWidth: 520 }}
             >
-              <button
-                onClick={() => state.mode !== "classic" && dispatch({ type: "TOGGLE_MODE" })}
-                className="disp"
-                style={modePill(state.mode === "classic", "left")}
-              >
-                Classic
-              </button>
-              <button
-                onClick={() => state.mode !== "quiplash" && dispatch({ type: "TOGGLE_MODE" })}
-                className="disp"
-                style={modePill(state.mode === "quiplash", "right")}
-              >
-                Quiplash
-              </button>
+              {ALL_MODES.map((m) => {
+                const info = MODE_INFO[m];
+                const active = state.mode === m;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => !active && dispatch({ type: "SET_MODE", mode: m })}
+                    className="disp"
+                    style={modeChip(active)}
+                  >
+                    <span style={{ marginRight: 6 }}>{info.emoji}</span>
+                    {info.label}
+                  </button>
+                );
+              })}
             </div>
             <div
               className="body"
-              style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, maxWidth: 440, margin: "0 auto 14px" }}
+              style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, maxWidth: 460, margin: "0 auto 14px" }}
             >
-              {state.mode === "classic"
-                ? "Everyone answers the same prompt. Vote for your favorite."
-                : "Each prompt is given to two players. Everyone else votes between the answers. Needs 3+."}
+              {MODE_INFO[state.mode].blurb}
             </div>
             {(() => {
-              const min = state.mode === "quiplash" ? 3 : 2;
+              const min = MODE_INFO[state.mode].min;
               const enabled = players.length >= min;
               return (
                 <button
@@ -673,6 +734,344 @@ function Board({
           );
         })()}
 
+        {state.phase === "writing" && !introVisible && state.mode === "trivia" && (() => {
+          const q = state.trivia.questions[state.round - 1];
+          if (!q) return null;
+          const answered = Object.keys(state.trivia.answers).length;
+          return (
+            <div className="fadeup" style={{ textAlign: "center", padding: "10px 0" }}>
+              <div
+                className="body"
+                style={{ color: C.coral, fontWeight: 700, letterSpacing: 2, fontSize: 12, marginBottom: 8 }}
+              >
+                {q.category.toUpperCase()}
+              </div>
+              <div
+                key={state.round}
+                className="disp stagedrop"
+                style={{
+                  fontSize: "clamp(22px, 5vw, 32px)",
+                  fontWeight: 800,
+                  color: C.cream,
+                  lineHeight: 1.2,
+                  maxWidth: 700,
+                  margin: "0 auto 22px"
+                }}
+              >
+                {q.text}
+              </div>
+              <div
+                className="flex flex-wrap justify-center"
+                style={{ gap: 10, maxWidth: 640, margin: "0 auto" }}
+              >
+                {q.choices.map((c, i) => (
+                  <div
+                    key={i}
+                    className="popin"
+                    style={{
+                      flex: "1 1 220px",
+                      minWidth: 200,
+                      background: C.surface2,
+                      border: `1px solid ${C.line}`,
+                      borderRadius: 14,
+                      padding: "14px 18px",
+                      animationDelay: `${i * 0.05}s`,
+                      textAlign: "left"
+                    }}
+                  >
+                    <span
+                      className="disp"
+                      style={{ color: C.gold, fontWeight: 800, marginRight: 8 }}
+                    >
+                      {String.fromCharCode(65 + i)}
+                    </span>
+                    <span className="disp" style={{ color: C.cream, fontSize: 17, fontWeight: 600 }}>
+                      {c}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="body" style={{ color: C.creamDim, marginTop: 18, fontSize: 13 }}>
+                {answered} / {players.length} locked in
+              </div>
+              <button
+                onClick={() => dispatch({ type: "FORCE_VOTING" })}
+                className="body"
+                style={ghostBtn}
+              >
+                Reveal answer →
+              </button>
+            </div>
+          );
+        })()}
+
+        {state.phase === "writing" && !introVisible && state.mode === "picture" && (
+          <PictureWritingCard
+            state={state}
+            dispatch={dispatch}
+            phaseTotal={phaseTotal}
+            remaining={remaining}
+            playerCount={players.length}
+          />
+        )}
+
+        {state.phase === "writing" && !introVisible && state.mode === "wheel" && (() => {
+          const puzzle = state.wheel.puzzles[state.round - 1];
+          if (!puzzle) return null;
+          const revealed = new Set(Object.keys(state.wheel.guessedLetters));
+          const display = wheelDisplay(puzzle.text, revealed);
+          return (
+            <div className="fadeup" style={{ textAlign: "center", padding: "10px 0" }}>
+              <div
+                className="body"
+                style={{ color: C.coral, fontWeight: 700, letterSpacing: 2, fontSize: 12, marginBottom: 8 }}
+              >
+                {puzzle.category.toUpperCase()}
+              </div>
+              <div
+                className="disp"
+                style={{
+                  fontSize: "clamp(24px, 5vw, 38px)",
+                  fontWeight: 800,
+                  color: C.cream,
+                  letterSpacing: 6,
+                  lineHeight: 1.5,
+                  maxWidth: 700,
+                  margin: "0 auto 18px",
+                  fontFamily: "monospace, monospace"
+                }}
+              >
+                {display}
+              </div>
+              <div
+                className="flex flex-wrap justify-center"
+                style={{ gap: 6, marginBottom: 8, maxWidth: 640, margin: "0 auto 8px" }}
+              >
+                {Object.keys(state.wheel.guessedLetters).sort().length === 0 ? (
+                  <span className="body" style={{ color: C.creamDim, fontSize: 13 }}>
+                    No letters yet
+                  </span>
+                ) : (
+                  Object.entries(state.wheel.guessedLetters)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([letter, hit]) => {
+                      const p = state.players[hit.playerId];
+                      const color = p?.color ?? C.gold;
+                      const inPuzzle = puzzle.text.toUpperCase().includes(letter);
+                      return (
+                        <span
+                          key={letter}
+                          className="disp popin"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            padding: "3px 8px",
+                            background: inPuzzle ? `${color}22` : C.bgDeep,
+                            border: `1px solid ${color}`,
+                            borderRadius: 8,
+                            fontSize: 12,
+                            fontWeight: 800,
+                            color: inPuzzle ? color : C.creamDim
+                          }}
+                        >
+                          <span style={{ letterSpacing: 1 }}>{letter}</span>
+                          <span style={{ opacity: 0.85, fontSize: 10 }}>${hit.value}</span>
+                        </span>
+                      );
+                    })
+                )}
+              </div>
+              <div
+                className="flex flex-wrap justify-center"
+                style={{ gap: 8, marginTop: 6, marginBottom: 4 }}
+              >
+                {players.map((p) => {
+                  const spent = wheelLettersSpent(state, p.id);
+                  const remaining = WHEEL_LETTER_BUDGET - spent;
+                  return (
+                    <span
+                      key={p.id}
+                      className="flex items-center"
+                      style={{
+                        gap: 6,
+                        padding: "3px 9px",
+                        borderRadius: 999,
+                        background: C.bgDeep,
+                        border: `1px solid ${remaining > 0 ? p.color : C.line}`,
+                        opacity: remaining > 0 ? 1 : 0.55
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 999,
+                          background: p.color,
+                          boxShadow: remaining > 0 ? `0 0 6px ${p.color}` : "none"
+                        }}
+                      />
+                      <span className="body" style={{ color: C.cream, fontWeight: 700, fontSize: 11 }}>
+                        {p.name}
+                      </span>
+                      <span
+                        className="disp"
+                        style={{ color: remaining > 0 ? C.gold : C.creamDim, fontWeight: 800, fontSize: 11 }}
+                      >
+                        {remaining > 0 ? "•".repeat(remaining) : "—"}
+                      </span>
+                    </span>
+                  );
+                })}
+              </div>
+              {state.wheel.solverId && state.players[state.wheel.solverId] && (
+                <div
+                  className="body popin"
+                  style={{
+                    color: state.players[state.wheel.solverId].color,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    marginTop: 6
+                  }}
+                >
+                  Solved by {state.players[state.wheel.solverId].name} 🎉
+                </div>
+              )}
+              <button
+                onClick={() => dispatch({ type: "FORCE_VOTING" })}
+                className="body"
+                style={ghostBtn}
+              >
+                End round →
+              </button>
+            </div>
+          );
+        })()}
+
+        {state.phase === "writing" && !introVisible && state.mode === "feud" && (() => {
+          const q = state.feud.questions[state.round - 1];
+          if (!q) return null;
+          // Per-slot first-hit map: slot index -> playerId who got it first.
+          const firstHits: Record<number, string> = {};
+          const allGuesses: { pid: string; at: number; matchIndex: number }[] = [];
+          Object.entries(state.feud.guesses).forEach(([pid, arr]) => {
+            arr.forEach((g) => {
+              if (g.matchIndex != null) allGuesses.push({ pid, at: g.at, matchIndex: g.matchIndex });
+            });
+          });
+          allGuesses.sort((a, b) => a.at - b.at);
+          allGuesses.forEach((g) => {
+            if (firstHits[g.matchIndex] == null) firstHits[g.matchIndex] = g.pid;
+          });
+          const totalAttempts = Object.values(state.feud.guesses).reduce((n, arr) => n + arr.length, 0);
+          return (
+            <div className="fadeup" style={{ textAlign: "center", padding: "10px 0" }}>
+              <div
+                className="body"
+                style={{ color: C.coral, fontWeight: 700, letterSpacing: 2, fontSize: 12, marginBottom: 10 }}
+              >
+                SURVEY SAYS
+              </div>
+              <div
+                key={state.round}
+                className="disp stagedrop"
+                style={{
+                  fontSize: "clamp(22px, 5vw, 32px)",
+                  fontWeight: 800,
+                  color: C.cream,
+                  lineHeight: 1.2,
+                  maxWidth: 680,
+                  margin: "0 auto 22px"
+                }}
+              >
+                {q.prompt}
+              </div>
+              <div
+                className="flex flex-col"
+                style={{ gap: 8, maxWidth: 460, margin: "0 auto" }}
+              >
+                {q.answers.map((a, i) => {
+                  const hitterId = firstHits[i];
+                  const hitter = hitterId ? state.players[hitterId] : null;
+                  const revealed = !!hitter;
+                  return (
+                    <div
+                      key={i}
+                      className={revealed ? "popin" : undefined}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        background: revealed ? `${C.gold}1a` : C.surface2,
+                        border: `1px solid ${revealed ? C.gold : C.line}`,
+                        borderRadius: 12,
+                        padding: "10px 16px",
+                        boxShadow: revealed ? `0 0 14px ${C.gold}33` : "none"
+                      }}
+                    >
+                      <span className="disp" style={{ color: C.gold, fontWeight: 800, width: 26 }}>
+                        #{i + 1}
+                      </span>
+                      {revealed ? (
+                        <>
+                          <span className="disp" style={{ color: C.cream, fontSize: 17, fontWeight: 700, flex: 1, textAlign: "left", marginLeft: 8 }}>
+                            {a.text}
+                          </span>
+                          {hitter && (
+                            <span
+                              className="body"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                color: hitter.color,
+                                fontWeight: 700,
+                                fontSize: 12,
+                                marginRight: 10
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: 999,
+                                  background: hitter.color,
+                                  boxShadow: `0 0 6px ${hitter.color}`
+                                }}
+                              />
+                              {hitter.name}
+                            </span>
+                          )}
+                          <span className="disp" style={{ color: C.gold, fontWeight: 800 }}>
+                            {a.points}
+                          </span>
+                        </>
+                      ) : (
+                        <span
+                          className="body"
+                          style={{ color: C.creamDim, letterSpacing: 6, fontSize: 14, marginLeft: "auto" }}
+                        >
+                          _ _ _ _ _
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="body" style={{ color: C.creamDim, marginTop: 18, fontSize: 13 }}>
+                {Object.keys(firstHits).length} / {q.answers.length} revealed · {totalAttempts} attempts
+              </div>
+              <button
+                onClick={() => dispatch({ type: "FORCE_VOTING" })}
+                className="body"
+                style={ghostBtn}
+              >
+                Reveal board →
+              </button>
+            </div>
+          );
+        })()}
+
         {state.phase === "voting" && state.mode === "classic" && (
           <div className="fadeup" style={{ padding: "10px 0" }}>
             <div style={{ textAlign: "center", marginBottom: 16 }}>
@@ -822,6 +1221,22 @@ function Board({
             state={state}
             dispatch={dispatch}
           />
+        )}
+
+        {state.phase === "reveal" && state.mode === "trivia" && (
+          <TriviaRevealCard key={`${state.round}`} state={state} dispatch={dispatch} />
+        )}
+
+        {state.phase === "reveal" && state.mode === "picture" && (
+          <PictureRevealCard key={`${state.round}`} state={state} dispatch={dispatch} />
+        )}
+
+        {state.phase === "reveal" && state.mode === "wheel" && (
+          <WheelRevealCard key={`${state.round}`} state={state} dispatch={dispatch} />
+        )}
+
+        {state.phase === "reveal" && state.mode === "feud" && (
+          <FeudRevealCard key={`${state.round}`} state={state} dispatch={dispatch} />
         )}
 
         {state.phase === "scoreboard" && (
@@ -993,6 +1408,361 @@ function QuipWritingPhone({
   );
 }
 
+function TriviaPhone({
+  state,
+  dispatch,
+  player
+}: {
+  state: State;
+  dispatch: React.Dispatch<Action>;
+  player: Player;
+}) {
+  const q = state.trivia.questions[state.round - 1];
+  if (!q) return null;
+  const mine = state.trivia.answers[player.id];
+  if (mine) {
+    return (
+      <div className="body" style={{ ...phoneNote, color: player.color }}>
+        Locked in: {String.fromCharCode(65 + mine.choice)} ✓
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col" style={{ gap: 6 }}>
+      <div className="body" style={{ color: C.creamDim, fontSize: 11, lineHeight: 1.3, marginBottom: 2 }}>
+        {q.text}
+      </div>
+      {q.choices.map((c, i) => (
+        <button
+          key={i}
+          onClick={() =>
+            dispatch({ type: "SUBMIT_TRIVIA", playerId: player.id, choice: i, at: Date.now() })
+          }
+          className="body"
+          style={{
+            textAlign: "left",
+            background: C.surface,
+            border: `1px solid ${C.line}`,
+            color: C.cream,
+            borderRadius: 10,
+            padding: "8px 10px",
+            fontSize: 12,
+            cursor: "pointer",
+            lineHeight: 1.25
+          }}
+        >
+          <span style={{ color: C.gold, fontWeight: 800, marginRight: 6 }}>
+            {String.fromCharCode(65 + i)}
+          </span>
+          {c}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PicturePhone({
+  state,
+  dispatch,
+  player
+}: {
+  state: State;
+  dispatch: React.Dispatch<Action>;
+  player: Player;
+}) {
+  const item = state.picture.items[state.round - 1];
+  const [draft, setDraft] = useState("");
+  const roundKey = `${state.round}-pic`;
+  const [lastKey, setLastKey] = useState(roundKey);
+  if (lastKey !== roundKey) {
+    setLastKey(roundKey);
+    setDraft("");
+  }
+  if (!item) return null;
+  const mine = state.picture.guesses[player.id];
+  if (mine?.correct) {
+    return (
+      <div className="body" style={{ ...phoneNote, color: player.color }}>
+        Got it ✓ ({mine.text})
+      </div>
+    );
+  }
+  const lastWrong = mine && !mine.correct ? mine.text : null;
+  return (
+    <div>
+      {lastWrong && (
+        <div className="body" style={{ color: C.coral, fontSize: 11, marginBottom: 4 }}>
+          “{lastWrong}” — nope, try again
+        </div>
+      )}
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        placeholder="Your guess…"
+        maxLength={40}
+        className="body"
+        style={inputStyle}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && draft.trim()) {
+            dispatch({
+              type: "SUBMIT_PICTURE",
+              playerId: player.id,
+              text: draft,
+              at: Date.now()
+            });
+            if (!matchesAnswer(draft, item.answer, item.aliases)) setDraft("");
+          }
+        }}
+      />
+      <button
+        onClick={() => {
+          if (!draft.trim()) return;
+          dispatch({
+            type: "SUBMIT_PICTURE",
+            playerId: player.id,
+            text: draft,
+            at: Date.now()
+          });
+          if (!matchesAnswer(draft, item.answer, item.aliases)) setDraft("");
+        }}
+        disabled={!draft.trim()}
+        className="body"
+        style={phoneBtn(!!draft.trim(), player.color)}
+      >
+        Guess
+      </button>
+    </div>
+  );
+}
+
+function WheelPhone({
+  state,
+  dispatch,
+  player
+}: {
+  state: State;
+  dispatch: React.Dispatch<Action>;
+  player: Player;
+}) {
+  const puzzle = state.wheel.puzzles[state.round - 1];
+  const [solveDraft, setSolveDraft] = useState("");
+  const [wrongShake, setWrongShake] = useState(0);
+  const roundKey = `${state.round}-w`;
+  const [lastKey, setLastKey] = useState(roundKey);
+  if (lastKey !== roundKey) {
+    setLastKey(roundKey);
+    setSolveDraft("");
+  }
+  if (!puzzle) return null;
+  if (state.wheel.solved) {
+    const solver = state.wheel.solverId ? state.players[state.wheel.solverId] : null;
+    const youSolved = solver?.id === player.id;
+    return (
+      <div className="body" style={{ ...phoneNote, color: youSolved ? player.color : C.creamDim }}>
+        {youSolved ? "You solved it! 🎉" : `Solved by ${solver?.name ?? "someone"}. Watch ☝️`}
+      </div>
+    );
+  }
+  const spent = wheelLettersSpent(state, player.id);
+  const remaining = WHEEL_LETTER_BUDGET - spent;
+  const usedSet = new Set(Object.keys(state.wheel.guessedLetters));
+  const rows = ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ"];
+  const trySolve = () => {
+    if (!solveDraft.trim()) return;
+    const ok = matchesAnswer(solveDraft, puzzle.text);
+    dispatch({ type: "SOLVE_WHEEL", playerId: player.id, text: solveDraft });
+    if (!ok) {
+      setWrongShake((n) => n + 1);
+      setSolveDraft("");
+    }
+  };
+  return (
+    <div>
+      {/* Solve box — primary action, top of the phone */}
+      <div
+        key={wrongShake}
+        style={{
+          marginBottom: 10,
+          padding: 8,
+          background: C.bgDeep,
+          border: `1px solid ${C.gold}`,
+          borderRadius: 10,
+          boxShadow: `0 0 12px ${C.gold}33`,
+          animation: wrongShake ? "parlor-popin .2s ease-out" : undefined
+        }}
+      >
+        <div className="body" style={{ color: C.gold, fontSize: 10, fontWeight: 800, letterSpacing: 1, marginBottom: 4 }}>
+          SOLVE THE PUZZLE
+        </div>
+        <input
+          value={solveDraft}
+          onChange={(e) => setSolveDraft(e.target.value)}
+          placeholder="Type the answer…"
+          maxLength={60}
+          className="body"
+          style={{ ...inputStyle, marginBottom: 4, fontSize: 14 }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") trySolve();
+          }}
+        />
+        <button
+          onClick={trySolve}
+          disabled={!solveDraft.trim()}
+          className="body"
+          style={phoneBtn(!!solveDraft.trim(), C.gold)}
+        >
+          Solve
+        </button>
+      </div>
+
+      {/* Budget indicator */}
+      <div
+        className="flex items-center justify-between"
+        style={{ marginBottom: 6, padding: "0 2px" }}
+      >
+        <span className="body" style={{ color: C.creamDim, fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
+          LETTERS
+        </span>
+        <span
+          className="disp"
+          style={{
+            color: remaining > 0 ? player.color : C.creamDim,
+            fontWeight: 800,
+            fontSize: 12,
+            letterSpacing: 2
+          }}
+        >
+          {remaining > 0 ? "•".repeat(remaining) + "·".repeat(spent) : "spent"}
+          <span style={{ color: C.creamDim, fontWeight: 600, marginLeft: 6 }}>
+            {remaining}/{WHEEL_LETTER_BUDGET}
+          </span>
+        </span>
+      </div>
+
+      {/* Compact keyboard */}
+      <div className="flex flex-col" style={{ gap: 3 }}>
+        {rows.map((row, ri) => (
+          <div key={ri} className="flex" style={{ gap: 3, justifyContent: "center" }}>
+            {row.split("").map((ch) => {
+              const used = usedSet.has(ch);
+              const mine = state.wheel.guessedLetters[ch]?.playerId === player.id;
+              const exhausted = remaining <= 0 && !used;
+              return (
+                <button
+                  key={ch}
+                  disabled={used || exhausted}
+                  onClick={() => dispatch({ type: "GUESS_LETTER", playerId: player.id, letter: ch })}
+                  className="disp"
+                  style={{
+                    width: 21,
+                    height: 26,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    background: mine ? player.color : used ? C.bgDeep : exhausted ? C.bgDeep : C.surface,
+                    color: mine ? C.bgDeep : used || exhausted ? C.line : C.cream,
+                    border: `1px solid ${used || exhausted ? C.line : player.color}`,
+                    borderRadius: 5,
+                    cursor: used || exhausted ? "not-allowed" : "pointer",
+                    padding: 0,
+                    opacity: exhausted ? 0.45 : 1
+                  }}
+                >
+                  {ch}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FeudPhone({
+  state,
+  dispatch,
+  player
+}: {
+  state: State;
+  dispatch: React.Dispatch<Action>;
+  player: Player;
+}) {
+  const q = state.feud.questions[state.round - 1];
+  const [draft, setDraft] = useState("");
+  const roundKey = `${state.round}-f`;
+  const [lastKey, setLastKey] = useState(roundKey);
+  if (lastKey !== roundKey) {
+    setLastKey(roundKey);
+    setDraft("");
+  }
+  if (!q) return null;
+  const mine = state.feud.guesses[player.id] ?? [];
+  const submit = () => {
+    if (!draft.trim()) return;
+    dispatch({ type: "SUBMIT_FEUD", playerId: player.id, text: draft, at: Date.now() });
+    setDraft("");
+  };
+  return (
+    <div>
+      <div className="body" style={{ color: C.creamDim, fontSize: 11, marginBottom: 4, lineHeight: 1.3 }}>
+        {q.prompt}
+      </div>
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        placeholder="Your guess…"
+        maxLength={40}
+        className="body"
+        style={inputStyle}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") submit();
+        }}
+      />
+      <button
+        onClick={submit}
+        disabled={!draft.trim()}
+        className="body"
+        style={phoneBtn(!!draft.trim(), player.color)}
+      >
+        Guess
+      </button>
+      {mine.length > 0 && (
+        <div className="flex flex-col" style={{ gap: 3, marginTop: 8 }}>
+          {mine.map((g, i) => {
+            const hit = g.matchIndex != null;
+            return (
+              <div
+                key={i}
+                className="body"
+                style={{
+                  fontSize: 11,
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  background: hit ? `${C.mint}22` : C.surface,
+                  color: hit ? C.mint : C.creamDim,
+                  border: `1px solid ${hit ? C.mint : C.line}`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6
+                }}
+              >
+                <span style={{ flex: 1, textAlign: "left" }}>{g.text}</span>
+                {hit ? (
+                  <span style={{ fontWeight: 800 }}>
+                    #{(g.matchIndex ?? 0) + 1} · +{q.answers[g.matchIndex ?? 0].points}
+                  </span>
+                ) : (
+                  <span style={{ opacity: 0.7 }}>✗</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function QuipRevealCard({ state, dispatch }: { state: State; dispatch: React.Dispatch<Action> }) {
   const prompt = state.quipPrompts[state.quipIndex];
   if (!prompt) return null;
@@ -1085,6 +1855,613 @@ function QuipRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
           style={hostBtn(true)}
         >
           {isLast ? "See scores" : "Next prompt"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TriviaRevealCard({ state, dispatch }: { state: State; dispatch: React.Dispatch<Action> }) {
+  const q = state.trivia.questions[state.round - 1];
+  if (!q) return null;
+  const playersByChoice: Record<number, Player[]> = {};
+  Object.entries(state.trivia.answers).forEach(([pid, a]) => {
+    const p = state.players[pid];
+    if (!p) return;
+    (playersByChoice[a.choice] ??= []).push(p);
+  });
+  const noAnswer = Object.values(state.players).filter((p) => !state.trivia.answers[p.id]);
+  return (
+    <div className="popin" style={{ textAlign: "center", padding: "10px 0" }}>
+      <div
+        className="body"
+        style={{ color: C.mint, fontWeight: 700, letterSpacing: 2, fontSize: 12, marginBottom: 8 }}
+      >
+        {q.category.toUpperCase()}
+      </div>
+      <div
+        className="disp"
+        style={{
+          fontSize: "clamp(20px, 4vw, 26px)",
+          fontWeight: 700,
+          color: C.creamDim,
+          lineHeight: 1.2,
+          maxWidth: 700,
+          margin: "0 auto 18px"
+        }}
+      >
+        {q.text}
+      </div>
+      <div className="flex flex-col" style={{ gap: 8, maxWidth: 560, margin: "0 auto" }}>
+        {q.choices.map((c, i) => {
+          const correct = i === q.correctIndex;
+          const folks = playersByChoice[i] ?? [];
+          return (
+            <div
+              key={i}
+              className="popin"
+              style={{
+                background: correct ? `${C.mint}22` : C.surface2,
+                border: `1px solid ${correct ? C.mint : C.line}`,
+                borderRadius: 14,
+                padding: "12px 16px",
+                animationDelay: `${i * 0.08}s`,
+                textAlign: "left",
+                boxShadow: correct ? `0 0 18px ${C.mint}44` : "none"
+              }}
+            >
+              <div className="flex items-center" style={{ gap: 10, marginBottom: folks.length ? 6 : 0 }}>
+                <span
+                  className="disp"
+                  style={{ color: correct ? C.mint : C.gold, fontWeight: 800, width: 22 }}
+                >
+                  {String.fromCharCode(65 + i)}
+                </span>
+                <span className="disp" style={{ color: C.cream, fontSize: 17, fontWeight: 600 }}>
+                  {c}
+                </span>
+                {correct && (
+                  <span
+                    className="disp"
+                    style={{ marginLeft: "auto", color: C.mint, fontWeight: 800, fontSize: 13 }}
+                  >
+                    ✓ CORRECT
+                  </span>
+                )}
+              </div>
+              {folks.length > 0 && (
+                <div className="flex flex-wrap" style={{ gap: 6, marginLeft: 32 }}>
+                  {folks.map((p) => (
+                    <span
+                      key={p.id}
+                      className="body"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        background: C.bgDeep,
+                        border: `1px solid ${p.color}`,
+                        borderRadius: 999,
+                        padding: "3px 10px",
+                        fontSize: 12,
+                        color: p.color,
+                        fontWeight: 700
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 999,
+                          background: p.color,
+                          boxShadow: `0 0 6px ${p.color}`
+                        }}
+                      />
+                      {p.name}
+                      {correct && (state.lastPoints[p.id] ?? 0) > 0 && (
+                        <span style={{ color: C.mint, marginLeft: 4 }}>
+                          +{state.lastPoints[p.id]}
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {noAnswer.length > 0 && (
+          <div className="body" style={{ color: C.creamDim, fontSize: 12, marginTop: 4 }}>
+            No answer: {noAnswer.map((p) => p.name).join(", ")}
+          </div>
+        )}
+      </div>
+      <div style={{ marginTop: 22 }}>
+        <button
+          onClick={() => dispatch({ type: "NEXT_REVEAL" })}
+          className="disp"
+          style={hostBtn(true)}
+        >
+          See scores
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type PictureImageResult = {
+  src?: string;
+  revisedPrompt?: string;
+  error?: string;
+};
+
+function pictureImageSrc(item: { generatedSrc?: string; src?: string }): string {
+  return item.generatedSrc || item.src || "";
+}
+
+async function generatePictureImage(item: {
+  answer: string;
+  hint?: string;
+  imagePrompt?: string;
+}): Promise<PictureImageResult> {
+  const response = await fetch("/api/picture-image", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      answer: item.answer,
+      hint: item.hint,
+      prompt: item.imagePrompt
+    })
+  });
+  const data = (await response.json().catch(() => ({}))) as PictureImageResult;
+  if (!response.ok) {
+    return { error: data.error || "Image generation failed." };
+  }
+  return data;
+}
+
+function PictureFrame({
+  src,
+  alt,
+  blurPx,
+  status,
+  error
+}: {
+  src: string;
+  alt: string;
+  blurPx: number;
+  status?: string;
+  error?: string;
+}) {
+  const [failedSrc, setFailedSrc] = useState("");
+  const failed = !!src && failedSrc === src;
+  const waiting = !src || status === "generating";
+  return (
+    <div
+      style={{
+        width: "100%",
+        maxWidth: 460,
+        aspectRatio: "1 / 1",
+        margin: "0 auto 18px",
+        background: `radial-gradient(circle at 35% 20%, ${C.surface2} 0%, ${C.bgDeep} 72%)`,
+        border: `1px solid ${C.gold}55`,
+        borderRadius: 18,
+        overflow: "hidden",
+        position: "relative",
+        display: "grid",
+        placeItems: "center",
+        boxShadow: `0 18px 50px rgba(0,0,0,.34), inset 0 0 0 1px rgba(255,255,255,.06)`
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 10,
+          border: `1px solid ${C.cream}18`,
+          borderRadius: 14,
+          pointerEvents: "none",
+          zIndex: 2
+        }}
+      />
+      {!waiting && !failed && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={alt}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: blurPx > 0 ? `blur(${blurPx}px)` : "none",
+            transform: blurPx > 0 ? "scale(1.1)" : "scale(1.01)",
+            transition: "filter 0.25s linear"
+          }}
+          onError={() => setFailedSrc(src)}
+        />
+      )}
+      {(waiting || failed) && (
+        <div
+          className="body"
+          style={{ color: C.creamDim, fontSize: 12, textAlign: "center", padding: 22, lineHeight: 1.5, zIndex: 3 }}
+        >
+          <div className="disp" style={{ color: C.gold, fontSize: 18, fontWeight: 800, marginBottom: 8 }}>
+            {status === "generating" ? "Conjuring image..." : "Image standby"}
+          </div>
+          <div>
+            {error || (src ? "Could not load the generated image." : "Waiting for the AI reveal art.")}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PictureWritingCard({
+  state,
+  dispatch,
+  phaseTotal,
+  remaining,
+  playerCount
+}: {
+  state: State;
+  dispatch: React.Dispatch<Action>;
+  phaseTotal: number;
+  remaining: number;
+  playerCount: number;
+}) {
+  const item = state.picture.items[state.round - 1];
+  const requestedImage = useRef<string | null>(null);
+  useEffect(() => {
+    if (!item) return;
+    if (item.generatedSrc || item.imageStatus === "generating" || item.imageStatus === "ready") return;
+    if (requestedImage.current === item.id) return;
+    requestedImage.current = item.id;
+    dispatch({ type: "REQUEST_PICTURE_IMAGE", itemId: item.id });
+    generatePictureImage(item)
+      .then((result) => {
+        if (result.src) {
+          dispatch({
+            type: "SET_PICTURE_IMAGE",
+            itemId: item.id,
+            src: result.src,
+            revisedPrompt: result.revisedPrompt
+          });
+          return;
+        }
+        dispatch({
+          type: "SET_PICTURE_IMAGE_ERROR",
+          itemId: item.id,
+          error: result.error ?? "Image generation failed."
+        });
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : "Image generation failed.";
+        dispatch({ type: "SET_PICTURE_IMAGE_ERROR", itemId: item.id, error: message });
+      });
+  }, [dispatch, item]);
+  if (!item) return null;
+  const elapsedFrac = phaseTotal > 0 ? 1 - remaining / (phaseTotal * 1000) : 0;
+  const blurPx = Math.max(0, 30 * Math.pow(1 - elapsedFrac, 1.6));
+  const correctCount = Object.values(state.picture.guesses).filter((g) => g.correct).length;
+  return (
+    <div className="fadeup" style={{ textAlign: "center", padding: "10px 0" }}>
+      <div
+        className="body"
+        style={{ color: C.coral, fontWeight: 700, letterSpacing: 2, fontSize: 12, marginBottom: 10 }}
+      >
+        WHAT IS IT?
+      </div>
+      <PictureFrame
+        src={pictureImageSrc(item)}
+        alt=""
+        blurPx={blurPx}
+        status={item.imageStatus}
+        error={item.imageError}
+      />
+      {item.hint && elapsedFrac > 0.6 && (
+        <div className="body fadeup" style={{ color: C.creamDim, fontSize: 13, marginBottom: 8 }}>
+          Hint: <span style={{ color: C.cream }}>{item.hint}</span>
+        </div>
+      )}
+      {item.imageStatus === "generating" && (
+        <div className="body" style={{ color: C.gold, fontSize: 12, marginBottom: 8, fontWeight: 700 }}>
+          Generating this round&apos;s reveal art...
+        </div>
+      )}
+      <div className="body" style={{ color: C.creamDim, fontSize: 13 }}>
+        {correctCount} / {playerCount} guessed correctly
+      </div>
+      <button
+        onClick={() => dispatch({ type: "FORCE_VOTING" })}
+        className="body"
+        style={ghostBtn}
+      >
+        Reveal answer →
+      </button>
+    </div>
+  );
+}
+
+function PictureRevealCard({ state, dispatch }: { state: State; dispatch: React.Dispatch<Action> }) {
+  const item = state.picture.items[state.round - 1];
+  if (!item) return null;
+  const ranked = Object.entries(state.picture.guesses)
+    .filter(([, g]) => g.correct)
+    .sort((a, b) => a[1].at - b[1].at)
+    .map(([pid]) => state.players[pid])
+    .filter(Boolean);
+  return (
+    <div className="popin" style={{ textAlign: "center", padding: "10px 0" }}>
+      <PictureFrame
+        src={pictureImageSrc(item)}
+        alt={item.answer}
+        blurPx={0}
+        status={item.imageStatus}
+        error={item.imageError}
+      />
+      <div className="body" style={{ color: C.creamDim, letterSpacing: 3, fontSize: 12, fontWeight: 700 }}>
+        IT WAS
+      </div>
+      <div className="disp" style={{ fontSize: 40, fontWeight: 800, color: C.gold, margin: "4px 0 20px" }}>
+        {item.answer}
+      </div>
+      {ranked.length > 0 ? (
+        <div className="flex flex-col" style={{ gap: 6, maxWidth: 360, margin: "0 auto" }}>
+          {ranked.map((p, i) => (
+            <div
+              key={p.id}
+              className="popin"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                background: C.surface2,
+                border: `1px solid ${p.color}`,
+                borderRadius: 12,
+                padding: "8px 14px",
+                animationDelay: `${i * 0.07}s`
+              }}
+            >
+              <span className="disp" style={{ color: C.gold, fontWeight: 800, width: 22 }}>
+                {i + 1}
+              </span>
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 999,
+                  background: p.color,
+                  boxShadow: `0 0 8px ${p.color}`
+                }}
+              />
+              <span className="body" style={{ color: C.cream, fontWeight: 700 }}>
+                {p.name}
+              </span>
+              <span className="disp" style={{ marginLeft: "auto", color: C.mint, fontWeight: 800 }}>
+                +{state.lastPoints[p.id] ?? 0}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="body" style={{ color: C.creamDim }}>
+          Nobody got it!
+        </div>
+      )}
+      <div style={{ marginTop: 22 }}>
+        <button onClick={() => dispatch({ type: "NEXT_REVEAL" })} className="disp" style={hostBtn(true)}>
+          See scores
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function WheelRevealCard({ state, dispatch }: { state: State; dispatch: React.Dispatch<Action> }) {
+  const puzzle = state.wheel.puzzles[state.round - 1];
+  if (!puzzle) return null;
+  const solver = state.wheel.solverId ? state.players[state.wheel.solverId] : null;
+  return (
+    <div className="popin" style={{ textAlign: "center", padding: "10px 0" }}>
+      <div
+        className="body"
+        style={{ color: C.mint, fontWeight: 700, letterSpacing: 2, fontSize: 12, marginBottom: 8 }}
+      >
+        {puzzle.category.toUpperCase()}
+      </div>
+      <div
+        className="disp"
+        style={{
+          fontSize: "clamp(26px, 5vw, 40px)",
+          fontWeight: 800,
+          color: C.gold,
+          letterSpacing: 4,
+          margin: "0 auto 20px",
+          maxWidth: 700,
+          fontFamily: "monospace, monospace"
+        }}
+      >
+        {puzzle.text}
+      </div>
+      {solver && (
+        <div
+          className="popin"
+          style={{ color: solver.color, fontWeight: 700, fontSize: 16, marginBottom: 12 }}
+        >
+          Solved by {solver.name} 🎉
+        </div>
+      )}
+      <div className="flex flex-col" style={{ gap: 6, maxWidth: 360, margin: "0 auto" }}>
+        {Object.values(state.players)
+          .filter((p) => (state.lastPoints[p.id] ?? 0) > 0)
+          .sort((a, b) => (state.lastPoints[b.id] ?? 0) - (state.lastPoints[a.id] ?? 0))
+          .map((p, i) => (
+            <div
+              key={p.id}
+              className="popin"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                background: C.surface2,
+                border: `1px solid ${p.color}`,
+                borderRadius: 12,
+                padding: "8px 14px",
+                animationDelay: `${i * 0.07}s`
+              }}
+            >
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 999,
+                  background: p.color,
+                  boxShadow: `0 0 8px ${p.color}`
+                }}
+              />
+              <span className="body" style={{ color: C.cream, fontWeight: 700 }}>
+                {p.name}
+              </span>
+              <span className="disp" style={{ marginLeft: "auto", color: C.mint, fontWeight: 800 }}>
+                +{state.lastPoints[p.id] ?? 0}
+              </span>
+            </div>
+          ))}
+      </div>
+      <div style={{ marginTop: 22 }}>
+        <button onClick={() => dispatch({ type: "NEXT_REVEAL" })} className="disp" style={hostBtn(true)}>
+          See scores
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FeudRevealCard({ state, dispatch }: { state: State; dispatch: React.Dispatch<Action> }) {
+  const q = state.feud.questions[state.round - 1];
+  if (!q) return null;
+  // For each slot, find every player who matched it (with earliest-hit order).
+  const playersByRank: Record<number, Player[]> = {};
+  const allMatches: { pid: string; at: number; idx: number }[] = [];
+  Object.entries(state.feud.guesses).forEach(([pid, arr]) => {
+    arr.forEach((g) => {
+      if (g.matchIndex != null) allMatches.push({ pid, at: g.at, idx: g.matchIndex });
+    });
+  });
+  allMatches.sort((a, b) => a.at - b.at);
+  allMatches.forEach((m) => {
+    const list = (playersByRank[m.idx] ??= []);
+    const p = state.players[m.pid];
+    if (p && !list.find((x) => x.id === p.id)) list.push(p);
+  });
+  const playerHits: Record<string, Set<number>> = {};
+  Object.entries(state.feud.guesses).forEach(([pid, arr]) => {
+    const set = (playerHits[pid] ??= new Set());
+    arr.forEach((g) => g.matchIndex != null && set.add(g.matchIndex));
+  });
+  const noMatch = Object.entries(state.feud.guesses)
+    .filter(([pid, arr]) => arr.length > 0 && !(playerHits[pid]?.size))
+    .map(([pid]) => state.players[pid])
+    .filter(Boolean);
+  return (
+    <div className="popin" style={{ textAlign: "center", padding: "10px 0" }}>
+      <div
+        className="body"
+        style={{ color: C.mint, fontWeight: 700, letterSpacing: 2, fontSize: 12, marginBottom: 8 }}
+      >
+        SURVEY SAYS
+      </div>
+      <div
+        className="disp"
+        style={{
+          fontSize: "clamp(20px, 4vw, 26px)",
+          fontWeight: 700,
+          color: C.creamDim,
+          lineHeight: 1.2,
+          maxWidth: 700,
+          margin: "0 auto 18px"
+        }}
+      >
+        {q.prompt}
+      </div>
+      <div className="flex flex-col" style={{ gap: 8, maxWidth: 460, margin: "0 auto" }}>
+        {q.answers.map((a, i) => {
+          const folks = playersByRank[i] ?? [];
+          return (
+            <div
+              key={i}
+              className="popin"
+              style={{
+                background: folks.length ? `${C.gold}1a` : C.surface2,
+                border: `1px solid ${folks.length ? C.gold : C.line}`,
+                borderRadius: 14,
+                padding: "10px 16px",
+                animationDelay: `${i * 0.08}s`,
+                textAlign: "left"
+              }}
+            >
+              <div className="flex items-center" style={{ gap: 10, marginBottom: folks.length ? 6 : 0 }}>
+                <span className="disp" style={{ color: C.gold, fontWeight: 800, width: 22 }}>
+                  #{i + 1}
+                </span>
+                <span className="disp" style={{ color: C.cream, fontSize: 17, fontWeight: 700 }}>
+                  {a.text}
+                </span>
+                <span className="disp" style={{ marginLeft: "auto", color: C.gold, fontWeight: 800 }}>
+                  {a.points}
+                </span>
+              </div>
+              {folks.length > 0 && (
+                <div className="flex flex-wrap" style={{ gap: 6, marginLeft: 32 }}>
+                  {folks.map((p) => (
+                    <span
+                      key={p.id}
+                      className="body"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        background: C.bgDeep,
+                        border: `1px solid ${p.color}`,
+                        borderRadius: 999,
+                        padding: "3px 10px",
+                        fontSize: 12,
+                        color: p.color,
+                        fontWeight: 700
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 999,
+                          background: p.color,
+                          boxShadow: `0 0 6px ${p.color}`
+                        }}
+                      />
+                      {p.name}
+                      {(state.lastPoints[p.id] ?? 0) > 0 && (
+                        <span style={{ color: C.mint, marginLeft: 4 }}>
+                          +{state.lastPoints[p.id]}
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {noMatch.length > 0 && (
+          <div className="body" style={{ color: C.coral, fontSize: 12, marginTop: 4 }}>
+            No match: {noMatch.map((p) => p.name).join(", ")}
+          </div>
+        )}
+      </div>
+      <div style={{ marginTop: 22 }}>
+        <button onClick={() => dispatch({ type: "NEXT_REVEAL" })} className="disp" style={hostBtn(true)}>
+          See scores
         </button>
       </div>
     </div>
@@ -1500,6 +2877,22 @@ function Phone({
             <QuipWritingPhone state={state} dispatch={dispatch} player={player} />
           )}
 
+          {state.phase === "writing" && state.mode === "trivia" && (
+            <TriviaPhone state={state} dispatch={dispatch} player={player} />
+          )}
+
+          {state.phase === "writing" && state.mode === "picture" && (
+            <PicturePhone state={state} dispatch={dispatch} player={player} />
+          )}
+
+          {state.phase === "writing" && state.mode === "wheel" && (
+            <WheelPhone state={state} dispatch={dispatch} player={player} />
+          )}
+
+          {state.phase === "writing" && state.mode === "feud" && (
+            <FeudPhone state={state} dispatch={dispatch} player={player} />
+          )}
+
           {state.phase === "voting" && state.mode === "classic" &&
             (hasVoted ? (
               <div className="body" style={{ ...phoneNote, color: player.color }}>
@@ -1616,9 +3009,8 @@ function Phone({
    ========================================================================== */
 type Role = "host" | "play" | "both";
 
-function getURLParams(): { room: string | null; role: Role; local: boolean } {
-  if (typeof window === "undefined") return { room: null, role: "both", local: false };
-  const p = new URLSearchParams(window.location.search);
+function parseURLParams(search: string): { room: string | null; role: Role; local: boolean } {
+  const p = new URLSearchParams(search);
   const room = p.get("room");
   const rawRole = p.get("role");
   const role: Role = rawRole === "host" || rawRole === "play" ? rawRole : "both";
@@ -1630,20 +3022,57 @@ function getURLParams(): { room: string | null; role: Role; local: boolean } {
 }
 
 export default function Parlor() {
-  const [params] = useState(getURLParams);
+  const search = useSyncExternalStore(
+    () => () => {
+      // URL changes in this prototype are full navigations; no live subscription needed.
+    },
+    () => window.location.search,
+    () => null
+  );
+  if (search == null) return <ParlorBoot />;
+  const params = parseURLParams(search);
   if (params.room) return <MultiplayerParlor room={params.room} role={params.role} />;
   if (params.local) return <LocalParlor />;
   return <ParlorLanding />;
 }
 
+function ParlorBoot() {
+  return (
+    <div
+      className="parlor-root body"
+      style={{
+        background: C.bg,
+        minHeight: "100vh",
+        color: C.cream,
+        display: "grid",
+        placeItems: "center",
+        padding: 24,
+        textAlign: "center"
+      }}
+    >
+      <style>{FONT_CSS}</style>
+      <div className="disp" style={{ fontSize: 28, fontWeight: 800, color: C.gold }}>
+        HOODWINKED
+      </div>
+    </div>
+  );
+}
+
 function ParlorLanding() {
   const [code, setCode] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState("");
+  const cleanJoinCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
   const start = () => {
     const c = makeRoomCode();
     setCode(c);
     if (typeof window !== "undefined") {
       window.location.href = `/?room=${c}&role=host`;
     }
+  };
+  const join = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!cleanJoinCode) return;
+    window.location.href = `/?room=${cleanJoinCode}&role=play`;
   };
   return (
     <div
@@ -1669,11 +3098,46 @@ function ParlorLanding() {
         <button onClick={start} className="disp glow" style={hostBtn(true)}>
           {code ? `Opening ${code}…` : "Start a room"}
         </button>
-        <div className="body" style={{ color: C.creamDim, fontSize: 12, marginTop: 26, lineHeight: 1.6 }}>
-          Players join by opening{" "}
-          <code style={{ color: C.cream }}>playhoodwinked.com?room=CODE&amp;role=play</code> on their phone.
-          <br />
-          The host opens the room on a TV / laptop.
+        <form onSubmit={join} style={{ margin: "24px auto 0", maxWidth: 320 }}>
+          <div className="body" style={{ color: C.creamDim, fontSize: 12, marginBottom: 8, fontWeight: 700 }}>
+            Already have a room code?
+          </div>
+          <div className="flex" style={{ gap: 8 }}>
+            <input
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
+              placeholder="CODE"
+              inputMode="text"
+              autoCapitalize="characters"
+              className="disp"
+              style={{
+                ...inputStyle,
+                textAlign: "center",
+                fontSize: 20,
+                fontWeight: 800,
+                letterSpacing: 4,
+                textTransform: "uppercase",
+                height: 46
+              }}
+            />
+            <button
+              type="submit"
+              disabled={!cleanJoinCode}
+              className="disp"
+              style={{
+                ...phoneBtn(!!cleanJoinCode, C.gold),
+                width: 92,
+                marginTop: 0,
+                height: 46,
+                borderRadius: 10
+              }}
+            >
+              Join
+            </button>
+          </div>
+        </form>
+        <div className="body" style={{ color: C.creamDim, fontSize: 12, marginTop: 24, lineHeight: 1.6 }}>
+          The host opens the room on a TV / laptop. Players can scan the QR or enter the code here.
           <br />
           <Link
             href="/?local=1"
@@ -1738,6 +3202,63 @@ function LocalParlor() {
             });
           }
         });
+      });
+      return;
+    }
+    if (state.mode === "trivia") {
+      const q = state.trivia.questions[state.round - 1];
+      if (!q) return;
+      joinedIds(state).forEach((pid) => {
+        if (state.trivia.answers[pid]) return;
+        // 70% correct so we can verify the speed-bonus tally; 30% random wrong.
+        const choice =
+          Math.random() < 0.7
+            ? q.correctIndex
+            : (q.correctIndex + 1 + Math.floor(Math.random() * (q.choices.length - 1))) % q.choices.length;
+        dispatch({ type: "SUBMIT_TRIVIA", playerId: pid, choice, at: Date.now() });
+      });
+      return;
+    }
+    if (state.mode === "picture") {
+      const item = state.picture.items[state.round - 1];
+      if (!item) return;
+      joinedIds(state).forEach((pid, i) => {
+        if (state.picture.guesses[pid]?.correct) return;
+        const text = i % 2 === 0 ? item.answer : BOT_ANSWERS[i % BOT_ANSWERS.length];
+        dispatch({ type: "SUBMIT_PICTURE", playerId: pid, text, at: Date.now() });
+      });
+      return;
+    }
+    if (state.mode === "wheel") {
+      const used = new Set(Object.keys(state.wheel.guessedLetters));
+      // Bias toward common letters so the puzzle actually reveals something.
+      const common = "ETAOINSHRDLU".split("");
+      const rest = "BCFGJKMPQVWXYZ".split("");
+      const pool = [...common.filter((c) => !used.has(c)), ...rest.filter((c) => !used.has(c))];
+      // Each bot tries to use one of their remaining slots this click; over a few
+      // clicks they fill the budget.
+      joinedIds(state).forEach((pid) => {
+        if (!pool.length) return;
+        const spent = wheelLettersSpent(state, pid);
+        if (spent >= WHEEL_LETTER_BUDGET) return;
+        const letter = pool.shift();
+        if (letter) dispatch({ type: "GUESS_LETTER", playerId: pid, letter });
+      });
+      return;
+    }
+    if (state.mode === "feud") {
+      const q = state.feud.questions[state.round - 1];
+      if (!q) return;
+      // Each bot submits 1–2 attempts so the multi-guess flow gets exercised.
+      joinedIds(state).forEach((pid, i) => {
+        const existing = state.feud.guesses[pid] ?? [];
+        if (existing.length >= 2) return;
+        const tries = Math.random() < 0.5 ? 2 : 1;
+        for (let t = 0; t < tries; t++) {
+          const slot = (i + t) % q.answers.length;
+          const text = Math.random() < 0.8 ? q.answers[slot].text : BOT_ANSWERS[(i + t) % BOT_ANSWERS.length];
+          dispatch({ type: "SUBMIT_FEUD", playerId: pid, text, at: Date.now() + t });
+        }
       });
       return;
     }
@@ -2065,17 +3586,17 @@ function MultiplayerParlor({ room, role }: { room: string; role: Role }) {
 }
 
 /* ---- style helpers ------------------------------------------------------- */
-const modePill = (active: boolean, side: "left" | "right"): React.CSSProperties => ({
-  flex: 1,
+const modeChip = (active: boolean): React.CSSProperties => ({
   fontSize: 13,
   fontWeight: 700,
   padding: "8px 14px",
   background: active ? C.gold : C.surface2,
   color: active ? C.bgDeep : C.creamDim,
-  border: `1px solid ${C.line}`,
-  borderRadius: side === "left" ? "999px 0 0 999px" : "0 999px 999px 0",
+  border: `1px solid ${active ? C.gold : C.line}`,
+  borderRadius: 999,
   cursor: active ? "default" : "pointer",
-  letterSpacing: 0.3
+  letterSpacing: 0.3,
+  boxShadow: active ? `0 0 14px ${C.gold}55` : "none"
 });
 const hostBtn = (enabled: boolean): React.CSSProperties => ({
   fontSize: 17,
