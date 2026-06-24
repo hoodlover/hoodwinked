@@ -318,6 +318,16 @@ function saveAvatar(deviceId: string, avatar: string) {
 /* ---- AUDIO --------------------------------------------------------------- */
 let audioCtx: AudioContext | null = null;
 let audioMuted = false;
+let currentVoiceAudio: HTMLAudioElement | null = null;
+
+function stopFeudVoice() {
+  if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+  if (!currentVoiceAudio) return;
+  currentVoiceAudio.pause();
+  currentVoiceAudio.src = "";
+  currentVoiceAudio = null;
+}
+
 const setAudioMuted = (v: boolean) => {
   audioMuted = v;
 };
@@ -361,10 +371,12 @@ function playRevealSound() {
 }
 
 function playRevealTick() {
-  playTone(1180, 0, 0.04, "square", 0.05);
+  playTone(1568, 0, 0.09, "triangle", 0.08);
+  playTone(2093, 0.015, 0.12, "sine", 0.045);
+  playTone(3136, 0.035, 0.08, "sine", 0.025);
 }
 
-function speakFeudAnswer(text: string, onDone: () => void) {
+function speakBrowserVoice(text: string, onDone: () => void) {
   if (audioMuted || typeof window === "undefined" || !("speechSynthesis" in window)) {
     window.setTimeout(onDone, 650);
     return;
@@ -381,6 +393,38 @@ function speakFeudAnswer(text: string, onDone: () => void) {
     window.speechSynthesis.speak(utterance);
   } catch {
     window.setTimeout(onDone, 650);
+  }
+}
+
+async function speakFeudAnswer(text: string, onDone: () => void) {
+  if (audioMuted || typeof window === "undefined") {
+    window.setTimeout(onDone, 650);
+    return;
+  }
+
+  try {
+    stopFeudVoice();
+    const response = await fetch("/api/voice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+    if (!response.ok) throw new Error("Voice API unavailable");
+
+    const blob = await response.blob();
+    const src = URL.createObjectURL(blob);
+    const audio = new Audio(src);
+    currentVoiceAudio = audio;
+    const finish = () => {
+      if (currentVoiceAudio === audio) currentVoiceAudio = null;
+      URL.revokeObjectURL(src);
+      window.setTimeout(onDone, 160);
+    };
+    audio.onended = finish;
+    audio.onerror = finish;
+    await audio.play();
+  } catch {
+    speakBrowserVoice(text, onDone);
   }
 }
 
@@ -730,8 +774,8 @@ function LetterHeistBoard({
         flexWrap: "wrap",
         justifyContent: "center",
         alignItems: "center",
-        gap: "10px 18px",
-        maxWidth: 780,
+        gap: "12px 20px",
+        maxWidth: 1120,
         margin: "0 auto 18px",
         padding: "14px",
         borderRadius: 12,
@@ -756,8 +800,8 @@ function LetterHeistBoard({
                 key={`${wordIndex}-${i}-${ch}`}
                 className={visible ? "popin" : undefined}
                 style={{
-                  width: "clamp(26px, 4.1vw, 46px)",
-                  height: "clamp(34px, 5vw, 58px)",
+                  width: "clamp(26px, 4.1vw, 54px)",
+                  height: "clamp(34px, 5vw, 68px)",
                   display: "grid",
                   placeItems: "center",
                   borderRadius: 4,
@@ -766,7 +810,7 @@ function LetterHeistBoard({
                     ? "linear-gradient(180deg, #fffef8 0%, #e8e3d4 100%)"
                     : "linear-gradient(180deg, #f7f2e8 0%, #d8cfbc 100%)",
                   color: visible ? "#202020" : "transparent",
-                  fontSize: "clamp(20px, 3.3vw, 38px)",
+                  fontSize: "clamp(20px, 3.3vw, 44px)",
                   fontWeight: 900,
                   lineHeight: 1,
                   textTransform: "uppercase",
@@ -843,9 +887,9 @@ function FeudBoardRow({
       className={revealed ? "popin" : undefined}
       style={{
         display: "grid",
-        gridTemplateColumns: "64px minmax(0, 1fr) 78px",
+        gridTemplateColumns: "82px minmax(0, 1fr) 100px",
         alignItems: "center",
-        minHeight: 56,
+        minHeight: 70,
         borderRadius: 7,
         border: "2px solid rgba(245,242,232,.75)",
         background: revealed
@@ -860,7 +904,7 @@ function FeudBoardRow({
         className="disp"
         style={{
           color: C.gold,
-          fontSize: 20,
+          fontSize: 26,
           fontWeight: 900,
           textAlign: "center",
           textShadow: "0 2px 3px rgba(0,0,0,.55)"
@@ -873,7 +917,7 @@ function FeudBoardRow({
           className="disp"
           style={{
             color: revealed ? C.cream : "rgba(251,243,228,.55)",
-            fontSize: "clamp(17px, 2.6vw, 30px)",
+            fontSize: "clamp(19px, 2.8vw, 38px)",
             fontWeight: 900,
             letterSpacing: revealed ? 0.5 : 6,
             textTransform: "uppercase",
@@ -887,11 +931,11 @@ function FeudBoardRow({
         </div>
         {hit && (
           <div className="flex items-center" style={{ gap: 7, marginTop: 4 }}>
-            <AvatarBadge avatar={hit.player.avatar} color={hit.player.color} size={22} />
-            <span className="body" style={{ color: C.cream, fontSize: 12, fontWeight: 800 }}>
+            <AvatarBadge avatar={hit.player.avatar} color={hit.player.color} size={28} />
+            <span className="body" style={{ color: C.cream, fontSize: 14, fontWeight: 800 }}>
               {hit.player.name}
             </span>
-            <span className="disp" style={{ color: C.mint, fontSize: 12, fontWeight: 900 }}>
+            <span className="disp" style={{ color: C.mint, fontSize: 14, fontWeight: 900 }}>
               +{hit.points}
             </span>
           </div>
@@ -906,7 +950,7 @@ function FeudBoardRow({
           borderLeft: "2px solid rgba(245,242,232,.55)",
           background: "linear-gradient(180deg, #2f7cd8 0%, #104b9b 100%)",
           color: revealed ? C.cream : C.gold,
-          fontSize: 25,
+          fontSize: 32,
           fontWeight: 900,
           textShadow: "0 2px 4px rgba(0,0,0,.6)"
         }}
@@ -937,7 +981,7 @@ function BrandLogo({
       style={{
         display: "block",
         width: responsive ? `min(${size}px, 58vw)` : size,
-        height: responsive ? "auto" : size,
+        height: "auto",
         objectFit: "contain",
         margin: compact ? 0 : "0 auto",
         filter: "drop-shadow(0 14px 26px rgba(0,0,0,.38))"
@@ -1016,7 +1060,7 @@ function Board({
         background: `linear-gradient(180deg, ${C.surface} 0%, ${C.bg} 100%)`,
         border: `1px solid ${C.line}`,
         borderRadius: 22,
-        padding: 18,
+        padding: 28,
         boxShadow: "0 20px 60px rgba(0,0,0,.35)",
         position: "relative",
         overflow: "hidden"
@@ -1024,15 +1068,15 @@ function Board({
     >
       <Bulbs />
       <SuspectPins state={state} />
-      <div className="board-inner" style={{ padding: "16px 8px 8px", position: "relative", zIndex: 1 }}>
+      <div className="board-inner" style={{ padding: "20px 18px 12px", position: "relative", zIndex: 1 }}>
         <div className="flex items-center justify-between board-header" style={{ marginBottom: 14 }}>
           <div className="flex items-center" style={{ gap: 10 }}>
-            <BrandLogo size={108} compact />
+            <BrandLogo size={140} compact />
             <div>
-              <div className="disp" style={{ fontSize: 24, fontWeight: 800, color: C.gold, letterSpacing: 1 }}>
+              <div className="disp" style={{ fontSize: 34, fontWeight: 800, color: C.gold, letterSpacing: 1 }}>
                 HOODWINKED
               </div>
-              <div className="body" style={{ color: C.creamDim, fontSize: 10, fontWeight: 900, letterSpacing: 1.6, textTransform: "uppercase" }}>
+              <div className="body" style={{ color: C.creamDim, fontSize: 12, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
                 Fool the room. Win the night.
               </div>
             </div>
@@ -1056,8 +1100,8 @@ function Board({
                 width={64}
                 height={66}
                 style={{
-                  width: 104,
-                  height: 108,
+                  width: 130,
+                  height: 135,
                   objectFit: "cover",
                   borderRadius: 7,
                   border: `1px solid ${C.gold}55`,
@@ -1067,7 +1111,7 @@ function Board({
             </div>
           )}
           {state.phase !== "lobby" && state.phase !== "gameover" && (
-            <div className="body" style={{ color: C.creamDim, fontSize: 13, fontWeight: 600 }}>
+            <div className="body" style={{ color: C.creamDim, fontSize: 16, fontWeight: 700 }}>
               Round {state.round} / {state.totalRounds}
             </div>
           )}
@@ -1102,7 +1146,7 @@ function Board({
                 ↺
               </button>
             )}
-            <div className="body" style={{ color: C.creamDim, fontSize: 13 }}>
+            <div className="body" style={{ color: C.creamDim, fontSize: 15 }}>
               Room <b style={{ color: C.cream, letterSpacing: 3 }}>{state.roomCode}</b>
             </div>
           </div>
@@ -1153,7 +1197,7 @@ function Board({
             <div
               className="disp"
               style={{
-                fontSize: "clamp(48px, 16vw, 76px)",
+                fontSize: "clamp(56px, 16vw, 104px)",
                 fontWeight: 800,
                 color: C.gold,
                 letterSpacing: "clamp(4px, 1.5vw, 8px)",
@@ -1164,7 +1208,7 @@ function Board({
             </div>
             <div
               className="flex flex-wrap justify-center"
-              style={{ gap: 8, margin: "22px auto", maxWidth: 520 }}
+              style={{ gap: 10, margin: "24px auto", maxWidth: 760 }}
             >
               {players.length === 0 && (
                 <span className="body" style={{ color: C.creamDim }}>
@@ -1182,7 +1226,7 @@ function Board({
                     background: C.surface2,
                     border: `1px solid ${C.line}`,
                     borderRadius: 999,
-                    padding: "6px 14px"
+                    padding: "8px 16px"
                   }}
                 >
                   <AvatarBadge avatar={p.avatar} color={p.color} size={72} />
@@ -1196,9 +1240,9 @@ function Board({
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                gap: 14,
+                gap: 18,
                 margin: "0 auto 28px",
-                maxWidth: 560,
+                maxWidth: 900,
                 overflow: "visible"
               }}
             >
@@ -1242,7 +1286,7 @@ function Board({
                         fontSize: 10,
                         fontWeight: 800,
                         letterSpacing: 1.1,
-                        padding: "7px 2px 1px"
+                        padding: "8px 2px 2px"
                       }}
                     >
                       <span>{info.code}</span>
@@ -1256,10 +1300,10 @@ function Board({
               className="disp"
               style={{
                 color: C.cream,
-                fontSize: "clamp(17px, 2vw, 24px)",
+                fontSize: "clamp(20px, 2.2vw, 30px)",
                 fontWeight: 800,
                 lineHeight: 1.35,
-                maxWidth: 720,
+                maxWidth: 900,
                 margin: "0 auto 20px",
                 textShadow: "0 4px 16px rgba(0,0,0,.82), 0 2px 4px rgba(0,0,0,.94), 0 0 22px rgba(255,193,94,.28)"
               }}
@@ -1329,11 +1373,11 @@ function Board({
               key={state.round}
               className="disp stagedrop"
               style={{
-                fontSize: "clamp(22px, 5vw, 34px)",
+                fontSize: "clamp(26px, 5vw, 44px)",
                 fontWeight: 800,
                 color: C.cream,
                 lineHeight: 1.15,
-                maxWidth: 640,
+                maxWidth: 860,
                 margin: "0 auto",
                 textShadow: HEAVY_TEXT_SHADOW
               }}
@@ -1481,7 +1525,7 @@ function Board({
                 key={state.round}
                 className="disp stagedrop"
                 style={{
-                  fontSize: "clamp(22px, 5vw, 32px)",
+                  fontSize: "clamp(26px, 5vw, 42px)",
                   fontWeight: 800,
                   color: C.cream,
                   lineHeight: 1.2,
@@ -1494,19 +1538,19 @@ function Board({
               </div>
               <div
                 className="flex flex-wrap justify-center"
-                style={{ gap: 10, maxWidth: 640, margin: "0 auto" }}
+                style={{ gap: 10, maxWidth: 860, margin: "0 auto" }}
               >
                 {q.choices.map((c, i) => (
                   <div
                     key={i}
                     className="popin"
                     style={{
-                      flex: "1 1 220px",
-                      minWidth: 200,
+                      flex: "1 1 280px",
+                      minWidth: 240,
                       background: C.surface2,
                       border: `1px solid ${C.line}`,
                       borderRadius: 14,
-                      padding: "14px 18px",
+                      padding: "18px 22px",
                       animationDelay: `${i * 0.05}s`,
                       textAlign: "left"
                     }}
@@ -1517,7 +1561,7 @@ function Board({
                     >
                       {String.fromCharCode(65 + i)}
                     </span>
-                    <span className="disp" style={{ color: C.cream, fontSize: 17, fontWeight: 600 }}>
+                    <span className="disp" style={{ color: C.cream, fontSize: 21, fontWeight: 700 }}>
                       {c}
                     </span>
                   </div>
@@ -1682,11 +1726,11 @@ function Board({
                 key={state.round}
                 className="disp stagedrop"
                 style={{
-                  fontSize: "clamp(22px, 5vw, 32px)",
+                  fontSize: "clamp(26px, 5vw, 42px)",
                   fontWeight: 800,
                   color: C.cream,
                   lineHeight: 1.2,
-                  maxWidth: 680,
+                  maxWidth: 900,
                   margin: "0 auto 22px",
                   textShadow: HEAVY_TEXT_SHADOW
                 }}
@@ -1695,7 +1739,7 @@ function Board({
               </div>
               <div
                 className="flex flex-col"
-                style={{ gap: 8, maxWidth: 720, margin: "0 auto" }}
+                style={{ gap: 8, maxWidth: 900, margin: "0 auto" }}
               >
                 {q.answers.map((a, i) => (
                   <FeudBoardRow
@@ -1812,12 +1856,12 @@ function Board({
                 </div>
                 <div
                   className="disp"
-                  style={{ fontSize: 26, fontWeight: 700, color: C.cream, maxWidth: 600, margin: "0 auto", textShadow: HEAVY_TEXT_SHADOW }}
+                style={{ fontSize: "clamp(28px, 3vw, 40px)", fontWeight: 800, color: C.cream, maxWidth: 860, margin: "0 auto", textShadow: HEAVY_TEXT_SHADOW }}
                 >
                   {prompt.text}
                 </div>
               </div>
-              <div className="flex flex-wrap justify-center" style={{ gap: 14, maxWidth: 720, margin: "0 auto" }}>
+              <div className="flex flex-wrap justify-center" style={{ gap: 14, maxWidth: 900, margin: "0 auto" }}>
                 {[a1, a2].map((text, i) => (
                   <div
                     key={i}
@@ -1825,16 +1869,16 @@ function Board({
                     style={{
                       flex: "1 1 280px",
                       minWidth: 240,
-                      maxWidth: 340,
+                      maxWidth: 420,
                       background: C.surface2,
                       border: `1px solid ${C.line}`,
                       borderRadius: 16,
-                      padding: "18px 20px",
+                      padding: "24px 26px",
                       textAlign: "center",
                       animationDelay: `${i * 0.08}s`
                     }}
                   >
-                    <span className="disp" style={{ color: C.cream, fontSize: 22, fontWeight: 700 }}>
+                    <span className="disp" style={{ color: C.cream, fontSize: 28, fontWeight: 800 }}>
                       {text}
                     </span>
                   </div>
@@ -2436,13 +2480,13 @@ function QuipRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
       </div>
       <div
         className="disp"
-        style={{ fontSize: 22, fontWeight: 700, color: C.creamDim, maxWidth: 600, margin: "0 auto 18px", textShadow: HEAVY_TEXT_SHADOW }}
+        style={{ fontSize: "clamp(24px, 2.8vw, 36px)", fontWeight: 800, color: C.creamDim, maxWidth: 900, margin: "0 auto 18px", textShadow: HEAVY_TEXT_SHADOW }}
       >
         {prompt.text}
       </div>
       <div
         className="flex flex-wrap justify-center"
-        style={{ gap: 14, maxWidth: 760, margin: "0 auto" }}
+        style={{ gap: 18, maxWidth: 960, margin: "0 auto" }}
       >
         {[
           { player: p1, answer: prompt.answers[w1] ?? "(no answer)", votes: v1, isWinner: winnerId === w1 },
@@ -2454,16 +2498,16 @@ function QuipRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
             style={{
               flex: "1 1 280px",
               minWidth: 240,
-              maxWidth: 340,
+              maxWidth: 460,
               background: isWinner ? `${player.color}22` : C.surface2,
               border: `1px solid ${isWinner ? player.color : C.line}`,
               borderRadius: 16,
-              padding: "16px 18px",
+              padding: "22px 24px",
               textAlign: "center",
               boxShadow: isWinner ? `0 0 24px ${player.color}55` : "none"
             }}
           >
-            <div className="disp" style={{ color: C.cream, fontSize: 20, fontWeight: 700, marginBottom: 10 }}>
+            <div className="disp" style={{ color: C.cream, fontSize: 28, fontWeight: 800, marginBottom: 12 }}>
               {answer}
             </div>
             <div className="flex items-center justify-center" style={{ gap: 6 }}>
@@ -2533,18 +2577,18 @@ function TriviaRevealCard({ state, dispatch }: { state: State; dispatch: React.D
       <div
         className="disp"
         style={{
-          fontSize: "clamp(20px, 4vw, 26px)",
+          fontSize: "clamp(24px, 4vw, 36px)",
           fontWeight: 700,
           color: C.creamDim,
           lineHeight: 1.2,
-          maxWidth: 700,
+          maxWidth: 900,
           margin: "0 auto 18px",
           textShadow: HEAVY_TEXT_SHADOW
         }}
       >
         {q.text}
       </div>
-      <div className="flex flex-col" style={{ gap: 8, maxWidth: 560, margin: "0 auto" }}>
+      <div className="flex flex-col" style={{ gap: 10, maxWidth: 760, margin: "0 auto" }}>
         {q.choices.map((c, i) => {
           const correct = i === q.correctIndex;
           const folks = playersByChoice[i] ?? [];
@@ -2556,7 +2600,7 @@ function TriviaRevealCard({ state, dispatch }: { state: State; dispatch: React.D
                 background: correct ? `${C.mint}22` : C.surface2,
                 border: `1px solid ${correct ? C.mint : C.line}`,
                 borderRadius: 14,
-                padding: "12px 16px",
+                padding: "16px 20px",
                 animationDelay: `${i * 0.08}s`,
                 textAlign: "left",
                 boxShadow: correct ? `0 0 18px ${C.mint}44` : "none"
@@ -2569,7 +2613,7 @@ function TriviaRevealCard({ state, dispatch }: { state: State; dispatch: React.D
                 >
                   {String.fromCharCode(65 + i)}
                 </span>
-                <span className="disp" style={{ color: C.cream, fontSize: 17, fontWeight: 600 }}>
+                <span className="disp" style={{ color: C.cream, fontSize: 22, fontWeight: 700 }}>
                   {c}
                 </span>
                 {correct && (
@@ -2990,17 +3034,20 @@ function FeudRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
       if (cancelled || count >= q.answers.length) return;
       count += 1;
       const answer = q.answers[q.answers.length - count];
-      setRevealedCount(count);
-      playRevealTick();
-      speakFeudAnswer(answer.text, () => {
-        if (!cancelled) timers.push(window.setTimeout(revealNext, 160));
+      speakFeudAnswer("Survey says...", () => {
+        if (cancelled) return;
+        playRevealTick();
+        setRevealedCount(count);
+        speakFeudAnswer(`${answer.text}!`, () => {
+          if (!cancelled) timers.push(window.setTimeout(revealNext, 220));
+        });
       });
     };
     timers.push(window.setTimeout(revealNext, 550));
     return () => {
       cancelled = true;
       timers.forEach((id) => window.clearTimeout(id));
-      window.speechSynthesis?.cancel();
+      stopFeudVoice();
     };
   }, [q]);
   if (!q) return null;
@@ -3025,18 +3072,18 @@ function FeudRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
       <div
         className="disp"
         style={{
-          fontSize: "clamp(20px, 4vw, 26px)",
+          fontSize: "clamp(24px, 4vw, 36px)",
           fontWeight: 700,
           color: C.creamDim,
           lineHeight: 1.2,
-          maxWidth: 700,
+          maxWidth: 900,
           margin: "0 auto 18px",
           textShadow: HEAVY_TEXT_SHADOW
         }}
       >
         {q.prompt}
       </div>
-      <div className="flex flex-col" style={{ gap: 8, maxWidth: 720, margin: "0 auto" }}>
+      <div className="flex flex-col" style={{ gap: 8, maxWidth: 900, margin: "0 auto" }}>
         {q.answers.map((a, i) => {
           const revealed = i >= q.answers.length - revealedCount;
           return (
@@ -4235,7 +4282,7 @@ function LocalParlor() {
       style={{ background: C.bg, minHeight: "100vh", padding: "20px 16px 40px" }}
     >
       <style>{FONT_CSS}</style>
-      <div style={{ maxWidth: 880, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <Board state={state} dispatch={dispatch} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
 
         <div className="flex items-center justify-between phones-row" style={{ margin: "26px 2px 12px" }}>
@@ -4648,7 +4695,7 @@ function MultiplayerParlor({
       style={{ background: C.bg, minHeight: "100vh", padding: "20px 16px 40px" }}
     >
       <style>{FONT_CSS}</style>
-      <div style={{ maxWidth: 880, margin: "0 auto" }}>
+      <div style={{ maxWidth: role === "play" ? 880 : 1320, margin: "0 auto" }}>
         {role !== "play" && (
           <Board state={state} dispatch={dispatch} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
         )}

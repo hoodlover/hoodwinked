@@ -13,6 +13,8 @@ export function GET() {
     authUrl: isSet(process.env.AUTH_URL) || isSet(process.env.NEXTAUTH_URL),
     authDebug: process.env.AUTH_DEBUG === "true",
     approvedHosts: isSet(process.env.APPROVED_HOST_EMAILS),
-    allowAllAuthenticatedHosts: allowAllAuthenticatedHosts()
+    allowAllAuthenticatedHosts: allowAllAuthenticatedHosts(),
+    elevenLabsKey: isSet(process.env.ELEVENLABS_API_KEY),
+    elevenLabsVoice: isSet(process.env.ELEVENLABS_VOICE_ID)
   });
 }
