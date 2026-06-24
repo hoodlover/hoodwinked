@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { getHostAccess } from "@/lib/host-access";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -42,6 +44,14 @@ function freeImageFallback(prompt: string, answer: string) {
 }
 
 export async function POST(request: Request) {
+  const access = getHostAccess(await auth());
+  if (!access.signedIn) {
+    return NextResponse.json({ error: "Host sign-in required." }, { status: 401 });
+  }
+  if (!access.approved) {
+    return NextResponse.json({ error: "Host access pending approval." }, { status: 403 });
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   let body: unknown;
   try {

@@ -26,6 +26,7 @@ import {
   type Player,
   type State
 } from "@/lib/engine";
+import type { HostAccess } from "@/lib/host-access";
 
 /* ============================================================================
    HOODWINKED — Fool the room. Win the night.
@@ -3210,7 +3211,13 @@ function getLocationSnapshot() {
   return `${window.location.pathname}${window.location.search}`;
 }
 
-export default function Parlor() {
+const PUBLIC_HOST_ACCESS: HostAccess = {
+  signedIn: false,
+  approved: false,
+  email: null
+};
+
+export default function Parlor({ hostAccess = PUBLIC_HOST_ACCESS }: { hostAccess?: HostAccess }) {
   const location = useSyncExternalStore(
     () => () => {
       // URL changes in this prototype are full navigations; no live subscription needed.
@@ -3223,7 +3230,7 @@ export default function Parlor() {
   const params = parseURLParams(url.search, url.pathname);
   if (params.room) return <MultiplayerParlor room={params.room} role={params.role} hostToken={params.hostToken} testMode={params.test} />;
   if (params.local) return <LocalParlor />;
-  return <ParlorLanding />;
+  return <ParlorLanding hostAccess={hostAccess} />;
 }
 
 function ParlorBoot() {
@@ -3246,11 +3253,19 @@ function ParlorBoot() {
   );
 }
 
-function ParlorLanding() {
+function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
   const [code, setCode] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const cleanJoinCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
   const start = () => {
+    if (!hostAccess.signedIn) {
+      window.location.href = "/api/auth/signin?callbackUrl=/";
+      return;
+    }
+    if (!hostAccess.approved) {
+      window.location.href = "/host-access";
+      return;
+    }
     const c = makeRoomCode();
     const hostToken = makeHostToken();
     setCode(c);
@@ -3319,11 +3334,27 @@ function ParlorLanding() {
               Start a room
             </div>
             <div className="body" style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, marginBottom: 16 }}>
-              Put this screen on the TV. Players join from {PLAY_URL}.
+              Approved hosts can start rooms. Players join from {PLAY_URL}.
             </div>
+            {hostAccess.signedIn && !hostAccess.approved && (
+              <div className="body" style={{ color: C.coral, fontSize: 12, lineHeight: 1.4, marginBottom: 12 }}>
+                Host access pending approval.
+              </div>
+            )}
             <button onClick={start} className="disp" style={{ ...hostBtn(true), width: "100%" }}>
-              {code ? `Opening ${code}...` : "Start room"}
+              {code
+                ? `Opening ${code}...`
+                : !hostAccess.signedIn
+                  ? "Sign in to host"
+                  : hostAccess.approved
+                    ? "Start room"
+                    : "Host access pending"}
             </button>
+            {hostAccess.signedIn && (
+              <div className="body" style={{ color: C.creamDim, fontSize: 11, marginTop: 10 }}>
+                {hostAccess.email}
+              </div>
+            )}
           </section>
 
           <form onSubmit={join} style={landingPanel}>
