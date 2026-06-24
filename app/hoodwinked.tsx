@@ -2805,6 +2805,7 @@ function Phone({
   const player = state.players[deviceId];
   const [name, setName] = useState(() => readSavedName(deviceId));
   const [draft, setDraft] = useState("");
+  const canJoin = connected && state.phase !== "gameover" && !!name.trim();
 
   const joinWithName = (raw: string) => {
     const trimmed = raw.trim();
@@ -2930,12 +2931,23 @@ function Phone({
           />
           <button
             onClick={() => joinWithName(name)}
-            disabled={!connected || state.phase !== "lobby" || !name.trim()}
+            disabled={!canJoin}
             className="body"
-            style={phoneBtn(connected && state.phase === "lobby" && !!name.trim(), C.gold, fullSize)}
+            style={phoneBtn(canJoin, C.gold, fullSize)}
           >
-            {!connected ? "Connecting..." : state.phase === "lobby" ? "Join" : "Game in progress"}
+            {!connected
+              ? "Connecting..."
+              : state.phase === "gameover"
+                ? "Game ended"
+                : state.phase === "lobby"
+                  ? "Join"
+                  : "Join late"}
           </button>
+          {connected && state.phase !== "lobby" && state.phase !== "gameover" && (
+            <div className="body" style={{ color: C.creamDim, fontSize: 11, lineHeight: 1.35, marginTop: 8 }}>
+              You can still play and score from here. Early players may have a head start.
+            </div>
+          )}
           {!connected && (
             <div className="body" style={{ color: C.coral, fontSize: 11, lineHeight: 1.35, marginTop: 8 }}>
               Hold tight. Your phone is still connecting to the room.

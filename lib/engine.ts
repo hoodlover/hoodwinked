@@ -74,8 +74,8 @@ export const PROMPTS = [
 ];
 
 export const COLORS = [
-  "#FFC15E", "#FF5E78", "#5BD1B7", "#8E9BFF",
-  "#FF9447", "#C0E84B", "#FF82D6", "#57C7FF"
+  "#C89B5A", "#7FA16B", "#B46A4C", "#6F8F87",
+  "#A88B55", "#8B6F47", "#7D8F5B", "#A76D64"
 ];
 
 /* ---- CONTENT: TRIVIA ----------------------------------------------------- */
@@ -870,7 +870,7 @@ function startRound(state: State, roundNum: number): State {
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "JOIN": {
-      if (state.phase !== "lobby") return state;
+      if (state.phase === "gameover") return state;
       if (state.players[action.id]) return state;
       const color = COLORS[Object.keys(state.players).length % COLORS.length];
       return {
