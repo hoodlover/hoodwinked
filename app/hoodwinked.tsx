@@ -65,42 +65,48 @@ const C = {
 const PLAY_URL = "playhoodwinked.com";
 
 /* ---- MODE INFO ----------------------------------------------------------- */
-const MODE_INFO: Record<Mode, { label: string; code: string; blurb: string; min: number }> = {
+const MODE_INFO: Record<Mode, { label: string; code: string; blurb: string; min: number; icon: string }> = {
   classic: {
-    label: "Classic",
+    label: "The Setup",
     code: "01",
     blurb: "Everyone answers the same prompt. Vote for your favorite.",
-    min: 2
+    min: 2,
+    icon: "/mode-icons/the-setup.webp"
   },
   quiplash: {
-    label: "Quiplash",
+    label: "Two-Faced",
     code: "02",
     blurb: "Each prompt is given to two players. Everyone else votes between the answers.",
-    min: 3
+    min: 3,
+    icon: "/mode-icons/two-faced.webp"
   },
   trivia: {
-    label: "Trivia",
+    label: "The Score",
     code: "03",
     blurb: "Tap the correct multiple-choice answer. Faster = more points.",
-    min: 2
+    min: 2,
+    icon: "/mode-icons/the-score.webp"
   },
   picture: {
-    label: "Picture Reveal",
+    label: "Now You See Me",
     code: "04",
     blurb: "Guess the image as it reveals. First correct guess wins.",
-    min: 2
+    min: 2,
+    icon: "/mode-icons/now-you-see-me.webp"
   },
   wheel: {
-    label: "Wheel",
+    label: "Letter Heist",
     code: "05",
     blurb: "Guess letters to reveal the puzzle, then solve it for bonus points.",
-    min: 2
+    min: 2,
+    icon: "/mode-icons/letter-heist.webp"
   },
   feud: {
-    label: "Family Feud",
+    label: "The Usual Suspects",
     code: "06",
     blurb: "Guess the top survey answers. Higher-ranked answers = more points.",
-    min: 2
+    min: 2,
+    icon: "/mode-icons/the-usual-suspects.webp"
   }
 };
 
@@ -564,8 +570,13 @@ function Board({
               ))}
             </div>
             <div
-              className="flex flex-wrap justify-center"
-              style={{ gap: 10, margin: "0 auto 16px", maxWidth: 650 }}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+                gap: 12,
+                margin: "0 auto 16px",
+                maxWidth: 820
+              }}
             >
               {ALL_MODES.map((m) => {
                 const info = MODE_INFO[m];
@@ -577,28 +588,42 @@ function Board({
                     className="disp"
                     style={modeChip(active)}
                   >
-                    <span
+                    {/* Generated mode card includes the name, so the visible label is for accessibility only. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={info.icon}
+                      alt={info.label}
+                      width={384}
+                      height={400}
+                      style={{
+                        width: "100%",
+                        aspectRatio: "24 / 25",
+                        height: "auto",
+                        display: "block",
+                        objectFit: "cover",
+                        borderRadius: 7,
+                        border: `1px solid ${active ? C.gold : "rgba(251,243,228,.14)"}`,
+                        boxShadow: active ? `0 0 0 2px ${C.gold}55, 0 14px 26px rgba(0,0,0,.36)` : "0 8px 18px rgba(0,0,0,.22)"
+                      }}
+                    />
+                    <div
                       className="body"
                       style={{
-                        color: active ? C.bgDeep : C.gold,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        width: "100%",
+                        color: active ? C.gold : C.creamDim,
                         fontSize: 10,
                         fontWeight: 800,
-                        letterSpacing: 1.4
+                        letterSpacing: 1.1,
+                        padding: "7px 2px 1px"
                       }}
                     >
-                      {info.code}
-                    </span>
-                    <span>{info.label}</span>
-                    <span
-                      className="body"
-                      style={{
-                        color: active ? C.bgDeep : C.creamDim,
-                        fontSize: 10,
-                        fontWeight: 700
-                      }}
-                    >
-                      {info.min}+ players
-                    </span>
+                      <span>{info.code}</span>
+                      <span>{info.min}+ players</span>
+                    </div>
                   </button>
                 );
               })}
@@ -4084,22 +4109,21 @@ const eyebrowStyle: React.CSSProperties = {
   marginBottom: 6
 };
 const modeChip = (active: boolean): React.CSSProperties => ({
-  display: "inline-flex",
+  display: "flex",
   flexDirection: "column",
-  alignItems: "flex-start",
-  gap: 3,
-  minWidth: 128,
-  fontSize: 15,
-  fontWeight: 800,
-  padding: "10px 12px",
-  background: active ? `linear-gradient(180deg, ${C.gold} 0%, ${C.goldDim} 100%)` : C.surface2,
-  color: active ? C.bgDeep : C.creamDim,
+  alignItems: "stretch",
+  gap: 0,
+  minWidth: 0,
+  padding: 6,
+  background: active ? "rgba(255,193,94,.12)" : "rgba(10, 19, 14, .72)",
+  color: C.creamDim,
   border: `1px solid ${active ? C.gold : C.line}`,
   borderRadius: 8,
   cursor: active ? "default" : "pointer",
   letterSpacing: 0,
   textAlign: "left",
-  boxShadow: active ? `0 12px 26px rgba(0,0,0,.28), 0 0 0 1px ${C.gold}44` : "none"
+  overflow: "hidden",
+  boxShadow: active ? `0 14px 28px rgba(0,0,0,.32), 0 0 0 1px ${C.gold}33` : "none"
 });
 const hostBtn = (enabled: boolean): React.CSSProperties => ({
   fontSize: 16,
