@@ -20,5 +20,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true;
     }
   },
+  logger: {
+    error(error) {
+      console.error("Hoodwinked auth error", error);
+    },
+    warn(code) {
+      console.warn("Hoodwinked auth warning", code);
+    },
+    debug(message, metadata) {
+      if (process.env.AUTH_DEBUG === "true") {
+        console.debug("Hoodwinked auth debug", message, metadata);
+      }
+    }
+  },
   trustHost: true
 });
