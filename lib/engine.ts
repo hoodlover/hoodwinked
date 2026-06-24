@@ -1881,17 +1881,25 @@ function tallyWheel(state: State): State {
 function tallyFeud(state: State): State {
   const q = state.feud.questions[state.round - 1];
   if (!q) return { ...state, phase: "reveal", phaseDeadline: null };
+  const firstHits: Record<number, string> = {};
+  const allMatches: { pid: string; at: number; idx: number }[] = [];
+  Object.entries(state.feud.guesses).forEach(([pid, arr]) => {
+    arr.forEach((g) => {
+      if (g.matchIndex != null) allMatches.push({ pid, at: g.at, idx: g.matchIndex });
+    });
+  });
+  allMatches.sort((a, b) => a.at - b.at);
+  allMatches.forEach((m) => {
+    if (firstHits[m.idx] == null) firstHits[m.idx] = m.pid;
+  });
   const players: Record<string, Player> = {};
   const lastPoints: Record<string, number> = {};
   Object.values(state.players).forEach((p) => {
-    const myGuesses = state.feud.guesses[p.id] ?? [];
-    const matched = new Set<number>();
-    myGuesses.forEach((g) => {
-      if (g.matchIndex != null) matched.add(g.matchIndex);
-    });
     let pts = 0;
-    matched.forEach((idx) => {
-      pts += q.answers[idx].points;
+    Object.entries(firstHits).forEach(([rawIdx, pid]) => {
+      if (pid !== p.id) return;
+      const idx = Number(rawIdx);
+      pts += q.answers[idx]?.points ?? 0;
       if (idx === 0) pts += FEUD_TOP_BONUS;
     });
     lastPoints[p.id] = pts;

@@ -7,6 +7,7 @@ import { usePartySocket } from "partysocket/react";
 import {
   ALL_MODES,
   FEUD_GUESS_SECONDS,
+  FEUD_TOP_BONUS,
   PICTURE_GUESS_SECONDS,
   POINTS_PER_VOTE,
   TRIVIA_ANSWER_SECONDS,
@@ -19,9 +20,9 @@ import {
   makeRoomCode,
   matchesAnswer,
   reducer,
-  wheelDisplay,
   wheelLettersSpent,
   type Action,
+  type FeudAnswer,
   type Mode,
   type Phase,
   type Player,
@@ -62,6 +63,8 @@ const C = {
   cream: "#FBF3E4",
   creamDim: "#B9C3B0"
 };
+
+const HEAVY_TEXT_SHADOW = "0 5px 0 rgba(0,0,0,.5), 0 10px 22px rgba(0,0,0,.86), 0 0 4px rgba(0,0,0,.96)";
 
 const PLAY_URL = "playhoodwinked.com";
 
@@ -164,7 +167,7 @@ const AVATAR_FILES = [
   "icon-027.webp"
 ] as const;
 
-const AVATAR_DEAL_SIZE = 15;
+const AVATAR_DEAL_SIZE = 9;
 
 type AvatarOption = {
   id: string;
@@ -359,6 +362,26 @@ function playRevealSound() {
 
 function playRevealTick() {
   playTone(1180, 0, 0.04, "square", 0.05);
+}
+
+function speakFeudAnswer(text: string, onDone: () => void) {
+  if (audioMuted || typeof window === "undefined" || !("speechSynthesis" in window)) {
+    window.setTimeout(onDone, 650);
+    return;
+  }
+  try {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.92;
+    utterance.pitch = 0.9;
+    utterance.volume = 0.95;
+    const finish = () => window.setTimeout(onDone, 260);
+    utterance.onend = finish;
+    utterance.onerror = finish;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  } catch {
+    window.setTimeout(onDone, 650);
+  }
 }
 
 function playWinSound() {
@@ -689,6 +712,211 @@ function SuspectPins({ state }: { state: State }) {
   );
 }
 
+function LetterHeistBoard({
+  text,
+  revealed,
+  solved = false
+}: {
+  text: string;
+  revealed: Set<string>;
+  solved?: boolean;
+}) {
+  const words = text.split(" ");
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "10px 18px",
+        maxWidth: 780,
+        margin: "0 auto 18px",
+        padding: "14px",
+        borderRadius: 12,
+        background: `linear-gradient(180deg, ${C.bgDeep} 0%, rgba(19,32,26,.82) 100%)`,
+        border: `1px solid ${C.goldDim}88`,
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,.05), 0 18px 34px rgba(0,0,0,.32)"
+      }}
+    >
+      {words.map((word, wordIndex) => (
+        <div
+          key={`${word}-${wordIndex}`}
+          style={{
+            display: "flex",
+            gap: 4,
+            padding: "2px 0"
+          }}
+        >
+          {word.split("").map((ch, i) => {
+            const visible = solved || revealed.has(ch.toUpperCase());
+            return (
+              <span
+                key={`${wordIndex}-${i}-${ch}`}
+                className={visible ? "popin" : undefined}
+                style={{
+                  width: "clamp(26px, 4.1vw, 46px)",
+                  height: "clamp(34px, 5vw, 58px)",
+                  display: "grid",
+                  placeItems: "center",
+                  borderRadius: 4,
+                  border: `2px solid ${visible ? "#fbfbf4" : "rgba(251,243,228,.72)"}`,
+                  background: visible
+                    ? "linear-gradient(180deg, #fffef8 0%, #e8e3d4 100%)"
+                    : "linear-gradient(180deg, #f7f2e8 0%, #d8cfbc 100%)",
+                  color: visible ? "#202020" : "transparent",
+                  fontSize: "clamp(20px, 3.3vw, 38px)",
+                  fontWeight: 900,
+                  lineHeight: 1,
+                  textTransform: "uppercase",
+                  boxShadow: visible
+                    ? "inset 0 -4px 0 rgba(0,0,0,.13), 0 0 18px rgba(255,255,255,.22)"
+                    : "inset 0 -4px 0 rgba(0,0,0,.18), inset 0 0 0 1px rgba(0,0,0,.08)",
+                  textShadow: visible ? "0 1px 0 rgba(255,255,255,.65)" : "none"
+                }}
+              >
+                {visible ? ch : ch}
+              </span>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ModeBlurb({ text }: { text: string }) {
+  const sentences = text.match(/[^.!?]+[.!?]+/g)?.map((part) => part.trim()) ?? [text];
+
+  return (
+    <>
+      {sentences.map((sentence, i) => (
+        <React.Fragment key={`${sentence}-${i}`}>
+          {i > 0 && <br />}
+          {sentence}
+        </React.Fragment>
+      ))}
+    </>
+  );
+}
+
+function getFeudFirstHits(state: State) {
+  const hits: Record<number, { player: Player; points: number; at: number }> = {};
+  const q = state.feud.questions[state.round - 1];
+  if (!q) return hits;
+  const allMatches: { pid: string; at: number; idx: number }[] = [];
+  Object.entries(state.feud.guesses).forEach(([pid, arr]) => {
+    arr.forEach((g) => {
+      if (g.matchIndex != null) allMatches.push({ pid, at: g.at, idx: g.matchIndex });
+    });
+  });
+  allMatches.sort((a, b) => a.at - b.at);
+  allMatches.forEach((m) => {
+    if (hits[m.idx]) return;
+    const player = state.players[m.pid];
+    if (!player) return;
+    hits[m.idx] = {
+      player,
+      points: (q.answers[m.idx]?.points ?? 0) + (m.idx === 0 ? FEUD_TOP_BONUS : 0),
+      at: m.at
+    };
+  });
+  return hits;
+}
+
+function FeudBoardRow({
+  rank,
+  answer,
+  hit,
+  revealed,
+  delay = 0
+}: {
+  rank: number;
+  answer: FeudAnswer;
+  hit?: { player: Player; points: number };
+  revealed: boolean;
+  delay?: number;
+}) {
+  return (
+    <div
+      className={revealed ? "popin" : undefined}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "64px minmax(0, 1fr) 78px",
+        alignItems: "center",
+        minHeight: 56,
+        borderRadius: 7,
+        border: "2px solid rgba(245,242,232,.75)",
+        background: revealed
+          ? "linear-gradient(180deg, #1f65b8 0%, #0b3f86 100%)"
+          : "linear-gradient(180deg, #123a6f 0%, #082a54 100%)",
+        boxShadow: "inset 0 0 0 2px rgba(0,0,0,.35), 0 8px 18px rgba(0,0,0,.32)",
+        overflow: "hidden",
+        animationDelay: `${delay}ms`
+      }}
+    >
+      <div
+        className="disp"
+        style={{
+          color: C.gold,
+          fontSize: 20,
+          fontWeight: 900,
+          textAlign: "center",
+          textShadow: "0 2px 3px rgba(0,0,0,.55)"
+        }}
+      >
+        {rank}
+      </div>
+      <div style={{ minWidth: 0, padding: "7px 12px", textAlign: "left" }}>
+        <div
+          className="disp"
+          style={{
+            color: revealed ? C.cream : "rgba(251,243,228,.55)",
+            fontSize: "clamp(17px, 2.6vw, 30px)",
+            fontWeight: 900,
+            letterSpacing: revealed ? 0.5 : 6,
+            textTransform: "uppercase",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            textShadow: revealed ? "0 2px 4px rgba(0,0,0,.65)" : "none"
+          }}
+        >
+          {revealed ? answer.text : "-----"}
+        </div>
+        {hit && (
+          <div className="flex items-center" style={{ gap: 7, marginTop: 4 }}>
+            <AvatarBadge avatar={hit.player.avatar} color={hit.player.color} size={22} />
+            <span className="body" style={{ color: C.cream, fontSize: 12, fontWeight: 800 }}>
+              {hit.player.name}
+            </span>
+            <span className="disp" style={{ color: C.mint, fontSize: 12, fontWeight: 900 }}>
+              +{hit.points}
+            </span>
+          </div>
+        )}
+      </div>
+      <div
+        className="disp"
+        style={{
+          display: "grid",
+          placeItems: "center",
+          height: "100%",
+          borderLeft: "2px solid rgba(245,242,232,.55)",
+          background: "linear-gradient(180deg, #2f7cd8 0%, #104b9b 100%)",
+          color: revealed ? C.cream : C.gold,
+          fontSize: 25,
+          fontWeight: 900,
+          textShadow: "0 2px 4px rgba(0,0,0,.6)"
+        }}
+      >
+        {revealed ? answer.points : hit ? hit.points : "—"}
+      </div>
+    </div>
+  );
+}
+
 function BrandLogo({
   size = 120,
   compact = false,
@@ -813,8 +1041,7 @@ function Board({
             <div
               className="flex items-center"
               style={{
-                gap: 10,
-                padding: "6px 10px",
+                padding: 8,
                 border: `1px solid ${C.line}`,
                 borderRadius: 10,
                 background: `${C.bgDeep}88`,
@@ -829,22 +1056,14 @@ function Board({
                 width={64}
                 height={66}
                 style={{
-                  width: 58,
-                  height: 60,
+                  width: 104,
+                  height: 108,
                   objectFit: "cover",
                   borderRadius: 7,
                   border: `1px solid ${C.gold}55`,
                   display: "block"
                 }}
               />
-              <div style={{ textAlign: "left", minWidth: 112 }}>
-                <div className="body" style={{ color: C.gold, fontSize: 10, fontWeight: 800, letterSpacing: 1.2 }}>
-                  {MODE_INFO[state.mode].code}
-                </div>
-                <div className="disp" style={{ color: C.cream, fontSize: 15, fontWeight: 800, lineHeight: 1.1 }}>
-                  {MODE_INFO[state.mode].label}
-                </div>
-              </div>
             </div>
           )}
           {state.phase !== "lobby" && state.phase !== "gameover" && (
@@ -966,7 +1185,7 @@ function Board({
                     padding: "6px 14px"
                   }}
                 >
-                  <AvatarBadge avatar={p.avatar} color={p.color} size={24} />
+                  <AvatarBadge avatar={p.avatar} color={p.color} size={72} />
                   <span className="body" style={{ color: C.cream, fontWeight: 600 }}>
                     {p.name}
                   </span>
@@ -1045,7 +1264,7 @@ function Board({
                 textShadow: "0 4px 16px rgba(0,0,0,.82), 0 2px 4px rgba(0,0,0,.94), 0 0 22px rgba(255,193,94,.28)"
               }}
             >
-              {MODE_INFO[state.mode].blurb}
+              <ModeBlurb text={MODE_INFO[state.mode].blurb} />
             </div>
             {(() => {
               const min = MODE_INFO[state.mode].min;
@@ -1115,7 +1334,8 @@ function Board({
                 color: C.cream,
                 lineHeight: 1.15,
                 maxWidth: 640,
-                margin: "0 auto"
+                margin: "0 auto",
+                textShadow: HEAVY_TEXT_SHADOW
               }}
             >
               {state.prompt}
@@ -1193,7 +1413,7 @@ function Board({
               </div>
               <div
                 className="disp"
-                style={{ fontSize: 22, fontWeight: 600, color: C.creamDim, maxWidth: 540, margin: "0 auto 14px" }}
+                style={{ fontSize: 22, fontWeight: 600, color: C.creamDim, maxWidth: 540, margin: "0 auto 14px", textShadow: HEAVY_TEXT_SHADOW }}
               >
                 Each prompt went to two players. Write a great answer — only the winner gets the points.
               </div>
@@ -1266,7 +1486,8 @@ function Board({
                   color: C.cream,
                   lineHeight: 1.2,
                   maxWidth: 700,
-                  margin: "0 auto 22px"
+                  margin: "0 auto 22px",
+                  textShadow: HEAVY_TEXT_SHADOW
                 }}
               >
                 {q.text}
@@ -1330,7 +1551,6 @@ function Board({
           const puzzle = state.wheel.puzzles[state.round - 1];
           if (!puzzle) return null;
           const revealed = new Set(Object.keys(state.wheel.guessedLetters));
-          const display = wheelDisplay(puzzle.text, revealed);
           return (
             <div className="fadeup" style={{ textAlign: "center", padding: "10px 0" }}>
               <div
@@ -1339,21 +1559,7 @@ function Board({
               >
                 {puzzle.category.toUpperCase()}
               </div>
-              <div
-                className="disp"
-                style={{
-                  fontSize: "clamp(24px, 5vw, 38px)",
-                  fontWeight: 800,
-                  color: C.cream,
-                  letterSpacing: 6,
-                  lineHeight: 1.5,
-                  maxWidth: 700,
-                  margin: "0 auto 18px",
-                  fontFamily: "monospace, monospace"
-                }}
-              >
-                {display}
-              </div>
+              <LetterHeistBoard text={puzzle.text} revealed={revealed} solved={state.wheel.solved} />
               <div
                 className="flex flex-wrap justify-center"
                 style={{ gap: 6, marginBottom: 8, maxWidth: 640, margin: "0 auto 8px" }}
@@ -1462,18 +1668,7 @@ function Board({
         {state.phase === "writing" && !introVisible && state.mode === "feud" && (() => {
           const q = state.feud.questions[state.round - 1];
           if (!q) return null;
-          // Per-slot first-hit map: slot index -> playerId who got it first.
-          const firstHits: Record<number, string> = {};
-          const allGuesses: { pid: string; at: number; matchIndex: number }[] = [];
-          Object.entries(state.feud.guesses).forEach(([pid, arr]) => {
-            arr.forEach((g) => {
-              if (g.matchIndex != null) allGuesses.push({ pid, at: g.at, matchIndex: g.matchIndex });
-            });
-          });
-          allGuesses.sort((a, b) => a.at - b.at);
-          allGuesses.forEach((g) => {
-            if (firstHits[g.matchIndex] == null) firstHits[g.matchIndex] = g.pid;
-          });
+          const firstHits = getFeudFirstHits(state);
           const totalAttempts = Object.values(state.feud.guesses).reduce((n, arr) => n + arr.length, 0);
           return (
             <div className="fadeup" style={{ textAlign: "center", padding: "10px 0" }}>
@@ -1492,85 +1687,28 @@ function Board({
                   color: C.cream,
                   lineHeight: 1.2,
                   maxWidth: 680,
-                  margin: "0 auto 22px"
+                  margin: "0 auto 22px",
+                  textShadow: HEAVY_TEXT_SHADOW
                 }}
               >
                 {q.prompt}
               </div>
               <div
                 className="flex flex-col"
-                style={{ gap: 8, maxWidth: 460, margin: "0 auto" }}
+                style={{ gap: 8, maxWidth: 720, margin: "0 auto" }}
               >
-                {q.answers.map((a, i) => {
-                  const hitterId = firstHits[i];
-                  const hitter = hitterId ? state.players[hitterId] : null;
-                  const revealed = !!hitter;
-                  return (
-                    <div
-                      key={i}
-                      className={revealed ? "popin" : undefined}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        background: revealed ? `${C.gold}1a` : C.surface2,
-                        border: `1px solid ${revealed ? C.gold : C.line}`,
-                        borderRadius: 12,
-                        padding: "10px 16px",
-                        boxShadow: revealed ? `0 0 14px ${C.gold}33` : "none"
-                      }}
-                    >
-                      <span className="disp" style={{ color: C.gold, fontWeight: 800, width: 26 }}>
-                        #{i + 1}
-                      </span>
-                      {revealed ? (
-                        <>
-                          <span className="disp" style={{ color: C.cream, fontSize: 17, fontWeight: 700, flex: 1, textAlign: "left", marginLeft: 8 }}>
-                            {a.text}
-                          </span>
-                          {hitter && (
-                            <span
-                              className="body"
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 6,
-                                color: hitter.color,
-                                fontWeight: 700,
-                                fontSize: 12,
-                                marginRight: 10
-                              }}
-                            >
-                              <span
-                                style={{
-                                  width: 8,
-                                  height: 8,
-                                  borderRadius: 999,
-                                  background: hitter.color,
-                                  boxShadow: `0 0 6px ${hitter.color}`
-                                }}
-                              />
-                              {hitter.name}
-                            </span>
-                          )}
-                          <span className="disp" style={{ color: C.gold, fontWeight: 800 }}>
-                            {a.points}
-                          </span>
-                        </>
-                      ) : (
-                        <span
-                          className="body"
-                          style={{ color: C.creamDim, letterSpacing: 6, fontSize: 14, marginLeft: "auto" }}
-                        >
-                          _ _ _ _ _
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
+                {q.answers.map((a, i) => (
+                  <FeudBoardRow
+                    key={`hidden-${i}`}
+                    rank={i + 1}
+                    answer={a}
+                    hit={firstHits[i]}
+                    revealed={false}
+                  />
+                ))}
               </div>
               <div className="body" style={{ color: C.creamDim, marginTop: 18, fontSize: 13 }}>
-                {Object.keys(firstHits).length} / {q.answers.length} revealed · {totalAttempts} attempts
+                {Object.keys(firstHits).length} / {q.answers.length} found · {totalAttempts} attempts
               </div>
               <button
                 onClick={() => dispatch({ type: "FORCE_VOTING" })}
@@ -1594,7 +1732,7 @@ function Board({
               </div>
               <div
                 className="disp"
-                style={{ fontSize: 22, fontWeight: 600, color: C.creamDim, maxWidth: 600, margin: "0 auto" }}
+                style={{ fontSize: 22, fontWeight: 600, color: C.creamDim, maxWidth: 600, margin: "0 auto", textShadow: HEAVY_TEXT_SHADOW }}
               >
                 {state.prompt}
               </div>
@@ -1674,7 +1812,7 @@ function Board({
                 </div>
                 <div
                   className="disp"
-                  style={{ fontSize: 26, fontWeight: 700, color: C.cream, maxWidth: 600, margin: "0 auto" }}
+                  style={{ fontSize: 26, fontWeight: 700, color: C.cream, maxWidth: 600, margin: "0 auto", textShadow: HEAVY_TEXT_SHADOW }}
                 >
                   {prompt.text}
                 </div>
@@ -2298,7 +2436,7 @@ function QuipRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
       </div>
       <div
         className="disp"
-        style={{ fontSize: 22, fontWeight: 700, color: C.creamDim, maxWidth: 600, margin: "0 auto 18px" }}
+        style={{ fontSize: 22, fontWeight: 700, color: C.creamDim, maxWidth: 600, margin: "0 auto 18px", textShadow: HEAVY_TEXT_SHADOW }}
       >
         {prompt.text}
       </div>
@@ -2400,7 +2538,8 @@ function TriviaRevealCard({ state, dispatch }: { state: State; dispatch: React.D
           color: C.creamDim,
           lineHeight: 1.2,
           maxWidth: 700,
-          margin: "0 auto 18px"
+          margin: "0 auto 18px",
+          textShadow: HEAVY_TEXT_SHADOW
         }}
       >
         {q.text}
@@ -2775,6 +2914,7 @@ function WheelRevealCard({ state, dispatch }: { state: State; dispatch: React.Di
   const puzzle = state.wheel.puzzles[state.round - 1];
   if (!puzzle) return null;
   const solver = state.wheel.solverId ? state.players[state.wheel.solverId] : null;
+  const revealed = new Set(Object.keys(state.wheel.guessedLetters));
   return (
     <div className="popin" style={{ textAlign: "center", padding: "10px 0" }}>
       <div
@@ -2783,20 +2923,7 @@ function WheelRevealCard({ state, dispatch }: { state: State; dispatch: React.Di
       >
         {puzzle.category.toUpperCase()}
       </div>
-      <div
-        className="disp"
-        style={{
-          fontSize: "clamp(26px, 5vw, 40px)",
-          fontWeight: 800,
-          color: C.gold,
-          letterSpacing: 4,
-          margin: "0 auto 20px",
-          maxWidth: 700,
-          fontFamily: "monospace, monospace"
-        }}
-      >
-        {puzzle.text}
-      </div>
+      <LetterHeistBoard text={puzzle.text} revealed={revealed} solved />
       {solver && (
         <div
           className="popin"
@@ -2853,21 +2980,31 @@ function WheelRevealCard({ state, dispatch }: { state: State; dispatch: React.Di
 
 function FeudRevealCard({ state, dispatch }: { state: State; dispatch: React.Dispatch<Action> }) {
   const q = state.feud.questions[state.round - 1];
+  const [revealedCount, setRevealedCount] = useState(0);
+  useEffect(() => {
+    if (!q) return;
+    let cancelled = false;
+    const timers: number[] = [];
+    let count = 0;
+    const revealNext = () => {
+      if (cancelled || count >= q.answers.length) return;
+      count += 1;
+      const answer = q.answers[q.answers.length - count];
+      setRevealedCount(count);
+      playRevealTick();
+      speakFeudAnswer(answer.text, () => {
+        if (!cancelled) timers.push(window.setTimeout(revealNext, 160));
+      });
+    };
+    timers.push(window.setTimeout(revealNext, 550));
+    return () => {
+      cancelled = true;
+      timers.forEach((id) => window.clearTimeout(id));
+      window.speechSynthesis?.cancel();
+    };
+  }, [q]);
   if (!q) return null;
-  // For each slot, find every player who matched it (with earliest-hit order).
-  const playersByRank: Record<number, Player[]> = {};
-  const allMatches: { pid: string; at: number; idx: number }[] = [];
-  Object.entries(state.feud.guesses).forEach(([pid, arr]) => {
-    arr.forEach((g) => {
-      if (g.matchIndex != null) allMatches.push({ pid, at: g.at, idx: g.matchIndex });
-    });
-  });
-  allMatches.sort((a, b) => a.at - b.at);
-  allMatches.forEach((m) => {
-    const list = (playersByRank[m.idx] ??= []);
-    const p = state.players[m.pid];
-    if (p && !list.find((x) => x.id === p.id)) list.push(p);
-  });
+  const firstHits = getFeudFirstHits(state);
   const playerHits: Record<string, Set<number>> = {};
   Object.entries(state.feud.guesses).forEach(([pid, arr]) => {
     const set = (playerHits[pid] ??= new Set());
@@ -2893,77 +3030,24 @@ function FeudRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
           color: C.creamDim,
           lineHeight: 1.2,
           maxWidth: 700,
-          margin: "0 auto 18px"
+          margin: "0 auto 18px",
+          textShadow: HEAVY_TEXT_SHADOW
         }}
       >
         {q.prompt}
       </div>
-      <div className="flex flex-col" style={{ gap: 8, maxWidth: 460, margin: "0 auto" }}>
+      <div className="flex flex-col" style={{ gap: 8, maxWidth: 720, margin: "0 auto" }}>
         {q.answers.map((a, i) => {
-          const folks = playersByRank[i] ?? [];
+          const revealed = i >= q.answers.length - revealedCount;
           return (
-            <div
-              key={i}
-              className="popin"
-              style={{
-                background: folks.length ? `${C.gold}1a` : C.surface2,
-                border: `1px solid ${folks.length ? C.gold : C.line}`,
-                borderRadius: 14,
-                padding: "10px 16px",
-                animationDelay: `${i * 0.08}s`,
-                textAlign: "left"
-              }}
-            >
-              <div className="flex items-center" style={{ gap: 10, marginBottom: folks.length ? 6 : 0 }}>
-                <span className="disp" style={{ color: C.gold, fontWeight: 800, width: 22 }}>
-                  #{i + 1}
-                </span>
-                <span className="disp" style={{ color: C.cream, fontSize: 17, fontWeight: 700 }}>
-                  {a.text}
-                </span>
-                <span className="disp" style={{ marginLeft: "auto", color: C.gold, fontWeight: 800 }}>
-                  {a.points}
-                </span>
-              </div>
-              {folks.length > 0 && (
-                <div className="flex flex-wrap" style={{ gap: 6, marginLeft: 32 }}>
-                  {folks.map((p) => (
-                    <span
-                      key={p.id}
-                      className="body"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        background: C.bgDeep,
-                        border: `1px solid ${p.color}`,
-                        borderRadius: 999,
-                        padding: "3px 10px",
-                        fontSize: 12,
-                        color: p.color,
-                        fontWeight: 700
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: 999,
-                          background: p.color,
-                          boxShadow: `0 0 6px ${p.color}`
-                        }}
-                      />
-                      {p.name}
-                      {(state.lastPoints[p.id] ?? 0) > 0 && (
-                        <span style={{ color: C.mint, marginLeft: 4 }}>
-                          +{state.lastPoints[p.id]}
-                        </span>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+            <FeudBoardRow
+              key={`reveal-${i}`}
+              rank={i + 1}
+              answer={a}
+              hit={firstHits[i]}
+              revealed={revealed}
+              delay={(q.answers.length - i - 1) * 80}
+            />
           );
         })}
         {noMatch.length > 0 && (
@@ -3141,7 +3225,7 @@ function LeaderboardRow({
       >
         {rank}
       </span>
-      <AvatarBadge avatar={player.avatar} color={player.color} size={26} />
+      <AvatarBadge avatar={player.avatar} color={player.color} size={52} />
       <span className="body" style={{ color: C.cream, fontWeight: 600, width: 96 }}>
         {player.name}
       </span>
@@ -3279,7 +3363,7 @@ function FinalPodium({ winners, second }: { winners: Player[]; second: Player | 
             1ST PLACE
           </div>
           <div className="flex items-center justify-center" style={{ gap: 8, marginTop: 8 }}>
-            <AvatarBadge avatar={winner.avatar} color={winner.color} size={34} selected />
+            <AvatarBadge avatar={winner.avatar} color={winner.color} size={72} selected />
             <span className="disp" style={{ color: C.cream, fontWeight: 800, fontSize: 22 }}>
               {winner.name}
             </span>
@@ -3302,7 +3386,7 @@ function FinalPodium({ winners, second }: { winners: Player[]; second: Player | 
             2ND PLACE
           </div>
           <div className="flex items-center justify-center" style={{ gap: 8, marginTop: 8 }}>
-            <AvatarBadge avatar={second.avatar} color={second.color} size={30} />
+            <AvatarBadge avatar={second.avatar} color={second.color} size={60} />
             <span className="disp" style={{ color: C.cream, fontWeight: 800, fontSize: 19 }}>
               {second.name}
             </span>
@@ -3344,9 +3428,10 @@ function Phone({
   const joinWithName = (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed || !connected) return;
+    const selectedAvatar = avatarRef.current;
     saveName(deviceId, trimmed);
-    saveAvatar(deviceId, avatar);
-    dispatch({ type: "JOIN", id: deviceId, name: trimmed, avatar });
+    saveAvatar(deviceId, selectedAvatar);
+    dispatch({ type: "JOIN", id: deviceId, name: trimmed, avatar: selectedAvatar });
   };
 
   const lastTypingAt = useRef(0);
@@ -3486,7 +3571,7 @@ function Phone({
               Shuffle
             </button>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 7, marginBottom: 8 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 10 }}>
             {avatarDeal.map((option) => {
               const selected = avatar === option.id;
               return (
@@ -3507,7 +3592,7 @@ function Phone({
                     cursor: "pointer"
                   }}
                 >
-                  <AvatarBadge avatar={option.id} color={selected ? C.goldDim : C.line} size={42} selected={selected} />
+                  <AvatarBadge avatar={option.id} color={selected ? C.goldDim : C.line} size={84} selected={selected} />
                 </button>
               );
             })}
@@ -3542,7 +3627,7 @@ function Phone({
       {player && (
         <div>
           <div className="flex items-center" style={{ gap: 7, marginBottom: 10 }}>
-            <AvatarBadge avatar={player.avatar} color={player.color} size={26} />
+            <AvatarBadge avatar={player.avatar} color={player.color} size={52} />
             <span className="body" style={{ color: C.cream, fontWeight: 700, fontSize: 14 }}>
               {player.name}
             </span>
