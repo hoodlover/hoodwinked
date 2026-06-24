@@ -15,8 +15,13 @@ export function approvedHostEmails(): Set<string> {
   );
 }
 
+export function allowAllAuthenticatedHosts(): boolean {
+  return process.env.ALLOW_ALL_AUTHENTICATED_HOSTS === "true";
+}
+
 export function isApprovedHostEmail(email: string | null | undefined): boolean {
   if (!email) return false;
+  if (allowAllAuthenticatedHosts()) return true;
   return approvedHostEmails().has(email.toLowerCase());
 }
 

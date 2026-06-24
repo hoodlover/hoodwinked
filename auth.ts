@@ -11,5 +11,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: googleClientSecret
     })
   ],
+  callbacks: {
+    signIn({ account, user }) {
+      console.info("Hoodwinked host sign-in", {
+        email: user.email,
+        provider: account?.provider
+      });
+      return true;
+    }
+  },
   trustHost: true
 });
