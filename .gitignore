@@ -44,3 +44,5 @@ partykit-dev.log
 
 # next dev logs from local testing
 next-dev.log
+
+.vercel
