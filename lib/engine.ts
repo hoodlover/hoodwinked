@@ -558,6 +558,7 @@ export type QuipPrompt = {
 export type Player = {
   id: string;
   name: string;
+  avatar?: string;
   color: string;
   score: number;
 };
@@ -620,7 +621,7 @@ export type State = {
 };
 
 export type Action =
-  | { type: "JOIN"; id: string; name: string }
+  | { type: "JOIN"; id: string; name: string; avatar?: string }
   | { type: "START_GAME" }
   | { type: "SUBMIT_ANSWER"; playerId: string; text: string }
   | { type: "FORCE_VOTING" }
@@ -877,7 +878,13 @@ export function reducer(state: State, action: Action): State {
         ...state,
         players: {
           ...state.players,
-          [action.id]: { id: action.id, name: action.name.trim() || "Player", color, score: 0 }
+          [action.id]: {
+            id: action.id,
+            name: action.name.trim() || "Player",
+            avatar: action.avatar?.trim().slice(0, 32),
+            color,
+            score: 0
+          }
         }
       };
     }

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useReducer, useState, useEffect, useRef, useSyncExternalStore } from "react";
+import React, { useReducer, useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
+import confetti from "canvas-confetti";
 import { usePartySocket } from "partysocket/react";
 import {
   ALL_MODES,
@@ -64,6 +65,149 @@ const C = {
 
 const PLAY_URL = "playhoodwinked.com";
 
+const AVATAR_FILES = [
+  "01-victoria.webp",
+  "02-edgar.webp",
+  "03-bram.webp",
+  "04-oscar.webp",
+  "05-clara.webp",
+  "06-felix.webp",
+  "07-victor.webp",
+  "08-violet.webp",
+  "09-milo.webp",
+  "10-agatha.webp",
+  "11-lucian.webp",
+  "12-sabine.webp",
+  "13-helena.webp",
+  "14-rufus.webp",
+  "15-gideon.webp",
+  "16-raven.webp",
+  "17-silas.webp",
+  "18-ivy.webp",
+  "19-atlas.webp",
+  "20-selene.webp",
+  "21-bianca.webp",
+  "22-basil.webp",
+  "23-daisy.webp",
+  "24-jasper.webp",
+  "25-ophelia.webp",
+  "26-theo.webp",
+  "27-miles.webp",
+  "28-eleanor.webp",
+  "29-malcolm.webp",
+  "30-andre.webp",
+  "31-calvin.webp",
+  "32-darius.webp",
+  "33-marcus.webp",
+  "34-isaiah.webp",
+  "35-khalil.webp",
+  "36-zane.webp",
+  "37-kwame.webp",
+  "38-lionel.webp",
+  "39-devon.webp",
+  "40-nolan.webp",
+  "41-grant.webp",
+  "42-ellis.webp",
+  "43-terrence.webp",
+  "44-jordan.webp",
+  "45-cole.webp",
+  "46-nico.webp",
+  "47-solomon.webp",
+  "48-asher.webp",
+  "49-leon.webp",
+  "50-damon.webp",
+  "51-emmett.webp",
+  "52-jaylen.webp",
+  "53-winston.webp",
+  "54-curtis.webp",
+  "55-bryce.webp",
+  "56-roman.webp",
+  "57-yumi.webp",
+  "58-samir.webp",
+  "59-rafael.webp",
+  "60-arjun.webp",
+  "61-mei.webp",
+  "62-omar.webp",
+  "63-maya.webp",
+  "64-nadia.webp",
+  "65-aisha.webp",
+  "66-hiro.webp",
+  "67-kenji.webp",
+  "68-diego.webp",
+  "69-amara.webp",
+  "70-sophia.webp",
+  "71-lin.webp",
+  "72-raj.webp",
+  "73-akira.webp",
+  "74-mateo.webp",
+  "75-lina.webp",
+  "76-carlos.webp",
+  "77-anton.webp",
+  "78-haruto.webp",
+  "79-reyes.webp",
+  "80-nia.webp",
+  "81-hana.webp",
+  "82-amir.webp",
+  "83-marco.webp",
+  "84-leila.webp",
+  "icon-001.webp",
+  "icon-003.webp",
+  "icon-006.webp",
+  "icon-008.webp",
+  "icon-011.webp",
+  "icon-015.webp",
+  "icon-016.webp",
+  "icon-017.webp",
+  "icon-021.webp",
+  "icon-023.webp",
+  "icon-026.webp",
+  "icon-027.webp"
+] as const;
+
+const AVATAR_DEAL_SIZE = 15;
+
+type AvatarOption = {
+  id: string;
+  label: string;
+  src: string;
+};
+
+function toAvatarLabel(file: string): string {
+  const base = file.replace(/\.(webp|png|jpg|jpeg)$/i, "").replace(/^\d+-/, "").replace(/^icon-/, "Mystery ");
+  return base
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+const AVATAR_OPTIONS: AvatarOption[] = AVATAR_FILES.map((file) => ({
+  id: file.replace(/\.(webp|png|jpg|jpeg)$/i, ""),
+  label: toAvatarLabel(file),
+  src: `/avatars/${file}`
+}));
+
+function initialAvatarDeal(selectedId?: string): AvatarOption[] {
+  const selected = AVATAR_OPTIONS.find((option) => option.id === selectedId);
+  const deal = AVATAR_OPTIONS
+    .filter((option) => option.id !== selected?.id)
+    .slice(0, selected ? AVATAR_DEAL_SIZE - 1 : AVATAR_DEAL_SIZE);
+  return selected ? [selected, ...deal] : deal;
+}
+
+function dealAvatars(selectedId?: string): AvatarOption[] {
+  const selected = AVATAR_OPTIONS.find((option) => option.id === selectedId);
+  const pool = AVATAR_OPTIONS.filter((option) => option.id !== selected?.id);
+
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  const deal = pool.slice(0, selected ? AVATAR_DEAL_SIZE - 1 : AVATAR_DEAL_SIZE);
+  return selected ? [selected, ...deal] : deal;
+}
+
 /* ---- MODE INFO ----------------------------------------------------------- */
 const MODE_INFO: Record<Mode, { label: string; code: string; blurb: string; min: number; icon: string }> = {
   classic: {
@@ -112,6 +256,7 @@ const MODE_INFO: Record<Mode, { label: string; code: string; blurb: string; min:
 
 /* ---- PERSISTED NAMES ----------------------------------------------------- */
 const NAMES_KEY = "parlor:names";
+const AVATARS_KEY = "parlor:avatars";
 
 function readSavedNames(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -137,6 +282,33 @@ function saveName(deviceId: string, name: string) {
     localStorage.setItem(NAMES_KEY, JSON.stringify(all));
   } catch {
     // localStorage unavailable — silently ignore
+  }
+}
+
+function readSavedAvatars(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(AVATARS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function readSavedAvatar(deviceId: string): string {
+  return readSavedAvatars()[deviceId] ?? AVATAR_OPTIONS[0].id;
+}
+
+function saveAvatar(deviceId: string, avatar: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const all = readSavedAvatars();
+    all[deviceId] = avatar;
+    localStorage.setItem(AVATARS_KEY, JSON.stringify(all));
+  } catch {
+    // localStorage unavailable - silently ignore
   }
 }
 
@@ -218,15 +390,19 @@ const FONT_CSS = `
 @keyframes parlor-glow{0%,100%{box-shadow:0 0 0 0 rgba(255,193,94,0);}50%{box-shadow:0 0 22px 2px rgba(255,193,94,.45);}}
 @keyframes parlor-fall{0%{transform:translate3d(0,-12vh,0) rotate(0deg);opacity:0;}10%{opacity:1;}100%{transform:translate3d(var(--dx,0),110vh,0) rotate(var(--rot,540deg));opacity:1;}}
 @keyframes parlor-stage-drop{0%{transform:translateY(-60px) scale(.7);letter-spacing:14px;filter:blur(6px);opacity:0;}55%{transform:translateY(8px) scale(1.06);letter-spacing:0;filter:blur(0);opacity:1;}75%{transform:translateY(-4px) scale(.99);}100%{transform:translateY(0) scale(1);opacity:1;}}
+@keyframes parlor-pin-in{0%{transform:translateY(10px) rotate(var(--rot,0deg)) scale(.92);opacity:0;}100%{transform:translateY(0) rotate(var(--rot,0deg)) scale(1);opacity:1;}}
 .parlor-root .stagedrop{animation:parlor-stage-drop .9s cubic-bezier(.22,1.18,.36,1) both;}
 @keyframes parlor-typing{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-3px);opacity:1;}}
 .parlor-root .typing-dot{display:inline-block;width:4px;height:4px;border-radius:999px;margin:0 1px;animation:parlor-typing 1s infinite ease-in-out;}
 @keyframes parlor-streak{0%{transform:scale(1);text-shadow:0 0 0 transparent;}30%{transform:scale(1.22);text-shadow:0 0 22px var(--glow,#FFC15E);}70%{transform:scale(1.22);text-shadow:0 0 22px var(--glow,#FFC15E);}100%{transform:scale(1);text-shadow:0 0 0 transparent;}}
 .parlor-root .streak{animation:parlor-streak 1.8s ease-out 1 both;display:inline-block;}
+.parlor-root .suspect-pins{display:block;}
+.parlor-root .suspect-pin{animation:parlor-pin-in .55s cubic-bezier(.22,1.18,.36,1) both;}
 @media (max-width: 640px) {
   .parlor-root .phones-row { display: none !important; }
   .parlor-root .board-inner { padding: 8px 4px !important; }
   .parlor-root .board-wrap { padding: 12px !important; border-radius: 16px !important; }
+  .parlor-root .suspect-pins { display: none !important; }
 }
 @media (max-width: 420px) {
   .parlor-root .board-header { flex-wrap: wrap; gap: 6px; }
@@ -235,66 +411,45 @@ const FONT_CSS = `
 .parlor-root .popin{animation:parlor-popin .32s cubic-bezier(.34,1.56,.64,1) both;}
 .parlor-root .fadeup{animation:parlor-fadeup .35s ease both;}
 .parlor-root .glow{animation:parlor-glow 2.2s ease-in-out infinite;}
-.parlor-root .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50;}
-.parlor-root .confetti span{position:absolute;top:0;will-change:transform,opacity;animation:parlor-fall linear forwards;}
 @media (prefers-reduced-motion: reduce){
-  .parlor-root .bulb,.parlor-root .popin,.parlor-root .fadeup,.parlor-root .glow,.parlor-root .stagedrop,.parlor-root .confetti span,.parlor-root .typing-dot,.parlor-root .streak{animation:none !important;}
-  .parlor-root .confetti{display:none;}
+  .parlor-root .bulb,.parlor-root .popin,.parlor-root .fadeup,.parlor-root .glow,.parlor-root .stagedrop,.parlor-root .typing-dot,.parlor-root .streak,.parlor-root .suspect-pin{animation:none !important;}
 }
 `;
 
-type ConfettiPiece = {
-  left: number;
-  size: number;
-  dx: number;
-  rot: number;
-  dur: number;
-  delay: number;
-  color: string;
-  round: boolean;
-};
-
 function Confetti({ count = 90, palette }: { count?: number; palette: string[] }) {
-  const [pieces, setPieces] = useState<ConfettiPiece[]>([]);
   const paletteKey = palette.join(",");
   useEffect(() => {
-    const pal = paletteKey.split(",");
+    if (typeof window === "undefined") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const colors = paletteKey.split(",").filter(Boolean);
     // Client-only Math.random — runs once per palette change to avoid SSR hydration mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPieces(
-      Array.from({ length: count }, () => ({
-        left: Math.random() * 100,
-        size: 6 + Math.random() * 8,
-        dx: (Math.random() - 0.5) * 40,
-        rot: 360 + Math.random() * 720 * (Math.random() < 0.5 ? -1 : 1),
-        dur: 3.2 + Math.random() * 2.4,
-        delay: Math.random() * 1.2,
-        color: pal[Math.floor(Math.random() * pal.length)],
-        round: Math.random() < 0.3
-      }))
-    );
+    const base = {
+      colors,
+      disableForReducedMotion: true,
+      scalar: 0.9,
+      ticks: 180,
+      zIndex: 80
+    };
+    confetti({
+      ...base,
+      particleCount: Math.round(count * 0.55),
+      spread: 64,
+      startVelocity: 42,
+      origin: { x: 0.28, y: 0.25 },
+      angle: 55
+    });
+    window.setTimeout(() => {
+      confetti({
+        ...base,
+        particleCount: Math.round(count * 0.45),
+        spread: 70,
+        startVelocity: 40,
+        origin: { x: 0.72, y: 0.25 },
+        angle: 125
+      });
+    }, 120);
   }, [count, paletteKey]);
-  if (pieces.length === 0) return null;
-  return (
-    <div className="confetti" aria-hidden>
-      {pieces.map((p, i) => (
-        <span
-          key={i}
-          style={{
-            left: `${p.left}%`,
-            width: p.size,
-            height: p.size * 1.4,
-            background: p.color,
-            borderRadius: p.round ? 999 : 2,
-            animationDuration: `${p.dur}s`,
-            animationDelay: `${p.delay}s`,
-            ["--dx" as string]: `${p.dx}vw`,
-            ["--rot" as string]: `${p.rot}deg`
-          } as React.CSSProperties}
-        />
-      ))}
-    </div>
-  );
+  return null;
 }
 
 function Bulbs({ count = 14 }: { count?: number }) {
@@ -313,6 +468,191 @@ function Bulbs({ count = 14 }: { count?: number }) {
             animationDelay: `${(i % 5) * 0.28}s`
           }}
         />
+      ))}
+    </div>
+  );
+}
+
+function AvatarBadge({
+  avatar,
+  color,
+  size = 28,
+  selected = false
+}: {
+  avatar?: string;
+  color: string;
+  size?: number;
+  selected?: boolean;
+}) {
+  const option = AVATAR_OPTIONS.find((a) => a.id === avatar) ?? AVATAR_OPTIONS[0];
+  return (
+    <span
+      aria-hidden
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 999,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        background: C.bgDeep,
+        border: `2px solid ${selected ? C.gold : `${color}99`}`,
+        boxShadow: selected ? `0 0 0 2px ${C.gold}55, 0 0 18px ${color}66` : `0 0 10px ${color}44`,
+        overflow: "hidden"
+      }}
+      title={option.label}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={option.src}
+        alt=""
+        width={size}
+        height={size}
+        draggable={false}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block"
+        }}
+      />
+    </span>
+  );
+}
+
+type SuspectPin = {
+  option: AvatarOption;
+  left: number;
+  top: number;
+  rotate: number;
+  size: number;
+  opacity: number;
+  delay: number;
+};
+
+function hashString(input: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function seededRandom(seed: number) {
+  let value = seed || 1;
+  return () => {
+    value = Math.imul(value ^ (value >>> 15), 1 | value);
+    value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function buildSuspectPins(seedKey: string): SuspectPin[] {
+  const rand = seededRandom(hashString(seedKey));
+  const zones = [
+    { left: 4, top: 17 },
+    { left: 15, top: 72 },
+    { left: 81, top: 15 },
+    { left: 90, top: 66 },
+    { left: 47, top: 87 }
+  ];
+  const pool = [...AVATAR_OPTIONS];
+
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rand() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  return zones.map((zone, i) => ({
+    option: pool[i % pool.length],
+    left: zone.left + (rand() * 8 - 4),
+    top: zone.top + (rand() * 7 - 3.5),
+    rotate: rand() * 22 - 11,
+    size: 74 + Math.round(rand() * 24),
+    opacity: 0.18 + rand() * 0.08,
+    delay: i * 70
+  }));
+}
+
+function SuspectPins({ state }: { state: State }) {
+  const seedKey = `${state.roomCode}-${state.mode}-${state.phase}-${state.round}-${Object.keys(state.players).length}`;
+  const pins = useMemo(() => buildSuspectPins(seedKey), [seedKey]);
+
+  return (
+    <div className="suspect-pins" aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+      {pins.map((pin, i) => (
+        <div
+          key={`${pin.option.id}-${i}-${seedKey}`}
+          className="suspect-pin"
+          style={{
+            position: "absolute",
+            left: `${pin.left}%`,
+            top: `${pin.top}%`,
+            width: pin.size,
+            padding: "6px 6px 13px",
+            background: "linear-gradient(180deg, rgba(251,243,228,.92), rgba(218,204,174,.86))",
+            border: "1px solid rgba(42,28,16,.28)",
+            borderRadius: 4,
+            boxShadow: "0 12px 28px rgba(0,0,0,.32)",
+            opacity: pin.opacity,
+            transform: `rotate(${pin.rotate}deg)`,
+            ["--rot" as string]: `${pin.rotate}deg`,
+            animationDelay: `${pin.delay}ms`
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: -6,
+              width: 11,
+              height: 11,
+              transform: "translateX(-50%)",
+              borderRadius: 999,
+              background: C.coral,
+              border: "1px solid rgba(255,255,255,.55)",
+              boxShadow: "0 2px 7px rgba(0,0,0,.4)"
+            }}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={pin.option.src}
+            alt=""
+            width={pin.size}
+            height={pin.size}
+            draggable={false}
+            style={{
+              display: "block",
+              width: "100%",
+              aspectRatio: "1 / 1",
+              objectFit: "cover",
+              borderRadius: 2,
+              filter: "sepia(.16) contrast(.98) saturate(.86)"
+            }}
+          />
+          <div
+            className="body"
+            style={{
+              position: "absolute",
+              left: 7,
+              right: 7,
+              bottom: 3,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              color: "#2b2118",
+              fontSize: 7,
+              fontWeight: 800,
+              letterSpacing: 0.8,
+              textAlign: "center",
+              textTransform: "uppercase"
+            }}
+          >
+            Suspect {String(i + 1).padStart(2, "0")}
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -418,11 +758,14 @@ function Board({
         border: `1px solid ${C.line}`,
         borderRadius: 22,
         padding: 18,
-        boxShadow: "0 20px 60px rgba(0,0,0,.35)"
+        boxShadow: "0 20px 60px rgba(0,0,0,.35)",
+        position: "relative",
+        overflow: "hidden"
       }}
     >
       <Bulbs />
-      <div className="board-inner" style={{ padding: "16px 8px 8px" }}>
+      <SuspectPins state={state} />
+      <div className="board-inner" style={{ padding: "16px 8px 8px", position: "relative", zIndex: 1 }}>
         <div className="flex items-center justify-between board-header" style={{ marginBottom: 14 }}>
           <div className="flex items-center" style={{ gap: 10 }}>
             <BrandLogo size={108} compact />
@@ -431,10 +774,48 @@ function Board({
                 HOODWINKED
               </div>
               <div className="body" style={{ color: C.creamDim, fontSize: 10, fontWeight: 800, letterSpacing: 1.4 }}>
-                {PLAY_URL}
+                Fool the room. Win the night.
               </div>
             </div>
           </div>
+          {state.phase !== "lobby" && state.phase !== "gameover" && (
+            <div
+              className="flex items-center"
+              style={{
+                gap: 10,
+                padding: "6px 10px",
+                border: `1px solid ${C.line}`,
+                borderRadius: 10,
+                background: `${C.bgDeep}88`,
+                boxShadow: "0 10px 24px rgba(0,0,0,.22)"
+              }}
+            >
+              {/* Generated mode card includes the name, so the visible text is intentionally compact. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={MODE_INFO[state.mode].icon}
+                alt={MODE_INFO[state.mode].label}
+                width={64}
+                height={66}
+                style={{
+                  width: 58,
+                  height: 60,
+                  objectFit: "cover",
+                  borderRadius: 7,
+                  border: `1px solid ${C.gold}55`,
+                  display: "block"
+                }}
+              />
+              <div style={{ textAlign: "left", minWidth: 112 }}>
+                <div className="body" style={{ color: C.gold, fontSize: 10, fontWeight: 800, letterSpacing: 1.2 }}>
+                  {MODE_INFO[state.mode].code}
+                </div>
+                <div className="disp" style={{ color: C.cream, fontSize: 15, fontWeight: 800, lineHeight: 1.1 }}>
+                  {MODE_INFO[state.mode].label}
+                </div>
+              </div>
+            </div>
+          )}
           {state.phase !== "lobby" && state.phase !== "gameover" && (
             <div className="body" style={{ color: C.creamDim, fontSize: 13, fontWeight: 600 }}>
               Round {state.round} / {state.totalRounds}
@@ -554,15 +935,7 @@ function Board({
                     padding: "6px 14px"
                   }}
                 >
-                  <span
-                    style={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: 999,
-                      background: p.color,
-                      boxShadow: `0 0 8px ${p.color}`
-                    }}
-                  />
+                  <AvatarBadge avatar={p.avatar} color={p.color} size={24} />
                   <span className="body" style={{ color: C.cream, fontWeight: 600 }}>
                     {p.name}
                   </span>
@@ -572,10 +945,11 @@ function Board({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-                gap: 12,
-                margin: "0 auto 16px",
-                maxWidth: 820
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: 18,
+                margin: "0 auto 28px",
+                maxWidth: 760,
+                overflow: "visible"
               }}
             >
               {ALL_MODES.map((m) => {
@@ -629,8 +1003,16 @@ function Board({
               })}
             </div>
             <div
-              className="body"
-              style={{ color: C.creamDim, fontSize: 13, lineHeight: 1.5, maxWidth: 500, margin: "0 auto 14px" }}
+              className="disp"
+              style={{
+                color: C.cream,
+                fontSize: "clamp(17px, 2vw, 24px)",
+                fontWeight: 800,
+                lineHeight: 1.35,
+                maxWidth: 720,
+                margin: "0 auto 20px",
+                textShadow: `0 0 18px ${C.gold}22`
+              }}
             >
               {MODE_INFO[state.mode].blurb}
             </div>
@@ -1365,6 +1747,7 @@ function Board({
             if (!top) return null;
             const winners = ranked.filter((p) => p.score === top.score);
             const isTie = winners.length > 1;
+            const second = ranked.find((p) => p.score < top.score) ?? null;
             const confettiPalette = [
               ...winners.map((w) => w.color),
               C.gold,
@@ -1412,6 +1795,7 @@ function Board({
                 <div className="disp" style={{ fontSize: 24, color: C.gold, marginBottom: 20 }}>
                   {top.score} pts
                 </div>
+                <FinalPodium winners={winners} second={second} />
                 <Leaderboard state={state} />
                 <div style={{ marginTop: 22 }}>
                   <button
@@ -2726,15 +3110,7 @@ function LeaderboardRow({
       >
         {rank}
       </span>
-      <span
-        style={{
-          width: 12,
-          height: 12,
-          borderRadius: 999,
-          background: player.color,
-          boxShadow: `0 0 8px ${player.color}`
-        }}
-      />
+      <AvatarBadge avatar={player.avatar} color={player.color} size={26} />
       <span className="body" style={{ color: C.cream, fontWeight: 600, width: 96 }}>
         {player.name}
       </span>
@@ -2811,6 +3187,101 @@ function Leaderboard({ state, highlightGainers = false }: { state: State; highli
   );
 }
 
+function TrophyIcon({ size = 74 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 96 96" role="img" aria-label="Gold trophy">
+      <defs>
+        <linearGradient id="hoodwinked-trophy-gold" x1="20" y1="8" x2="78" y2="88">
+          <stop offset="0" stopColor="#FFF0A8" />
+          <stop offset=".48" stopColor="#FFC15E" />
+          <stop offset="1" stopColor="#A96618" />
+        </linearGradient>
+      </defs>
+      <path d="M31 16h34v20c0 13-7 23-17 23S31 49 31 36V16Z" fill="url(#hoodwinked-trophy-gold)" stroke="#4A2B08" strokeWidth="4" />
+      <path d="M31 23H17c0 18 7 28 19 31" fill="none" stroke="url(#hoodwinked-trophy-gold)" strokeWidth="8" strokeLinecap="round" />
+      <path d="M65 23h14c0 18-7 28-19 31" fill="none" stroke="url(#hoodwinked-trophy-gold)" strokeWidth="8" strokeLinecap="round" />
+      <path d="M43 58h10v15H43z" fill="#C8892A" stroke="#4A2B08" strokeWidth="3" />
+      <path d="M29 75h38l5 10H24l5-10Z" fill="url(#hoodwinked-trophy-gold)" stroke="#4A2B08" strokeWidth="4" />
+      <path d="M40 25h16M39 34h18" stroke="#FFF4B8" strokeWidth="3" strokeLinecap="round" opacity=".65" />
+    </svg>
+  );
+}
+
+function RibbonIcon({ size = 56 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 80 96" role="img" aria-label="Blue ribbon">
+      <defs>
+        <linearGradient id="hoodwinked-ribbon-blue" x1="18" y1="8" x2="62" y2="88">
+          <stop offset="0" stopColor="#D7ECFF" />
+          <stop offset=".45" stopColor="#63A8FF" />
+          <stop offset="1" stopColor="#244D8C" />
+        </linearGradient>
+      </defs>
+      <circle cx="40" cy="32" r="24" fill="url(#hoodwinked-ribbon-blue)" stroke="#102A52" strokeWidth="5" />
+      <circle cx="40" cy="32" r="12" fill="#D7ECFF" opacity=".75" />
+      <path d="M27 52 18 88l22-13 22 13-9-36" fill="url(#hoodwinked-ribbon-blue)" stroke="#102A52" strokeWidth="5" strokeLinejoin="round" />
+      <path d="M33 26h14v7H33zM33 38h14" stroke="#102A52" strokeWidth="5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function FinalPodium({ winners, second }: { winners: Player[]; second: Player | null }) {
+  return (
+    <div
+      className="flex flex-wrap justify-center"
+      style={{ gap: 14, margin: "0 auto 22px", maxWidth: 720 }}
+    >
+      {winners.map((winner) => (
+        <div
+          key={winner.id}
+          style={{
+            minWidth: 190,
+            padding: "16px 18px",
+            borderRadius: 14,
+            border: `1px solid ${C.gold}`,
+            background: `linear-gradient(180deg, ${C.gold}22 0%, ${C.bgDeep} 100%)`,
+            boxShadow: `0 0 28px ${C.gold}33`
+          }}
+        >
+          <TrophyIcon size={78} />
+          <div className="body" style={{ color: C.gold, fontWeight: 900, letterSpacing: 2, fontSize: 11, marginTop: 8 }}>
+            1ST PLACE
+          </div>
+          <div className="flex items-center justify-center" style={{ gap: 8, marginTop: 8 }}>
+            <AvatarBadge avatar={winner.avatar} color={winner.color} size={34} selected />
+            <span className="disp" style={{ color: C.cream, fontWeight: 800, fontSize: 22 }}>
+              {winner.name}
+            </span>
+          </div>
+        </div>
+      ))}
+      {second && (
+        <div
+          style={{
+            minWidth: 170,
+            padding: "14px 16px",
+            borderRadius: 14,
+            border: "1px solid #63A8FF",
+            background: "linear-gradient(180deg, rgba(99,168,255,.18) 0%, rgba(19,32,26,.92) 100%)",
+            boxShadow: "0 0 24px rgba(99,168,255,.22)"
+          }}
+        >
+          <RibbonIcon size={62} />
+          <div className="body" style={{ color: "#A9D0FF", fontWeight: 900, letterSpacing: 2, fontSize: 10, marginTop: 8 }}>
+            2ND PLACE
+          </div>
+          <div className="flex items-center justify-center" style={{ gap: 8, marginTop: 8 }}>
+            <AvatarBadge avatar={second.avatar} color={second.color} size={30} />
+            <span className="disp" style={{ color: C.cream, fontWeight: 800, fontSize: 19 }}>
+              {second.name}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---- A PHONE (one player's controller) ----------------------------------- */
 function Phone({
   deviceId,
@@ -2829,14 +3300,22 @@ function Phone({
 }) {
   const player = state.players[deviceId];
   const [name, setName] = useState(() => readSavedName(deviceId));
+  const [avatar, setAvatar] = useState(() => readSavedAvatar(deviceId));
+  const avatarRef = useRef(avatar);
+  const [avatarDeal, setAvatarDeal] = useState(() => initialAvatarDeal(avatar));
   const [draft, setDraft] = useState("");
   const canJoin = connected && state.phase !== "gameover" && !!name.trim();
+
+  useEffect(() => {
+    setAvatarDeal(dealAvatars(avatarRef.current));
+  }, []);
 
   const joinWithName = (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed || !connected) return;
     saveName(deviceId, trimmed);
-    dispatch({ type: "JOIN", id: deviceId, name: trimmed });
+    saveAvatar(deviceId, avatar);
+    dispatch({ type: "JOIN", id: deviceId, name: trimmed, avatar });
   };
 
   const lastTypingAt = useRef(0);
@@ -2954,6 +3433,54 @@ function Phone({
               if (e.key === "Enter") joinWithName(name);
             }}
           />
+          <div className="flex items-center justify-between" style={{ margin: "10px 0 6px", gap: 10 }}>
+            <div className="body" style={{ color: C.creamDim, fontSize: 11, fontWeight: 800, letterSpacing: 1.2 }}>
+              AVATAR
+            </div>
+            <button
+              type="button"
+              onClick={() => setAvatarDeal(dealAvatars(avatar))}
+              className="body"
+              style={{
+                border: `1px solid ${C.line}`,
+                borderRadius: 999,
+                background: "rgba(255,255,255,.04)",
+                color: C.creamDim,
+                cursor: "pointer",
+                fontSize: 10,
+                fontWeight: 800,
+                padding: "4px 8px"
+              }}
+            >
+              Shuffle
+            </button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 7, marginBottom: 8 }}>
+            {avatarDeal.map((option) => {
+              const selected = avatar === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => {
+                    setAvatar(option.id);
+                    avatarRef.current = option.id;
+                    setAvatarDeal(dealAvatars(option.id));
+                  }}
+                  aria-label={`Choose ${option.label} avatar`}
+                  title={option.label}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    padding: 0,
+                    cursor: "pointer"
+                  }}
+                >
+                  <AvatarBadge avatar={option.id} color={selected ? C.goldDim : C.line} size={42} selected={selected} />
+                </button>
+              );
+            })}
+          </div>
           <button
             onClick={() => joinWithName(name)}
             disabled={!canJoin}
@@ -2984,15 +3511,7 @@ function Phone({
       {player && (
         <div>
           <div className="flex items-center" style={{ gap: 7, marginBottom: 10 }}>
-            <span
-              style={{
-                width: 11,
-                height: 11,
-                borderRadius: 999,
-                background: player.color,
-                boxShadow: `0 0 8px ${player.color}`
-              }}
-            />
+            <AvatarBadge avatar={player.avatar} color={player.color} size={26} />
             <span className="body" style={{ color: C.cream, fontWeight: 700, fontSize: 14 }}>
               {player.name}
             </span>
@@ -4122,8 +4641,13 @@ const modeChip = (active: boolean): React.CSSProperties => ({
   cursor: active ? "default" : "pointer",
   letterSpacing: 0,
   textAlign: "left",
-  overflow: "hidden",
-  boxShadow: active ? `0 14px 28px rgba(0,0,0,.32), 0 0 0 1px ${C.gold}33` : "none"
+  overflow: "visible",
+  position: "relative",
+  zIndex: active ? 5 : 1,
+  transform: active ? "scale(1.2)" : "scale(1)",
+  transformOrigin: "center",
+  transition: "transform 420ms cubic-bezier(.2,.85,.2,1), box-shadow 420ms ease, border-color 420ms ease",
+  boxShadow: active ? `0 22px 44px rgba(0,0,0,.42), 0 0 0 1px ${C.gold}44` : "none"
 });
 const hostBtn = (enabled: boolean): React.CSSProperties => ({
   fontSize: 16,
