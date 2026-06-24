@@ -523,13 +523,34 @@ function AvatarBadge({
 
 type SuspectPin = {
   option: AvatarOption;
+  label: string;
   left: number;
   top: number;
   rotate: number;
   size: number;
   opacity: number;
   delay: number;
+  zIndex: number;
 };
+
+const CASE_BOARD_LABELS = [
+  "Suspect",
+  "Bystander",
+  "Alibi",
+  "Witness",
+  "Person of Interest",
+  "Last Seen",
+  "Lookout",
+  "Inside Source",
+  "Unknown",
+  "Cleared?",
+  "Red Herring",
+  "Loose End",
+  "Accomplice?",
+  "Motive?",
+  "Has Intel",
+  "Question Again"
+];
 
 function hashString(input: string): number {
   let hash = 2166136261;
@@ -552,11 +573,14 @@ function seededRandom(seed: number) {
 function buildSuspectPins(seedKey: string): SuspectPin[] {
   const rand = seededRandom(hashString(seedKey));
   const zones = [
-    { left: 4, top: 17 },
-    { left: 15, top: 72 },
-    { left: 81, top: 15 },
-    { left: 90, top: 66 },
-    { left: 47, top: 87 }
+    { left: 6, top: 13, size: 70, zIndex: 2 },
+    { left: 13, top: 22, size: 78, zIndex: 3 },
+    { left: 83, top: 9, size: 76, zIndex: 2 },
+    { left: 91, top: 26, size: 70, zIndex: 3 },
+    { left: 5, top: 68, size: 76, zIndex: 2 },
+    { left: 13, top: 78, size: 68, zIndex: 3 },
+    { left: 86, top: 70, size: 78, zIndex: 2 },
+    { left: 48, top: 90, size: 72, zIndex: 1 }
   ];
   const pool = [...AVATAR_OPTIONS];
 
@@ -567,12 +591,14 @@ function buildSuspectPins(seedKey: string): SuspectPin[] {
 
   return zones.map((zone, i) => ({
     option: pool[i % pool.length],
-    left: zone.left + (rand() * 8 - 4),
-    top: zone.top + (rand() * 7 - 3.5),
+    label: CASE_BOARD_LABELS[Math.floor(rand() * CASE_BOARD_LABELS.length)],
+    left: zone.left + (rand() * 5 - 2.5),
+    top: zone.top + (rand() * 5 - 2.5),
     rotate: rand() * 22 - 11,
-    size: 74 + Math.round(rand() * 24),
-    opacity: 0.18 + rand() * 0.08,
-    delay: i * 70
+    size: zone.size + Math.round(rand() * 10 - 5),
+    opacity: 0.2 + rand() * 0.08,
+    delay: i * 55,
+    zIndex: zone.zIndex
   }));
 }
 
@@ -599,21 +625,26 @@ function SuspectPins({ state }: { state: State }) {
             opacity: pin.opacity,
             transform: `rotate(${pin.rotate}deg)`,
             ["--rot" as string]: `${pin.rotate}deg`,
-            animationDelay: `${pin.delay}ms`
+            animationDelay: `${pin.delay}ms`,
+            zIndex: pin.zIndex
           }}
         >
-          <span
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/bluepin.webp"
+            alt=""
+            width={20}
+            height={20}
             style={{
               position: "absolute",
               left: "50%",
-              top: -6,
-              width: 11,
-              height: 11,
-              transform: "translateX(-50%)",
-              borderRadius: 999,
-              background: C.coral,
-              border: "1px solid rgba(255,255,255,.55)",
-              boxShadow: "0 2px 7px rgba(0,0,0,.4)"
+              top: -10,
+              width: 20,
+              height: 20,
+              transform: "translateX(-50%) rotate(-12deg)",
+              objectFit: "contain",
+              filter: "drop-shadow(0 2px 3px rgba(0,0,0,.45))",
+              zIndex: 2
             }}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -650,7 +681,7 @@ function SuspectPins({ state }: { state: State }) {
               textTransform: "uppercase"
             }}
           >
-            Suspect {String(i + 1).padStart(2, "0")}
+            {pin.label} {String(i + 1).padStart(2, "0")}
           </div>
         </div>
       ))}
@@ -773,7 +804,7 @@ function Board({
               <div className="disp" style={{ fontSize: 24, fontWeight: 800, color: C.gold, letterSpacing: 1 }}>
                 HOODWINKED
               </div>
-              <div className="body" style={{ color: C.creamDim, fontSize: 10, fontWeight: 800, letterSpacing: 1.4 }}>
+              <div className="body" style={{ color: C.creamDim, fontSize: 10, fontWeight: 900, letterSpacing: 1.6, textTransform: "uppercase" }}>
                 Fool the room. Win the night.
               </div>
             </div>
@@ -946,9 +977,9 @@ function Board({
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                gap: 18,
+                gap: 14,
                 margin: "0 auto 28px",
-                maxWidth: 760,
+                maxWidth: 560,
                 overflow: "visible"
               }}
             >
@@ -3873,7 +3904,7 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
             textShadow: `0 0 18px ${C.gold}33`
           }}
         >
-          Fool the room. Win the night.
+          FOOL THE ROOM. WIN THE NIGHT.
         </div>
 
         <div
@@ -4644,7 +4675,7 @@ const modeChip = (active: boolean): React.CSSProperties => ({
   overflow: "visible",
   position: "relative",
   zIndex: active ? 5 : 1,
-  transform: active ? "scale(1.2)" : "scale(1)",
+  transform: active ? "scale(1.12)" : "scale(1)",
   transformOrigin: "center",
   transition: "transform 420ms cubic-bezier(.2,.85,.2,1), box-shadow 420ms ease, border-color 420ms ease",
   boxShadow: active ? `0 22px 44px rgba(0,0,0,.42), 0 0 0 1px ${C.gold}44` : "none"
