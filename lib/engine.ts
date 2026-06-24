@@ -70,7 +70,57 @@ export const PROMPTS = [
   "A rejected name for a hurricane",
   "The most unhelpful thing on a job interview résumé",
   "A bad password your uncle insists is secure",
-  "What's playing on the radio in the elevator to hell"
+  "What's playing on the radio in the elevator to hell",
+  "The least convincing thing to say when caught sneaking around",
+  "A terrible alias for a jewel thief",
+  "The worst place to hide a secret map",
+  "What the detective found in the suspect's glove box",
+  "A rejected slogan for a very suspicious locksmith",
+  "The fake excuse that absolutely no one believed",
+  "What was really inside the mysterious envelope",
+  "The oddest thing to find taped under a table",
+  "A password only a terrible spy would use",
+  "What the lookout whispered into the walkie-talkie",
+  "The most suspicious thing to bring to a dinner party",
+  "A clue that would ruin the whole mystery immediately",
+  "What the villain wrote in their diary by accident",
+  "A bad name for a neighborhood watch group",
+  "The weirdest thing on the security camera footage",
+  "A disguise that fooled exactly nobody",
+  "The real reason someone wore sunglasses indoors",
+  "What the getaway driver forgot to do",
+  "A phrase you should never say in an interrogation room",
+  "The least intimidating secret society password",
+  "A ridiculous item in a spy's emergency kit",
+  "The worst possible code name for a mission",
+  "What the suspect claims is totally normal to keep in a freezer",
+  "The most suspicious thing to label 'not evidence'",
+  "A bad place to stash stolen snacks",
+  "What the witness was too embarrassed to admit",
+  "A rejected title for a true crime podcast",
+  "The object that somehow became Exhibit A",
+  "What the butler was doing when nobody was looking",
+  "A clue found in the office fridge",
+  "A terrible way to blend into a crowd",
+  "What the villain practiced saying in the mirror",
+  "The worst thing to accidentally text the group chat",
+  "A strange rule at detective summer camp",
+  "The secret hidden in grandma's cookie tin",
+  "A suspiciously specific thing to say at breakfast",
+  "What the safe combination probably should not be",
+  "The strangest thing found in a coat pocket",
+  "A bad excuse for having glitter on your shoes",
+  "What the mysterious note said after autocorrect ruined it",
+  "A terrible hiding place during a stakeout",
+  "The clue everyone ignored because it was too obvious",
+  "A new app designed only for suspicious people",
+  "What the rival detective keeps in their desk drawer",
+  "The worst possible thing to shout during a quiet mission",
+  "A fake job title for someone clearly up to something",
+  "The secret ingredient in a very suspicious casserole",
+  "A reason the case board has too much string",
+  "What the decoy briefcase actually contained",
+  "A thing no innocent person would say twice"
 ];
 
 export const COLORS = [
@@ -162,7 +212,42 @@ export const TRIVIA_QUESTIONS: TriviaQuestion[] = [
   { id: "t72", category: "Science", text: "What's the speed of light (approximately)?", choices: ["186,000 mi/s", "300,000 ft/s", "100,000 mi/s", "50,000 mi/s"], correctIndex: 0 },
   { id: "t73", category: "Movies", text: "Which actor voices Shrek?", choices: ["Eddie Murphy", "Mike Myers", "Antonio Banderas", "Cameron Diaz"], correctIndex: 1 },
   { id: "t74", category: "Pop Culture", text: "In Monopoly, how much do you collect for passing GO?", choices: ["$100", "$150", "$200", "$500"], correctIndex: 2 },
-  { id: "t75", category: "Music", text: "What instrument does Yo-Yo Ma famously play?", choices: ["Violin", "Cello", "Piano", "Flute"], correctIndex: 1 }
+  { id: "t75", category: "Music", text: "What instrument does Yo-Yo Ma famously play?", choices: ["Violin", "Cello", "Piano", "Flute"], correctIndex: 1 },
+  { id: "t76", category: "Mystery", text: "What is the name for a false clue meant to mislead readers?", choices: ["Cold open", "Red herring", "Plot armor", "MacGuffin"], correctIndex: 1 },
+  { id: "t77", category: "Mystery", text: "In detective stories, what does an alibi prove?", choices: ["Motive", "Opportunity", "Someone was elsewhere", "The case is closed"], correctIndex: 2 },
+  { id: "t78", category: "Mystery", text: "What is a 'whodunit'?", choices: ["A mystery about who committed the crime", "A courtroom transcript", "A spy gadget", "A police radio code"], correctIndex: 0 },
+  { id: "t79", category: "Spycraft", text: "What does a decoy do?", choices: ["Locks a vault", "Distracts or misleads", "Records fingerprints", "Counts money"], correctIndex: 1 },
+  { id: "t80", category: "Spycraft", text: "What is invisible ink traditionally used for?", choices: ["Secret messages", "Fake money", "Fingerprinting", "Lock picking"], correctIndex: 0 },
+  { id: "t81", category: "Crime Terms", text: "What is a person who helps commit a crime called?", choices: ["Archivist", "Accomplice", "Bailiff", "Curator"], correctIndex: 1 },
+  { id: "t82", category: "Crime Terms", text: "What does 'motive' mean in an investigation?", choices: ["A getaway car", "A reason for doing it", "A signed confession", "A witness statement"], correctIndex: 1 },
+  { id: "t83", category: "Crime Terms", text: "What does 'surveillance' mean?", choices: ["Watching or monitoring", "Burning evidence", "Making a disguise", "Writing a ransom note"], correctIndex: 0 },
+  { id: "t84", category: "Mystery", text: "Which board game asks players to solve a murder using rooms, weapons, and suspects?", choices: ["Risk", "Clue", "Sorry", "Trouble"], correctIndex: 1 },
+  { id: "t85", category: "Heists", text: "What is a vault mainly designed to protect?", choices: ["Valuables", "Pets", "Plants", "Rainwater"], correctIndex: 0 },
+  { id: "t86", category: "Heists", text: "What is another word for a getaway route?", choices: ["Escape route", "Table read", "Sound check", "Receipt"], correctIndex: 0 },
+  { id: "t87", category: "Mystery", text: "What does a detective usually collect at a scene?", choices: ["Evidence", "Souvenirs", "Coupons", "Wallpaper"], correctIndex: 0 },
+  { id: "t88", category: "Spycraft", text: "What is a code phrase?", choices: ["A secret agreed-upon message", "A typo", "A public headline", "A parking ticket"], correctIndex: 0 },
+  { id: "t89", category: "Disguises", text: "Which item is most commonly used as a quick disguise in cartoons?", choices: ["Fake mustache", "Waffle iron", "Tennis racket", "Garden hose"], correctIndex: 0 },
+  { id: "t90", category: "Crime Terms", text: "What is a witness?", choices: ["Someone who saw or heard something", "A locked safe", "A fake ID", "A police car"], correctIndex: 0 },
+  { id: "t91", category: "Mystery", text: "What does 'case closed' mean?", choices: ["The mystery is solved", "The door is locked", "The suspect escaped", "The clues were lost"], correctIndex: 0 },
+  { id: "t92", category: "Heists", text: "In a heist story, what is the 'score'?", choices: ["The target prize", "The soundtrack", "The lunch order", "The weather"], correctIndex: 0 },
+  { id: "t93", category: "Spycraft", text: "What is a safe house?", choices: ["A secret protected location", "A bank lobby", "A house made of steel", "A courtroom"], correctIndex: 0 },
+  { id: "t94", category: "Mystery", text: "What is a clue?", choices: ["Information that helps solve something", "A costume", "A trophy", "A random guess"], correctIndex: 0 },
+  { id: "t95", category: "Crime Terms", text: "What does 'interrogate' mean?", choices: ["Question someone closely", "Hide a wallet", "Draw a map", "Unlock a phone"], correctIndex: 0 },
+  { id: "t96", category: "Disguises", text: "What accessory is often used to hide someone's face?", choices: ["Mask", "Apron", "Scarf ring", "Belt"], correctIndex: 0 },
+  { id: "t97", category: "Spycraft", text: "What is a cipher used for?", choices: ["Encoding messages", "Cooking soup", "Measuring shoes", "Printing photos"], correctIndex: 0 },
+  { id: "t98", category: "Mystery", text: "What is the final reveal in many mysteries called?", choices: ["The solution", "The warm-up", "The receipt", "The rehearsal"], correctIndex: 0 },
+  { id: "t99", category: "Heists", text: "What role watches for trouble during a sneaky plan?", choices: ["Lookout", "Decorator", "Referee", "Barista"], correctIndex: 0 },
+  { id: "t100", category: "Crime Terms", text: "What does 'evidence' help prove?", choices: ["What happened", "Who is tallest", "The price of gas", "The weather forecast"], correctIndex: 0 },
+  { id: "t101", category: "Mystery", text: "What is a suspect?", choices: ["Someone thought to be involved", "A judge's desk", "A type of map", "A locked drawer"], correctIndex: 0 },
+  { id: "t102", category: "Spycraft", text: "What is a dead drop?", choices: ["A secret place to leave items", "A broken elevator", "A dance move", "A weather report"], correctIndex: 0 },
+  { id: "t103", category: "Heists", text: "Which tool is used to see tiny details?", choices: ["Magnifying glass", "Hammer", "Compass", "Ladle"], correctIndex: 0 },
+  { id: "t104", category: "Disguises", text: "What does it mean to go undercover?", choices: ["Hide your real identity", "Take a nap", "Stand under a blanket", "Lose a game"], correctIndex: 0 },
+  { id: "t105", category: "Mystery", text: "Which phrase means someone is not telling the truth?", choices: ["Lying", "Bookmarking", "Polishing", "Forecasting"], correctIndex: 0 },
+  { id: "t106", category: "Crime Terms", text: "What is a confession?", choices: ["Admitting what happened", "A secret door", "A fake mustache", "A police badge"], correctIndex: 0 },
+  { id: "t107", category: "Spycraft", text: "What does a wiretap listen to?", choices: ["Conversations", "Footprints", "Fingerprints", "Paint colors"], correctIndex: 0 },
+  { id: "t108", category: "Mystery", text: "What is the person solving a mystery often called?", choices: ["Detective", "Goalkeeper", "Pilot", "Chef"], correctIndex: 0 },
+  { id: "t109", category: "Heists", text: "What is a getaway car used for?", choices: ["Escaping quickly", "Delivering mail", "Teaching math", "Selling popcorn"], correctIndex: 0 },
+  { id: "t110", category: "Crime Terms", text: "What is a fingerprint?", choices: ["A unique mark from a finger", "A secret password", "A kind of trophy", "A map symbol"], correctIndex: 0 }
 ];
 
 /* ---- CONTENT: PICTURE REVEAL --------------------------------------------- */
@@ -278,6 +363,145 @@ export const PICTURE_ITEMS: PictureItem[] = [
     answer: "taco",
     hint: "Folded food",
     imagePrompt: "A mouthwatering food photograph of a taco with colorful toppings on a dark table, centered, no text."
+  },
+  {
+    id: "p16",
+    answer: "magnifying glass",
+    aliases: ["magnifier"],
+    hint: "Detective tool",
+    imagePrompt: "A cinematic close-up photograph of a brass magnifying glass on a dark wooden desk with moody detective lighting, no text."
+  },
+  {
+    id: "p17",
+    answer: "fingerprint",
+    aliases: ["finger print"],
+    hint: "Tiny identity clue",
+    imagePrompt: "A dramatic forensic photograph of a large visible fingerprint dusted in powder on black glass, centered, no text."
+  },
+  {
+    id: "p18",
+    answer: "mask",
+    aliases: ["disguise mask"],
+    hint: "Face cover",
+    imagePrompt: "A glossy theatrical disguise mask on a velvet table under a spotlight, mysterious but clear, no text."
+  },
+  {
+    id: "p19",
+    answer: "vault",
+    aliases: ["safe", "bank vault"],
+    hint: "Locked treasure room",
+    imagePrompt: "A cinematic photograph of a heavy round bank vault door slightly open, dramatic gold and green lighting, no text."
+  },
+  {
+    id: "p20",
+    answer: "envelope",
+    aliases: ["sealed envelope", "letter"],
+    hint: "Secret message",
+    imagePrompt: "A sealed cream envelope with a wax seal on a dark desk, moody mystery lighting, no writing or text."
+  },
+  {
+    id: "p21",
+    answer: "flashlight",
+    aliases: ["torch"],
+    hint: "Beam in the dark",
+    imagePrompt: "A flashlight shining a bright cone of light across a dark evidence room, object clearly visible, no text."
+  },
+  {
+    id: "p22",
+    answer: "briefcase",
+    aliases: ["case"],
+    hint: "Carry the score",
+    imagePrompt: "A black leather briefcase on a table with dramatic shadows and golden rim light, no logos, no text."
+  },
+  {
+    id: "p23",
+    answer: "walkie talkie",
+    aliases: ["radio", "walkie-talkie"],
+    hint: "Lookout tool",
+    imagePrompt: "A realistic walkie talkie radio lying on a dark desk beside scattered clue photos, no visible words."
+  },
+  {
+    id: "p24",
+    answer: "key",
+    aliases: ["gold key", "skeleton key"],
+    hint: "Unlocks trouble",
+    imagePrompt: "A vintage brass key on a dark green felt surface under a small spotlight, sharp centered object, no text."
+  },
+  {
+    id: "p25",
+    answer: "footprint",
+    aliases: ["shoe print", "shoeprint"],
+    hint: "Trail on the floor",
+    imagePrompt: "A muddy shoe footprint on a polished floor photographed like forensic evidence, clear shape, no text."
+  },
+  {
+    id: "p26",
+    answer: "camera",
+    aliases: ["security camera"],
+    hint: "Caught on film",
+    imagePrompt: "A security camera mounted in a dim hallway with cinematic lighting, recognizable object, no text."
+  },
+  {
+    id: "p27",
+    answer: "dice",
+    aliases: ["pair of dice"],
+    hint: "Risky roll",
+    imagePrompt: "Two white dice on a dark game table with dramatic green and gold lighting, no text."
+  },
+  {
+    id: "p28",
+    answer: "lock",
+    aliases: ["padlock"],
+    hint: "Needs a key",
+    imagePrompt: "A heavy brass padlock on an old wooden box with dramatic detective lighting, centered, no text."
+  },
+  {
+    id: "p29",
+    answer: "rope",
+    aliases: ["string", "cord"],
+    hint: "Tied clue",
+    imagePrompt: "A coil of rope on a dark table with evidence-board style lighting, clean centered subject, no text."
+  },
+  {
+    id: "p30",
+    answer: "gemstone",
+    aliases: ["jewel", "diamond", "gem"],
+    hint: "Shiny target",
+    imagePrompt: "A sparkling gemstone on black velvet under a spotlight, luxury heist style, no text."
+  },
+  {
+    id: "p31",
+    answer: "getaway car",
+    aliases: ["car"],
+    hint: "Fast escape",
+    imagePrompt: "A sleek car parked in a rainy alley under dramatic streetlight, cinematic heist mood, no license text."
+  },
+  {
+    id: "p32",
+    answer: "newspaper",
+    aliases: ["paper"],
+    hint: "Morning headline",
+    imagePrompt: "A folded old newspaper on a detective desk with visible columns but no readable text, moody lighting."
+  },
+  {
+    id: "p33",
+    answer: "compass",
+    hint: "Find the route",
+    imagePrompt: "A brass compass on an old map-style background with no readable labels, adventure mystery lighting."
+  },
+  {
+    id: "p34",
+    answer: "binoculars",
+    aliases: ["field glasses"],
+    hint: "Stakeout view",
+    imagePrompt: "A pair of black binoculars on a rooftop ledge at night, clear centered object, no text."
+  },
+  {
+    id: "p35",
+    answer: "crowbar",
+    aliases: ["pry bar"],
+    hint: "Forceful tool",
+    imagePrompt: "A metal crowbar on a concrete floor under a single harsh spotlight, clear object, no text."
   }
 ];
 
@@ -308,7 +532,37 @@ export const WHEEL_PUZZLES: WheelPuzzle[] = [
   { id: "w17", category: "Place", text: "LAS VEGAS" },
   { id: "w18", category: "Phrase", text: "UNDER PRESSURE" },
   { id: "w19", category: "Food", text: "MACARONI AND CHEESE" },
-  { id: "w20", category: "Thing", text: "SUNGLASSES" }
+  { id: "w20", category: "Thing", text: "SUNGLASSES" },
+  { id: "w21", category: "Hoodwinked", text: "TRUST NO ONE" },
+  { id: "w22", category: "Hoodwinked", text: "FOLLOW THE CLUES" },
+  { id: "w23", category: "Hoodwinked", text: "THE PLOT THICKENS" },
+  { id: "w24", category: "Hoodwinked", text: "CAUGHT RED HANDED" },
+  { id: "w25", category: "Hoodwinked", text: "UNDERCOVER OPERATION" },
+  { id: "w26", category: "Hoodwinked", text: "THE GETAWAY CAR" },
+  { id: "w27", category: "Hoodwinked", text: "SECRET PASSAGE" },
+  { id: "w28", category: "Hoodwinked", text: "HIDDEN IN PLAIN SIGHT" },
+  { id: "w29", category: "Hoodwinked", text: "THE PERFECT ALIBI" },
+  { id: "w30", category: "Hoodwinked", text: "A CASE OF MISTAKEN IDENTITY" },
+  { id: "w31", category: "Hoodwinked", text: "SMOKE AND MIRRORS" },
+  { id: "w32", category: "Hoodwinked", text: "THE INSIDE JOB" },
+  { id: "w33", category: "Hoodwinked", text: "ONE LAST CLUE" },
+  { id: "w34", category: "Hoodwinked", text: "THE SECRET CODE" },
+  { id: "w35", category: "Hoodwinked", text: "BEHIND THE MASK" },
+  { id: "w36", category: "Hoodwinked", text: "NO LOOSE ENDS" },
+  { id: "w37", category: "Hoodwinked", text: "QUESTION EVERYTHING" },
+  { id: "w38", category: "Hoodwinked", text: "THE FALSE LEAD" },
+  { id: "w39", category: "Hoodwinked", text: "THE FINAL REVEAL" },
+  { id: "w40", category: "Hoodwinked", text: "CASE CLOSED" },
+  { id: "w41", category: "Hoodwinked", text: "WATCH YOUR BACK" },
+  { id: "w42", category: "Hoodwinked", text: "THE MISSING PIECE" },
+  { id: "w43", category: "Hoodwinked", text: "KEEP A STRAIGHT FACE" },
+  { id: "w44", category: "Hoodwinked", text: "READ THE ROOM" },
+  { id: "w45", category: "Hoodwinked", text: "THE LOOKOUT" },
+  { id: "w46", category: "Hoodwinked", text: "A SUSPICIOUS PACKAGE" },
+  { id: "w47", category: "Hoodwinked", text: "THE MASTER PLAN" },
+  { id: "w48", category: "Hoodwinked", text: "THE DECOY" },
+  { id: "w49", category: "Hoodwinked", text: "SLIP THROUGH THE CRACKS" },
+  { id: "w50", category: "Hoodwinked", text: "FOOL THE ROOM" }
 ];
 
 /* ---- CONTENT: FAMILY FEUD ------------------------------------------------ */
@@ -538,6 +792,226 @@ export const FEUD_QUESTIONS: FeudQuestion[] = [
       { text: "Crying baby", points: 16, aliases: ["baby"] },
       { text: "Rolling luggage", points: 12, aliases: ["suitcase"] },
       { text: "Security alert", points: 8, aliases: ["security"] }
+    ]
+  },
+  {
+    id: "f21",
+    prompt: "Name something a guilty person might do",
+    answers: [
+      { text: "Sweat", points: 30, aliases: ["sweating"] },
+      { text: "Avoid eye contact", points: 24, aliases: ["look away"] },
+      { text: "Talk too much", points: 18, aliases: ["ramble"] },
+      { text: "Blame someone else", points: 14, aliases: ["blame others"] },
+      { text: "Run away", points: 10, aliases: ["flee"] }
+    ]
+  },
+  {
+    id: "f22",
+    prompt: "Name something you would find on a detective's desk",
+    answers: [
+      { text: "Case files", points: 30, aliases: ["files", "folder"] },
+      { text: "Magnifying glass", points: 24, aliases: ["magnifier"] },
+      { text: "Coffee", points: 18 },
+      { text: "Photos", points: 14, aliases: ["pictures"] },
+      { text: "Notebook", points: 10, aliases: ["notes"] }
+    ]
+  },
+  {
+    id: "f23",
+    prompt: "Name a bad hiding place for a secret",
+    answers: [
+      { text: "Under the bed", points: 30, aliases: ["bed"] },
+      { text: "Sock drawer", points: 22, aliases: ["drawer"] },
+      { text: "Cookie jar", points: 18 },
+      { text: "Phone notes", points: 14, aliases: ["phone"] },
+      { text: "Back pocket", points: 10, aliases: ["pocket"] }
+    ]
+  },
+  {
+    id: "f24",
+    prompt: "Name something people lie about",
+    answers: [
+      { text: "Age", points: 28 },
+      { text: "Being fine", points: 24, aliases: ["feelings", "how they feel"] },
+      { text: "Money", points: 18 },
+      { text: "Where they were", points: 16, aliases: ["location"] },
+      { text: "Weight", points: 10 }
+    ]
+  },
+  {
+    id: "f25",
+    prompt: "Name something you would bring on a stakeout",
+    answers: [
+      { text: "Binoculars", points: 30 },
+      { text: "Coffee", points: 24 },
+      { text: "Snacks", points: 20, aliases: ["food"] },
+      { text: "Camera", points: 14 },
+      { text: "Notebook", points: 8, aliases: ["notes"] }
+    ]
+  },
+  {
+    id: "f26",
+    prompt: "Name something that makes a person look suspicious",
+    answers: [
+      { text: "Sneaking around", points: 30, aliases: ["sneaking"] },
+      { text: "Wearing a mask", points: 22, aliases: ["mask"] },
+      { text: "Whispering", points: 18 },
+      { text: "Carrying a bag", points: 14, aliases: ["bag"] },
+      { text: "Looking nervous", points: 10, aliases: ["nervous"] }
+    ]
+  },
+  {
+    id: "f27",
+    prompt: "Name something you might see on a case board",
+    answers: [
+      { text: "Photos", points: 30, aliases: ["pictures"] },
+      { text: "String", points: 24, aliases: ["red string"] },
+      { text: "Map", points: 18 },
+      { text: "Notes", points: 14 },
+      { text: "Push pins", points: 10, aliases: ["pins"] }
+    ]
+  },
+  {
+    id: "f28",
+    prompt: "Name a classic disguise item",
+    answers: [
+      { text: "Fake mustache", points: 32, aliases: ["mustache", "moustache"] },
+      { text: "Sunglasses", points: 22, aliases: ["shades"] },
+      { text: "Hat", points: 18 },
+      { text: "Wig", points: 14 },
+      { text: "Mask", points: 10 }
+    ]
+  },
+  {
+    id: "f29",
+    prompt: "Name something a thief might try to steal",
+    answers: [
+      { text: "Money", points: 30, aliases: ["cash"] },
+      { text: "Jewelry", points: 24, aliases: ["jewels"] },
+      { text: "Car", points: 18 },
+      { text: "Painting", points: 14, aliases: ["art"] },
+      { text: "Phone", points: 10 }
+    ]
+  },
+  {
+    id: "f30",
+    prompt: "Name something that could leave evidence behind",
+    answers: [
+      { text: "Fingerprints", points: 32, aliases: ["fingerprint"] },
+      { text: "Footprints", points: 24, aliases: ["shoe print"] },
+      { text: "Hair", points: 16 },
+      { text: "Mud", points: 12 },
+      { text: "Glitter", points: 8 }
+    ]
+  },
+  {
+    id: "f31",
+    prompt: "Name somewhere a secret meeting might happen",
+    answers: [
+      { text: "Alley", points: 28 },
+      { text: "Parking garage", points: 24, aliases: ["garage"] },
+      { text: "Basement", points: 18 },
+      { text: "Restaurant", points: 14 },
+      { text: "Warehouse", points: 10 }
+    ]
+  },
+  {
+    id: "f32",
+    prompt: "Name something you might use to open a locked door",
+    answers: [
+      { text: "Key", points: 34 },
+      { text: "Lock pick", points: 22, aliases: ["pick"] },
+      { text: "Crowbar", points: 18, aliases: ["pry bar"] },
+      { text: "Code", points: 14, aliases: ["keypad"] },
+      { text: "Credit card", points: 8, aliases: ["card"] }
+    ]
+  },
+  {
+    id: "f33",
+    prompt: "Name something people do to cover their tracks",
+    answers: [
+      { text: "Delete messages", points: 30, aliases: ["delete texts"] },
+      { text: "Clean up", points: 24, aliases: ["clean"] },
+      { text: "Lie", points: 18 },
+      { text: "Change clothes", points: 14 },
+      { text: "Use an alias", points: 10, aliases: ["fake name"] }
+    ]
+  },
+  {
+    id: "f34",
+    prompt: "Name something a lookout might say",
+    answers: [
+      { text: "Someone's coming", points: 34, aliases: ["someone is coming"] },
+      { text: "Run", points: 22 },
+      { text: "All clear", points: 18 },
+      { text: "Hurry up", points: 14, aliases: ["hurry"] },
+      { text: "Hide", points: 8 }
+    ]
+  },
+  {
+    id: "f35",
+    prompt: "Name something hidden in a secret room",
+    answers: [
+      { text: "Money", points: 28, aliases: ["cash"] },
+      { text: "Treasure", points: 24 },
+      { text: "Documents", points: 18, aliases: ["papers"] },
+      { text: "Safe", points: 14, aliases: ["vault"] },
+      { text: "Skeleton", points: 8 }
+    ]
+  },
+  {
+    id: "f36",
+    prompt: "Name something that happens in a mystery movie",
+    answers: [
+      { text: "Someone disappears", points: 28, aliases: ["disappearance"] },
+      { text: "A clue is found", points: 24, aliases: ["clue"] },
+      { text: "A chase", points: 18 },
+      { text: "A twist ending", points: 14, aliases: ["twist"] },
+      { text: "A confession", points: 10 }
+    ]
+  },
+  {
+    id: "f37",
+    prompt: "Name something a spy might carry",
+    answers: [
+      { text: "Camera", points: 28 },
+      { text: "Fake passport", points: 22, aliases: ["passport"] },
+      { text: "Gadget", points: 18 },
+      { text: "Radio", points: 14, aliases: ["walkie talkie"] },
+      { text: "Hidden microphone", points: 10, aliases: ["microphone", "mic"] }
+    ]
+  },
+  {
+    id: "f38",
+    prompt: "Name something you might inspect with a magnifying glass",
+    answers: [
+      { text: "Fingerprint", points: 30, aliases: ["fingerprints"] },
+      { text: "Footprint", points: 22, aliases: ["shoe print"] },
+      { text: "Tiny writing", points: 18, aliases: ["small print"] },
+      { text: "Hair", points: 14 },
+      { text: "Map", points: 10 }
+    ]
+  },
+  {
+    id: "f39",
+    prompt: "Name a place someone might stash a key",
+    answers: [
+      { text: "Under a mat", points: 32, aliases: ["doormat"] },
+      { text: "Flower pot", points: 24, aliases: ["plant"] },
+      { text: "Mailbox", points: 16 },
+      { text: "Rock", points: 12, aliases: ["fake rock"] },
+      { text: "Drawer", points: 8 }
+    ]
+  },
+  {
+    id: "f40",
+    prompt: "Name something a room full of players might argue about",
+    answers: [
+      { text: "Who lied", points: 28, aliases: ["liar"] },
+      { text: "The rules", points: 24 },
+      { text: "The answer", points: 18 },
+      { text: "Who won", points: 14, aliases: ["winner"] },
+      { text: "The score", points: 10 }
     ]
   }
 ];

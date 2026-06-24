@@ -573,14 +573,14 @@ function seededRandom(seed: number) {
 function buildSuspectPins(seedKey: string): SuspectPin[] {
   const rand = seededRandom(hashString(seedKey));
   const zones = [
-    { left: 6, top: 13, size: 70, zIndex: 2 },
-    { left: 13, top: 22, size: 78, zIndex: 3 },
-    { left: 83, top: 9, size: 76, zIndex: 2 },
-    { left: 91, top: 26, size: 70, zIndex: 3 },
-    { left: 5, top: 68, size: 76, zIndex: 2 },
-    { left: 13, top: 78, size: 68, zIndex: 3 },
-    { left: 86, top: 70, size: 78, zIndex: 2 },
-    { left: 48, top: 90, size: 72, zIndex: 1 }
+    { left: 9, top: 22, size: 70, zIndex: 2 },
+    { left: 17, top: 31, size: 78, zIndex: 3 },
+    { left: 87, top: 20, size: 76, zIndex: 2 },
+    { left: 94, top: 34, size: 70, zIndex: 3 },
+    { left: 8, top: 66, size: 76, zIndex: 2 },
+    { left: 15, top: 78, size: 68, zIndex: 3 },
+    { left: 91, top: 67, size: 78, zIndex: 2 },
+    { left: 83, top: 79, size: 72, zIndex: 3 }
   ];
   const pool = [...AVATAR_OPTIONS];
 
@@ -1042,7 +1042,7 @@ function Board({
                 lineHeight: 1.35,
                 maxWidth: 720,
                 margin: "0 auto 20px",
-                textShadow: `0 0 18px ${C.gold}22`
+                textShadow: "0 4px 16px rgba(0,0,0,.82), 0 2px 4px rgba(0,0,0,.94), 0 0 22px rgba(255,193,94,.28)"
               }}
             >
               {MODE_INFO[state.mode].blurb}
