@@ -22,6 +22,14 @@ const C = {
   green: "#6fb071"
 };
 
+const REVEAL_AMOUNT_ANIMATION = `
+  @keyframes final-offer-amount-pop {
+    0% { opacity: .2; transform: translate(-50%, -50%) scale(.58); }
+    62% { opacity: 1; transform: translate(-50%, -50%) scale(1.14); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+`;
+
 function money(value) {
   if (value === 0) return "BANKRUPT";
   return `$${value.toLocaleString()}`;
@@ -131,16 +139,19 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
         <span
           style={{
             position: "absolute",
-            left: 8,
-            right: 8,
+            left: "50%",
             top: "50%",
-            transform: "translateY(-18%)",
+            transform: "translate(-50%, -50%)",
+            width: "calc(100% - 12px)",
             color: briefcase.value === 0 ? "#ffd2ce" : C.gold,
-            fontSize: briefcase.value === 0 ? 12 : 13,
+            fontSize: briefcase.value === 0 ? "clamp(17px, 2vw, 23px)" : "clamp(18px, 2.2vw, 27px)",
             fontWeight: 900,
-            letterSpacing: briefcase.value === 0 ? 1 : 0,
-            textShadow: "0 2px 4px rgba(0,0,0,.9)",
-            pointerEvents: "none"
+            letterSpacing: briefcase.value === 0 ? 1.1 : 0,
+            lineHeight: 1,
+            textAlign: "center",
+            textShadow: "0 3px 6px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.85)",
+            pointerEvents: "none",
+            animation: "final-offer-amount-pop 420ms cubic-bezier(.2,.9,.2,1) both"
           }}
         >
           {money(briefcase.value)}
@@ -366,6 +377,7 @@ export default function FinalOffer() {
         marginTop: 24
       }}
     >
+      <style>{REVEAL_AMOUNT_ANIMATION}</style>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 860 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
