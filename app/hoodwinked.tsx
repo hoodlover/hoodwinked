@@ -4268,6 +4268,29 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
               </button>
             </div>
           </form>
+
+          <section style={landingPanel}>
+            <div className="body" style={eyebrowStyle}>SOLO</div>
+            <div className="disp" style={{ color: C.cream, fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
+              Solo games
+            </div>
+            <div className="body" style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, marginBottom: 16 }}>
+              Practice the case work with one-player AI challenges.
+            </div>
+            <Link
+              href="/solo"
+              className="disp"
+              style={{
+                ...hostBtn(true),
+                display: "block",
+                width: "100%",
+                textAlign: "center",
+                textDecoration: "none"
+              }}
+            >
+              Open solo cases
+            </Link>
+          </section>
         </div>
 
         <div className="body" style={{ color: C.creamDim, fontSize: 12, marginTop: 24, lineHeight: 1.6 }}>
