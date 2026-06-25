@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 
 const DIFFICULTY = {
-  easy: { label: "Easy", shuffles: 4, speed: 700 },
-  medium: { label: "Medium", shuffles: 6, speed: 500 },
-  hard: { label: "Hard", shuffles: 8, speed: 300 }
+  easy: { label: "Easy", shuffles: 4, speed: 630 },
+  medium: { label: "Medium", shuffles: 6, speed: 450 },
+  hard: { label: "Hard", shuffles: 8, speed: 270 }
 };
 
 const C = {
@@ -64,7 +64,7 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
         bottom: 20,
         width: 192,
         height: 264,
-        transition: "left 500ms cubic-bezier(.2,.85,.2,1)",
+        transition: "left 450ms cubic-bezier(.2,.85,.2,1)",
         zIndex: lifted ? 3 : 2
       }}
     >
@@ -109,7 +109,7 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
           height: 236,
           cursor: clickable ? "pointer" : "default",
           filter: clickable ? "drop-shadow(0 16px 18px rgba(0,0,0,.38))" : "drop-shadow(0 12px 16px rgba(0,0,0,.3))",
-          transform: lifted ? "translateY(-116px) rotate(-4deg)" : clickable ? "translateY(-6px)" : "none",
+          transform: lifted ? "translateY(-72px) rotate(-4deg)" : clickable ? "translateY(-6px)" : "none",
           transition: "transform 380ms ease, filter 180ms ease",
           position: "relative",
           zIndex: 2
@@ -300,8 +300,8 @@ export default function ShellGame() {
       <div
         style={{
           position: "relative",
-          height: "clamp(380px, 48vw, 520px)",
-          overflow: "hidden",
+          height: "clamp(260px, 29vw, 312px)",
+          overflow: "visible",
           borderRadius: 8,
           border: `1px solid ${C.line}`,
           background:

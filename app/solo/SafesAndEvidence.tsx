@@ -222,19 +222,38 @@ function SafesGrid({
   title,
   grid,
   owner,
+  pieces,
   status,
   onTarget
 }: {
   title: string;
   grid: Cell[];
   owner: Owner;
+  pieces: Piece[];
   status: Status;
   onTarget?: (index: number) => void;
 }) {
   const mapImage = owner === "player" ? "/a_and_I/jailmap.png" : "/a_and_I/citymap_1.webp";
+  const left = remainingPieces(pieces);
   return (
     <section>
-      <h3 style={{ margin: "0 0 10px", color: C.cream, fontSize: 18 }}>{title}</h3>
+      <h3 style={{ margin: "0 0 10px", color: C.cream, fontSize: 18, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <span>{title}</span>
+        <span
+          style={{
+            color: C.gold,
+            border: `1px solid ${C.line}`,
+            borderRadius: 999,
+            background: "rgba(9,19,14,.62)",
+            padding: "4px 9px",
+            fontSize: 12,
+            fontWeight: 900,
+            letterSpacing: 1
+          }}
+        >
+          {left.length} / {pieces.length} remaining
+        </span>
+      </h3>
       <div
         style={{
           display: "grid",
@@ -242,7 +261,7 @@ function SafesGrid({
           gap: 3,
           padding: 8,
           borderRadius: 8,
-          background: `linear-gradient(rgba(9,19,14,.5), rgba(9,19,14,.5)), url(${mapImage}) center/cover`,
+          background: `linear-gradient(rgba(9,19,14,.28), rgba(9,19,14,.28)), url(${mapImage}) center/cover`,
           border: `1px solid ${C.line}`,
           width: "fit-content",
           maxWidth: "100%",
@@ -252,9 +271,10 @@ function SafesGrid({
         {grid.map((cell, index) => {
           const revealPiece = owner === "player" || cell.shot === "hit" || status !== "playing";
           const clickable = owner === "ai" && status === "playing" && !cell.shot;
-          const base = revealPiece && cell.pieceType === "alibi" ? "rgba(255,193,94,.22)" : revealPiece && cell.pieceType === "informant" ? "rgba(61,125,104,.24)" : "rgba(251,243,228,.45)";
-          const background = cell.shot === "hit" ? "rgba(255,193,94,.28)" : cell.shot === "miss" ? "rgba(217,210,189,.8)" : base;
+          const base = revealPiece && cell.pieceType === "alibi" ? "rgba(255,193,94,.16)" : revealPiece && cell.pieceType === "informant" ? "rgba(61,125,104,.18)" : "rgba(251,243,228,.28)";
+          const background = cell.shot === "hit" ? "rgba(255,193,94,.2)" : cell.shot === "miss" ? "rgba(217,210,189,.42)" : base;
           const showFace = revealPiece && cell.pieceType && cell.shot !== "miss";
+          const showHitMark = owner === "player" && cell.shot === "hit";
           return (
             <button
               key={index}
@@ -272,6 +292,8 @@ function SafesGrid({
                 cursor: clickable ? "crosshair" : "default",
                 display: "grid",
                 placeItems: "center",
+                position: "relative",
+                overflow: "hidden",
                 boxShadow: cell.shot === "hit" ? "inset 0 0 0 2px rgba(0,0,0,.26)" : "none",
                 animation: cell.shot === "hit" ? "solo-board-hit 320ms ease" : cell.shot === "miss" ? "solo-board-miss 420ms ease" : "none",
                 fontSize: cell.shot === "miss" ? 9 : 14
@@ -299,58 +321,28 @@ function SafesGrid({
                   style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 3 }}
                 />
               ) : ""}
+              {showHitMark && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src="/a_and_I/X.png"
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    opacity: 0.92,
+                    pointerEvents: "none"
+                  }}
+                />
+              )}
             </button>
           );
         })}
       </div>
     </section>
-  );
-}
-
-function PieceList({ title, pieces }: { title: string; pieces: Piece[] }) {
-  const left = remainingPieces(pieces);
-  return (
-    <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, background: "rgba(9,19,14,.55)", minWidth: 0 }}>
-      <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>{title}</div>
-      <div style={{ color: C.cream, fontSize: 20, fontWeight: 900, margin: "3px 0" }}>
-        {left.length} / {pieces.length}
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-        {pieces.map((piece) => {
-          const sunk = piece.hits.length >= piece.cells.length;
-          return (
-            <span
-              key={piece.id}
-              style={{
-                color: sunk ? "#9b9b9b" : C.cream,
-                background: piece.type === "alibi" ? `${C.alibi}66` : `${C.informant}66`,
-                border: `1px solid ${sunk ? "#555" : piece.type === "alibi" ? C.alibi : C.informant}`,
-                borderRadius: 999,
-                padding: "5px 8px",
-                fontSize: 14,
-                fontWeight: 800,
-                textDecoration: sunk ? "line-through" : "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 3
-              }}
-            >
-              {Array.from({ length: piece.size }, (_, index) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={index}
-                  src={criminalIcon(piece.id, index)}
-                  alt=""
-                  aria-hidden="true"
-                  style={{ width: 26, height: 26, objectFit: "cover", borderRadius: 3, opacity: sunk ? 0.45 : 1 }}
-                />
-              ))}
-              <span>{piece.size} {piece.type}</span>
-            </span>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
@@ -529,16 +521,7 @@ export default function SafesAndEvidence() {
         </div>
       ) : (
         <>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr) minmax(180px, .5fr)",
-              gap: 12,
-              marginBottom: 16
-            }}
-          >
-            <PieceList title="Your pieces remaining" pieces={game.playerPieces} />
-            <PieceList title="AI pieces remaining" pieces={game.aiPieces} />
+          <div style={{ marginBottom: 16 }}>
             <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, background: "rgba(9,19,14,.55)", minWidth: 0 }}>
               <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>STATUS</div>
               <div style={{ color: game.status === "won" ? C.gold : game.status === "lost" ? C.hit : C.cream, fontWeight: 900, fontSize: 16, marginTop: 6 }}>
@@ -556,8 +539,8 @@ export default function SafesAndEvidence() {
               alignItems: "start"
             }}
           >
-            <SafesGrid title="Your Precinct Map" grid={game.playerGrid} owner="player" status={game.status} />
-            <SafesGrid title="Rival Station Map" grid={game.aiGrid} owner="ai" status={game.status} onTarget={playerFire} />
+            <SafesGrid title="Your Precinct Map" grid={game.playerGrid} owner="player" pieces={game.playerPieces} status={game.status} />
+            <SafesGrid title="Rival Station Map" grid={game.aiGrid} owner="ai" pieces={game.aiPieces} status={game.status} onTarget={playerFire} />
           </div>
         </>
       )}
