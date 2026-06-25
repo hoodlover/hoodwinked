@@ -271,7 +271,7 @@ function SafesGrid({
         {grid.map((cell, index) => {
           const revealPiece = owner === "player" || cell.shot === "hit" || status !== "playing";
           const clickable = owner === "ai" && status === "playing" && !cell.shot;
-          const base = revealPiece && cell.pieceType === "alibi" ? "rgba(255,193,94,.16)" : revealPiece && cell.pieceType === "informant" ? "rgba(61,125,104,.18)" : "rgba(251,243,228,.28)";
+          const base = revealPiece && cell.pieceType === "alibi" ? "rgba(255,193,94,.16)" : revealPiece && cell.pieceType === "informant" ? "rgba(61,125,104,.18)" : "rgba(251,243,228,.22)";
           const background = cell.shot === "hit" ? "rgba(255,193,94,.2)" : cell.shot === "miss" ? "rgba(217,210,189,.42)" : base;
           const showFace = revealPiece && cell.pieceType && cell.shot !== "miss";
           const showHitMark = owner === "player" && cell.shot === "hit";
@@ -284,7 +284,7 @@ function SafesGrid({
               style={{
                 width: "clamp(34px, 8vw, 54px)",
                 height: "clamp(34px, 8vw, 54px)",
-                border: `1px solid ${cell.shot === "hit" ? C.gold : "rgba(251,243,228,.28)"}`,
+                border: `1px solid ${cell.shot === "hit" ? C.gold : "rgba(251,243,228,.22)"}`,
                 borderRadius: 5,
                 background,
                 color: C.dark,

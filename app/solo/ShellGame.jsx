@@ -206,6 +206,10 @@ export default function ShellGame() {
     else setGame(initialGame());
   };
 
+  const changeDifficulty = () => {
+    setGame(initialGame());
+  };
+
   return (
     <section
       style={{
@@ -335,22 +339,38 @@ export default function ShellGame() {
       </div>
 
       {game.phase === "revealed" && (
-        <button
-          type="button"
-          onClick={replay}
-          style={{
-            marginTop: 16,
-            border: `1px solid ${C.gold}`,
-            background: `linear-gradient(180deg, ${C.gold}, #dca33d)`,
-            color: C.dark,
-            borderRadius: 8,
-            padding: "10px 16px",
-            fontWeight: 900,
-            cursor: "pointer"
-          }}
-        >
-          Replay
-        </button>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
+          <button
+            type="button"
+            onClick={replay}
+            style={{
+              border: `1px solid ${C.gold}`,
+              background: `linear-gradient(180deg, ${C.gold}, #dca33d)`,
+              color: C.dark,
+              borderRadius: 8,
+              padding: "10px 16px",
+              fontWeight: 900,
+              cursor: "pointer"
+            }}
+          >
+            Replay
+          </button>
+          <button
+            type="button"
+            onClick={changeDifficulty}
+            style={{
+              border: `1px solid ${C.gold}`,
+              background: `linear-gradient(180deg, ${C.gold}, #dca33d)`,
+              color: C.dark,
+              borderRadius: 8,
+              padding: "10px 16px",
+              fontWeight: 900,
+              cursor: "pointer"
+            }}
+          >
+            Change difficulty
+          </button>
+        </div>
       )}
     </section>
   );
