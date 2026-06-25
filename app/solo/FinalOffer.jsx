@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-const VALUES = [0, 100, 500, 1000, 5000, 10000, 25000, 50000, 75000, 100000, 150000, 250000, 400000, 500000, 750000, 1000000];
+const VALUES = [0, 100, 500, 1000, 2500, 5000, 10000, 25000, 50000, 75000, 100000, 150000, 250000, 400000, 500000, 750000, 1000000, 2000000];
 
 const DIFFICULTIES = {
   easy: { label: "Easy", min: 0.78, max: 0.95 },
@@ -75,6 +75,12 @@ function createGame(difficulty) {
 
 function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
   const opened = briefcase.opened;
+  const sealedImage = `/final_offer/${String(briefcase.id).padStart(2, "0")}-briefcase.webp`;
+  const image = opened
+    ? briefcase.value === 0
+      ? "/final_offer/bankruptcy.webp"
+      : "/final_offer/briefcase_opened.webp"
+    : sealedImage;
   return (
     <button
       type="button"
@@ -82,34 +88,65 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
       disabled={!canOpen}
       aria-label={`Briefcase ${briefcase.id}${opened ? ` opened with ${money(briefcase.value)}` : ""}`}
       style={{
-        minHeight: 104,
+        minHeight: 128,
         borderRadius: 8,
         border: chosen ? `2px solid ${C.gold}` : opened ? `1px solid ${C.gold}` : `1px solid ${C.line}`,
         background: chosen
-          ? "linear-gradient(180deg, rgba(255,193,94,.3), rgba(147,111,49,.35))"
+          ? "radial-gradient(circle at 50% 30%, rgba(255,193,94,.22), rgba(9,19,14,.82))"
           : opened
-            ? "linear-gradient(180deg, rgba(9,19,14,.84), rgba(31,51,32,.88))"
-            : "linear-gradient(180deg, #325936, #18281d)",
+            ? "linear-gradient(180deg, rgba(9,19,14,.7), rgba(31,51,32,.84))"
+            : "linear-gradient(180deg, rgba(50,89,54,.52), rgba(9,19,14,.64))",
         color: opened ? C.gold : C.cream,
         cursor: canOpen ? "pointer" : "default",
-        padding: 10,
+        padding: 8,
         display: "grid",
         alignContent: "center",
         justifyItems: "center",
-        gap: 6,
+        gap: 4,
         boxShadow: chosen
           ? "0 0 0 3px rgba(255,193,94,.15), 0 14px 28px rgba(0,0,0,.3)"
           : justOpened
             ? "0 0 0 4px rgba(255,193,94,.18), 0 16px 32px rgba(0,0,0,.36)"
             : "0 12px 24px rgba(0,0,0,.24)",
         transform: justOpened ? "translateY(-5px) scale(1.02)" : "none",
-        transition: "transform 220ms ease, box-shadow 220ms ease, background 220ms ease"
+        transition: "transform 220ms ease, box-shadow 220ms ease, background 220ms ease",
+        position: "relative",
+        overflow: "hidden"
       }}
     >
-      <span style={{ fontSize: opened ? 13 : 26, fontWeight: 900, letterSpacing: opened ? 0 : 1 }}>
-        {opened ? money(briefcase.value) : briefcase.id}
-      </span>
-      <span style={{ color: chosen ? C.gold : opened ? C.muted : "#b9c7b1", fontSize: 11, fontWeight: 900, letterSpacing: 1.1 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={image}
+        alt=""
+        aria-hidden="true"
+        style={{
+          width: "min(100%, 150px)",
+          height: "auto",
+          maxHeight: 104,
+          objectFit: "contain",
+          filter: opened ? "drop-shadow(0 12px 18px rgba(0,0,0,.3))" : "drop-shadow(0 10px 16px rgba(0,0,0,.34))"
+        }}
+      />
+      {opened && (
+        <span
+          style={{
+            position: "absolute",
+            left: 8,
+            right: 8,
+            top: "50%",
+            transform: "translateY(-18%)",
+            color: briefcase.value === 0 ? "#ffd2ce" : C.gold,
+            fontSize: briefcase.value === 0 ? 12 : 13,
+            fontWeight: 900,
+            letterSpacing: briefcase.value === 0 ? 1 : 0,
+            textShadow: "0 2px 4px rgba(0,0,0,.9)",
+            pointerEvents: "none"
+          }}
+        >
+          {money(briefcase.value)}
+        </span>
+      )}
+      <span style={{ color: chosen ? C.gold : opened ? C.muted : "#b9c7b1", fontSize: 10, fontWeight: 900, letterSpacing: 1.1 }}>
         {chosen ? "YOUR CASE" : opened ? "OPENED" : "SEALED"}
       </span>
     </button>
@@ -299,14 +336,23 @@ export default function FinalOffer() {
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
-        <div>
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 860 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/final_offer/final-offer.webp"
+            alt=""
+            aria-hidden="true"
+            style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
+          />
+          <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
           <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             Final Offer
           </h2>
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
-            A crooked evidence auction is underway in the basement of the county lockup. Sixteen cases hold cash, leverage, and one Bankrupt bomb that can wipe out the whole play. Keep your case sealed, expose the decoys, and decide whether the Banker is buying your nerve too cheaply.
+            A crooked evidence auction is underway in the basement of the county lockup. Eighteen cases hold cash, leverage, and one Bankrupt bomb that can wipe out the whole play. Keep your case sealed, expose the decoys, and decide whether the Banker is buying your nerve too cheaply.
           </p>
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           {Object.entries(DIFFICULTIES).map(([value, item]) => (
@@ -400,7 +446,7 @@ export default function FinalOffer() {
           marginBottom: 16
         }}
       >
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(132px, 1fr))", gap: 12 }}>
           {(game?.cases ?? Array.from({ length: VALUES.length }, (_, index) => ({ id: index + 1, value: 0, opened: false }))).map((briefcase) => {
             const chosen = briefcase.id === game?.chosenCaseId;
             const canOpen = game?.phase === "choose" || (game?.phase === "opening" && !chosen && !briefcase.opened);

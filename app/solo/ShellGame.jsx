@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 const DIFFICULTY = {
   easy: { label: "Easy", shuffles: 4, speed: 700 },
   medium: { label: "Medium", shuffles: 6, speed: 500 },
-  hard: { label: "Hard", shuffles: 8, speed: 320 }
+  hard: { label: "Hard", shuffles: 8, speed: 300 }
 };
 
 const C = {
@@ -64,7 +64,7 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
         bottom: 20,
         width: 96,
         height: 132,
-        transition: "left 420ms cubic-bezier(.2,.85,.2,1)",
+        transition: "left 500ms cubic-bezier(.2,.85,.2,1)",
         zIndex: lifted ? 3 : 2
       }}
     >
@@ -76,18 +76,22 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
             left: "50%",
             bottom: 0,
             transform: "translateX(-50%)",
-            width: 48,
-            height: 48,
+            width: 62,
+            height: 42,
             display: "grid",
             placeItems: "center",
-            borderRadius: "50%",
-            background: "radial-gradient(circle at 35% 30%, #fff4bf, #ffc15e 52%, #a76819)",
-            boxShadow: "0 8px 18px rgba(0,0,0,.36)",
-            fontSize: 24,
+            borderRadius: 8,
+            background: "transparent",
+            boxShadow: "0 8px 18px rgba(0,0,0,.24)",
             zIndex: 1
           }}
         >
-          ★
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/three_marks_monte/cup_ball_cash.webp"
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "contain" }}
+          />
         </div>
       )}
 
@@ -105,48 +109,19 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
           height: 118,
           cursor: clickable ? "pointer" : "default",
           filter: clickable ? "drop-shadow(0 16px 18px rgba(0,0,0,.38))" : "drop-shadow(0 12px 16px rgba(0,0,0,.3))",
-          transform: lifted ? "translateY(-52px) rotate(-4deg)" : clickable ? "translateY(-4px)" : "none",
-          transition: "transform 360ms ease, filter 180ms ease",
+          transform: lifted ? "translateY(-58px) rotate(-4deg)" : clickable ? "translateY(-4px)" : "none",
+          transition: "transform 380ms ease, filter 180ms ease",
           position: "relative",
           zIndex: 2
         }}
       >
-        <span
-          style={{
-            display: "block",
-            position: "relative",
-            width: 88,
-            height: 108,
-            margin: "4px auto 0",
-            background: `linear-gradient(90deg, ${C.redDark}, ${C.red} 18%, ${C.redLight} 45%, ${C.red} 72%, ${C.redDark})`,
-            clipPath: "polygon(24% 0, 76% 0, 92% 100%, 8% 100%)",
-            borderRadius: "20px 20px 12px 12px",
-            boxShadow: "inset 0 8px 0 rgba(255,255,255,.16), inset 0 -10px 0 rgba(0,0,0,.16)"
-          }}
-        >
-          <span
-            style={{
-              position: "absolute",
-              left: 7,
-              right: 7,
-              top: 8,
-              height: 12,
-              borderRadius: 999,
-              background: "rgba(255,255,255,.34)"
-            }}
-          />
-          <span
-            style={{
-              position: "absolute",
-              left: 25,
-              right: 25,
-              top: 34,
-              height: 26,
-              borderLeft: "2px solid rgba(255,255,255,.22)",
-              borderRight: "2px solid rgba(0,0,0,.14)"
-            }}
-          />
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/three_marks_monte/solocup.png"
+          alt=""
+          aria-hidden="true"
+          style={{ width: 96, height: 118, objectFit: "contain" }}
+        />
       </button>
     </div>
   );
@@ -243,7 +218,15 @@ export default function ShellGame() {
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
-        <div>
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/three_marks_monte/three-marks-monte.webp"
+            alt=""
+            aria-hidden="true"
+            style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
+          />
+          <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
           <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             Three Mark&apos;s Monte
@@ -251,6 +234,7 @@ export default function ShellGame() {
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             A street-corner misdirection test from the Hoodwinked evidence locker. Watch the yellow marker vanish under a cup, track the shuffle, and call the con before the marks start laughing.
           </p>
+          </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(70px, 1fr))", gap: 8, minWidth: "min(100%, 380px)" }}>
           {[

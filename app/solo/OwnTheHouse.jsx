@@ -323,7 +323,15 @@ export default function OwnTheHouse() {
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
-        <div>
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/the_house_always_lies/the-house-always-lies.webp"
+            alt=""
+            aria-hidden="true"
+            style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
+          />
+          <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
           <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             The House Always Lies
@@ -331,6 +339,7 @@ export default function OwnTheHouse() {
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             An undercover blackjack table in the back room of a crooked club. Beat the dealer without crossing 21, double your stake when the read is strong, and remember: the house smiles most when it is setting a trap.
           </p>
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           {Object.entries(DIFFICULTIES).map(([value, item]) => (

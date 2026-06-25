@@ -146,12 +146,14 @@ export default function SoloGamesPage() {
           ))}
         </section>
 
-        <SafesAndEvidence />
-        <ShellGame />
-        <HoodwinkOrDice />
-        <OwnTheHouse />
-        <FinalOffer />
-        <TheSweep />
+        <section style={{ display: "grid", gap: 36 }}>
+          <SafesAndEvidence />
+          <ShellGame />
+          <HoodwinkOrDice />
+          <OwnTheHouse />
+          <FinalOffer />
+          <TheSweep />
+        </section>
       </div>
     </main>
   );

@@ -50,6 +50,21 @@ const PIECES: PieceSpec[] = [
   { type: "informant", size: 2, name: "Back Stair Informant" }
 ];
 
+const CRIMINAL_ICONS = [
+  "/a_and_I/01-bank-robber.webp",
+  "/a_and_I/02-thief.webp",
+  "/a_and_I/03-thug.webp",
+  "/a_and_I/04-gang-member.webp",
+  "/a_and_I/05-criminal.webp",
+  "/a_and_I/06-crooked-businessman.webp",
+  "/a_and_I/07-bank-robber.webp",
+  "/a_and_I/08-thief.webp",
+  "/a_and_I/09-thug.webp",
+  "/a_and_I/10-gang-member.webp",
+  "/a_and_I/11-criminal.webp",
+  "/a_and_I/12-homeless-lady.webp"
+];
+
 const C = {
   bg: "#132019",
   panel: "#1f3320",
@@ -170,6 +185,14 @@ function resultLabel(cell: Cell) {
   return cell.pieceType === "alibi" ? "Found Alibi" : "Found Informant";
 }
 
+function pieceIndex(pieceId?: string) {
+  return Number(pieceId?.split("-")[1] ?? 0);
+}
+
+function criminalIcon(pieceId?: string, cellOffset = 0) {
+  return CRIMINAL_ICONS[(pieceIndex(pieceId) * 2 + cellOffset) % CRIMINAL_ICONS.length];
+}
+
 function parityCandidates(shots: Set<number>) {
   const parity = Array.from({ length: CELL_COUNT }, (_, i) => i).filter((i) => (row(i) + col(i)) % 2 === 0 && !shots.has(i));
   return parity.length ? parity : Array.from({ length: CELL_COUNT }, (_, i) => i).filter((i) => !shots.has(i));
@@ -208,6 +231,7 @@ function SafesGrid({
   status: Status;
   onTarget?: (index: number) => void;
 }) {
+  const mapImage = owner === "player" ? "/a_and_I/jailmap.webp" : "/a_and_I/citymap_1.webp";
   return (
     <section>
       <h3 style={{ margin: "0 0 10px", color: C.cream, fontSize: 18 }}>{title}</h3>
@@ -218,10 +242,11 @@ function SafesGrid({
           gap: 3,
           padding: 8,
           borderRadius: 8,
-          background: "rgba(9,19,14,.72)",
+          background: `linear-gradient(rgba(9,19,14,.5), rgba(9,19,14,.5)), url(${mapImage}) center/cover`,
           border: `1px solid ${C.line}`,
           width: "fit-content",
-          maxWidth: "100%"
+          maxWidth: "100%",
+          boxShadow: "inset 0 0 0 999px rgba(9,19,14,.08)"
         }}
       >
         {grid.map((cell, index) => {
@@ -229,6 +254,7 @@ function SafesGrid({
           const clickable = owner === "ai" && status === "playing" && !cell.shot;
           const base = revealPiece && cell.pieceType === "alibi" ? C.alibi : revealPiece && cell.pieceType === "informant" ? C.informant : "#8c9388";
           const background = cell.shot === "hit" ? C.hit : cell.shot === "miss" ? C.miss : base;
+          const showFace = revealPiece && cell.pieceType && cell.shot !== "miss";
           return (
             <button
               key={index}
@@ -251,7 +277,20 @@ function SafesGrid({
                 fontSize: cell.shot === "miss" ? 9 : 14
               }}
             >
-              {cell.shot === "hit" ? "X" : cell.shot === "miss" ? "•" : ""}
+              {showFace ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={criminalIcon(cell.pieceId, index)}
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    width: "88%",
+                    height: "88%",
+                    objectFit: "contain",
+                    filter: cell.shot === "hit" ? "drop-shadow(0 0 6px rgba(255,255,255,.5))" : "none"
+                  }}
+                />
+              ) : cell.shot === "miss" ? "POOF" : ""}
             </button>
           );
         })}
@@ -279,13 +318,26 @@ function PieceList({ title, pieces }: { title: string; pieces: Piece[] }) {
                 background: piece.type === "alibi" ? `${C.alibi}66` : `${C.informant}66`,
                 border: `1px solid ${sunk ? "#555" : piece.type === "alibi" ? C.alibi : C.informant}`,
                 borderRadius: 999,
-                padding: "4px 8px",
+                padding: "5px 8px",
                 fontSize: 11,
                 fontWeight: 800,
-                textDecoration: sunk ? "line-through" : "none"
+                textDecoration: sunk ? "line-through" : "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 3
               }}
             >
-              {piece.size} {piece.type}
+              {Array.from({ length: piece.size }, (_, index) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={index}
+                  src={criminalIcon(piece.id, index)}
+                  alt=""
+                  aria-hidden="true"
+                  style={{ width: 18, height: 18, objectFit: "contain", opacity: sunk ? 0.45 : 1 }}
+                />
+              ))}
+              <span>{piece.size} {piece.type}</span>
             </span>
           );
         })}
@@ -399,7 +451,15 @@ export default function SafesAndEvidence() {
         }
       `}</style>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
-        <div>
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/a_and_I/alibis-informants.webp"
+            alt=""
+            aria-hidden="true"
+            style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
+          />
+          <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
           <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             Alibis & Informants
@@ -407,6 +467,7 @@ export default function SafesAndEvidence() {
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             The station is crawling with jailhouse whispers, planted files, and suspects who swear they were nowhere near the scene. Your crew has hidden groups of alibis and informants through the precinct map; sweep the rival station first, expose their story, and keep your own witnesses from getting rolled up.
           </p>
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           {(["easy", "medium", "hard"] as Difficulty[]).map((value) => (

@@ -265,7 +265,15 @@ export default function HoodwinkOrDice() {
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
-        <div>
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hoodwin_or_dice/hoodwink-or-dice.webp"
+            alt=""
+            aria-hidden="true"
+            style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
+          />
+          <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
           <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             Hoodwink or Dice
@@ -273,6 +281,7 @@ export default function HoodwinkOrDice() {
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             Down in the jailhouse rec room, every suspect has a cup of dice and a story that does not quite hold. Bid how many matching dice you think are hidden across both hands, raise the pressure, or call the AI&apos;s bluff when the alibi sounds too clean.
           </p>
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           {Object.entries(DIFFICULTIES).map(([value, item]) => (

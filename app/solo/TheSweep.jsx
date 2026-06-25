@@ -37,6 +37,9 @@ const NUMBER_COLORS = {
   8: "#ffffff"
 };
 
+const CLUE_ICONS = ["/the_sweep/clue+1.webp", "/the_sweep/clue_2.webp", "/the_sweep/clue-3.webp"];
+const TRAP_ICONS = ["/the_sweep/trap_1.webp", "/the_sweep/trap2.webp"];
+
 function row(index) {
   return Math.floor(index / SIZE);
 }
@@ -137,6 +140,7 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
   const number = tile.revealed && !tile.trap && tile.nearbyTraps > 0 ? tile.nearbyTraps : "";
   const showTrap = tile.revealed && tile.trap;
   const showClue = tile.revealed && tile.clue && !tile.trap;
+  const image = showTrap ? TRAP_ICONS[tile.index % TRAP_ICONS.length] : showClue ? CLUE_ICONS[tile.index % CLUE_ICONS.length] : null;
 
   return (
     <button
@@ -166,7 +170,34 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
         transition: "transform 120ms ease, box-shadow 120ms ease, background 160ms ease"
       }}
     >
-      {showTrap ? "!" : tile.flagged && !tile.revealed ? "F" : showClue ? "CL" : number}
+      {image ? (
+        <span style={{ position: "relative", display: "grid", placeItems: "center", width: "100%", height: "100%" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={image} alt="" aria-hidden="true" style={{ width: "82%", height: "82%", objectFit: "contain" }} />
+          {showClue && number && (
+            <span
+              style={{
+                position: "absolute",
+                right: 0,
+                bottom: -1,
+                minWidth: 15,
+                height: 15,
+                borderRadius: 999,
+                background: C.dark,
+                color: NUMBER_COLORS[number],
+                fontSize: 10,
+                lineHeight: "15px",
+                border: "1px solid rgba(255,255,255,.35)"
+              }}
+            >
+              {number}
+            </span>
+          )}
+        </span>
+      ) : tile.flagged && !tile.revealed ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/the_sweep/marker_flag.webp" alt="Flagged" style={{ width: "76%", height: "76%", objectFit: "contain" }} />
+      ) : number}
     </button>
   );
 }
@@ -272,7 +303,15 @@ export default function TheSweep() {
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
-        <div>
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/the_sweep/the-sweep.webp"
+            alt=""
+            aria-hidden="true"
+            style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
+          />
+          <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
           <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             The Sweep
@@ -280,6 +319,7 @@ export default function TheSweep() {
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             The precinct evidence room has been salted with red herrings. Your first sweep is safe; after that, use the numbers to deduce which neighboring tiles hide traps and which ones can be cleared.
           </p>
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           {Object.entries(DIFFICULTIES).map(([value, item]) => (
