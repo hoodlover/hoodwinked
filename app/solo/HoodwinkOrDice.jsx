@@ -271,7 +271,7 @@ export default function HoodwinkOrDice() {
             Hoodwink or Dice
           </h2>
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
-            A one-on-one liar&apos;s dice duel. Raise the bid, pass the pressure, or call the bluff.
+            Down in the jailhouse rec room, every suspect has a cup of dice and a story that does not quite hold. Bid how many matching dice you think are hidden across both hands, raise the pressure, or call the AI&apos;s bluff when the alibi sounds too clean.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -310,6 +310,10 @@ export default function HoodwinkOrDice() {
             {game ? "New match" : "Start match"}
           </button>
         </div>
+      </div>
+
+      <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.45)", color: C.muted, fontWeight: 800, lineHeight: 1.45, marginBottom: 16 }}>
+        How to play: both sides roll five hidden dice. A bid like 3 fives means there are at least three dice showing 5 across both hands. Each new bid must raise the count or keep the count and raise the value. Call Bluff to reveal; if the bid is true, the caller loses a life. If it is false, the bidder loses a life.
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10, marginBottom: 16 }}>

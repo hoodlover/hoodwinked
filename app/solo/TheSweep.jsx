@@ -73,9 +73,14 @@ function sampleCells(count, excluded = new Set()) {
   return cells.slice(0, count);
 }
 
-function createBoard(difficulty) {
+function createBoard(difficulty, safeStart = null) {
   const settings = DIFFICULTIES[difficulty];
-  const traps = new Set(sampleCells(settings.traps));
+  const excluded = new Set();
+  if (safeStart != null) {
+    excluded.add(safeStart);
+    neighbors(safeStart).forEach((index) => excluded.add(index));
+  }
+  const traps = new Set(sampleCells(settings.traps, excluded));
   const clues = new Set(sampleCells(settings.clues, traps));
 
   return Array.from({ length: CELL_COUNT }, (_, index) => ({
@@ -92,8 +97,9 @@ function createGame(difficulty) {
   return {
     difficulty,
     board: createBoard(difficulty),
+    firstMove: true,
     status: "playing",
-    message: "Sweep the board. Reveal genuine clues, avoid red herrings.",
+    message: "First click is safe. Start anywhere on the board.",
     lastRevealed: null
   };
 }
@@ -137,7 +143,7 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
       type="button"
       onClick={onReveal}
       onContextMenu={onFlag}
-      disabled={disabled || tile.revealed}
+      disabled={disabled}
       aria-label={`Tile ${row(tile.index) + 1}-${col(tile.index) + 1}${tile.flagged ? " flagged" : ""}`}
       style={{
         width: "clamp(30px, 8.4vw, 40px)",
@@ -187,29 +193,50 @@ export default function TheSweep() {
   const revealTile = (index) => {
     setGame((current) => {
       if (!current || current.status !== "playing") return current;
-      const tile = current.board[index];
-      if (tile.revealed || tile.flagged) return current;
+      const activeBoard = current.firstMove ? createBoard(current.difficulty, index) : current.board;
+      const tile = activeBoard[index];
+      if (tile.flagged) return current;
+      if (tile.revealed) {
+        if (tile.nearbyTraps <= 0) return current;
+        const around = neighbors(index);
+        const flagCount = around.filter((neighbor) => activeBoard[neighbor].flagged).length;
+        if (flagCount !== tile.nearbyTraps) return current;
+        let board = activeBoard;
+        around.filter((neighbor) => !board[neighbor].flagged && !board[neighbor].revealed).forEach((neighbor) => {
+          board = revealFrom(board, neighbor);
+        });
+        const cluesFound = revealedClues(board);
+        const won = cluesFound >= DIFFICULTIES[current.difficulty].clues;
+        return {
+          ...current,
+          board: won ? board.map((value) => ({ ...value, revealed: value.revealed || value.trap })) : board,
+          status: won ? "won" : "playing",
+          message: won ? "All genuine clues recovered. You win!" : "Cleared the unflagged neighbors."
+        };
+      }
 
       if (tile.trap) {
-        const board = current.board.map((value, i) => ({
+        const board = activeBoard.map((value, i) => ({
           ...value,
           revealed: value.revealed || value.trap || i === index
         }));
         return {
           ...current,
           board,
+          firstMove: false,
           status: "lost",
           lastRevealed: index,
           message: "Red herring hit. The sweep is blown."
         };
       }
 
-      const board = revealFrom(current.board, index);
+      const board = revealFrom(activeBoard, index);
       const cluesFound = revealedClues(board);
       const won = cluesFound >= DIFFICULTIES[current.difficulty].clues;
 
       return {
         ...current,
+        firstMove: false,
         board: won ? board.map((value) => ({ ...value, revealed: value.revealed || value.trap })) : board,
         status: won ? "won" : "playing",
         lastRevealed: index,
@@ -251,7 +278,7 @@ export default function TheSweep() {
             The Sweep
           </h2>
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
-            Clear a 10x10 investigation board, recover genuine clues, and avoid the planted red herrings.
+            The precinct evidence room has been salted with red herrings. Your first sweep is safe; after that, use the numbers to deduce which neighboring tiles hide traps and which ones can be cleared.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -278,6 +305,10 @@ export default function TheSweep() {
             {game ? "Replay" : "Start sweep"}
           </button>
         </div>
+      </div>
+
+      <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.45)", color: C.muted, fontWeight: 800, lineHeight: 1.45, marginBottom: 16 }}>
+        How to play: left-click any tile to start safely. A number shows how many traps touch that tile, including diagonals. Blank tiles have zero nearby traps and sweep open nearby safe spaces. Right-click to flag suspected traps. If a revealed number already touches the correct number of flags, click that number again to clear its other neighboring tiles.
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 16 }}>

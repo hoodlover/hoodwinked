@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 type Difficulty = "easy" | "medium" | "hard";
 type Owner = "player" | "ai";
-type PieceType = "safe" | "evidence";
+type PieceType = "alibi" | "informant";
 type Shot = "hit" | "miss";
 type Status = "setup" | "playing" | "won" | "lost";
 
@@ -43,11 +43,11 @@ type GameState = {
 const SIZE = 10;
 const CELL_COUNT = SIZE * SIZE;
 const PIECES: PieceSpec[] = [
-  { type: "safe", size: 5, name: "Main Safe" },
-  { type: "safe", size: 4, name: "Hidden Safe" },
-  { type: "evidence", size: 3, name: "Evidence File A" },
-  { type: "evidence", size: 3, name: "Evidence File B" },
-  { type: "evidence", size: 2, name: "Loose Evidence" }
+  { type: "alibi", size: 5, name: "Front Desk Alibi" },
+  { type: "alibi", size: 4, name: "Holding Cell Alibi" },
+  { type: "informant", size: 3, name: "Locker Room Informant" },
+  { type: "informant", size: 3, name: "Records Room Informant" },
+  { type: "informant", size: 2, name: "Back Stair Informant" }
 ];
 
 const C = {
@@ -58,8 +58,8 @@ const C = {
   muted: "#d9d2bd",
   gold: "#ffc15e",
   line: "#81a475",
-  safe: "#936f31",
-  evidence: "#3d7d68",
+  alibi: "#936f31",
+  informant: "#3d7d68",
   hit: "#cf4f45",
   miss: "#9dc7e8",
   dark: "#09130e"
@@ -148,7 +148,7 @@ function newGame(difficulty: Difficulty): GameState {
     playerShots: new Set(),
     aiShots: new Set(),
     huntQueue: [],
-    message: "Case opened. Choose a cell on the AI evidence grid.",
+    message: "The precinct map is live. Choose a room on the rival station board.",
     turn: "player"
   };
 }
@@ -167,7 +167,7 @@ function hitPiece(pieces: Piece[], pieceId: string, target: number) {
 
 function resultLabel(cell: Cell) {
   if (!cell.pieceType) return "Miss";
-  return cell.pieceType === "safe" ? "Hit Safe" : "Hit Evidence";
+  return cell.pieceType === "alibi" ? "Found Alibi" : "Found Informant";
 }
 
 function parityCandidates(shots: Set<number>) {
@@ -227,7 +227,7 @@ function SafesGrid({
         {grid.map((cell, index) => {
           const revealPiece = owner === "player" || cell.shot === "hit" || status !== "playing";
           const clickable = owner === "ai" && status === "playing" && !cell.shot;
-          const base = revealPiece && cell.pieceType === "safe" ? C.safe : revealPiece && cell.pieceType === "evidence" ? C.evidence : "#8c9388";
+          const base = revealPiece && cell.pieceType === "alibi" ? C.alibi : revealPiece && cell.pieceType === "informant" ? C.informant : "#8c9388";
           const background = cell.shot === "hit" ? C.hit : cell.shot === "miss" ? C.miss : base;
           return (
             <button
@@ -246,7 +246,9 @@ function SafesGrid({
                 cursor: clickable ? "crosshair" : "default",
                 display: "grid",
                 placeItems: "center",
-                boxShadow: cell.shot === "hit" ? "inset 0 0 0 2px rgba(0,0,0,.26)" : "none"
+                boxShadow: cell.shot === "hit" ? "inset 0 0 0 2px rgba(0,0,0,.26)" : "none",
+                animation: cell.shot === "hit" ? "solo-board-hit 320ms ease" : cell.shot === "miss" ? "solo-board-miss 420ms ease" : "none",
+                fontSize: cell.shot === "miss" ? 9 : 14
               }}
             >
               {cell.shot === "hit" ? "X" : cell.shot === "miss" ? "•" : ""}
@@ -274,8 +276,8 @@ function PieceList({ title, pieces }: { title: string; pieces: Piece[] }) {
               key={piece.id}
               style={{
                 color: sunk ? "#9b9b9b" : C.cream,
-                background: piece.type === "safe" ? `${C.safe}66` : `${C.evidence}66`,
-                border: `1px solid ${sunk ? "#555" : piece.type === "safe" ? C.safe : C.evidence}`,
+                background: piece.type === "alibi" ? `${C.alibi}66` : `${C.informant}66`,
+                border: `1px solid ${sunk ? "#555" : piece.type === "alibi" ? C.alibi : C.informant}`,
                 borderRadius: 999,
                 padding: "4px 8px",
                 fontSize: 11,
@@ -299,8 +301,8 @@ export default function SafesAndEvidence() {
 
   const legend = useMemo(
     () => [
-      { label: "Safe", color: C.safe },
-      { label: "Evidence", color: C.evidence },
+      { label: "Alibi", color: C.alibi },
+      { label: "Informant", color: C.informant },
       { label: "Hit", color: C.hit },
       { label: "Miss", color: C.miss }
     ],
@@ -383,14 +385,27 @@ export default function SafesAndEvidence() {
         boxShadow: "0 20px 48px rgba(0,0,0,.32)"
       }}
     >
+      <style>{`
+        @keyframes solo-board-hit {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-3px); }
+          50% { transform: translateX(3px); }
+          75% { transform: translateX(-2px); }
+        }
+        @keyframes solo-board-miss {
+          0% { opacity: .35; transform: scale(.82); filter: blur(2px); }
+          45% { opacity: 1; transform: scale(1.08); filter: blur(0); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
         <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
           <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
-            Safes & Evidence
+            Alibis & Informants
           </h2>
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
-            A Hoodwinked take on hidden-fleet strategy. Find the AI safes and evidence before it clears yours.
+            The station is crawling with jailhouse whispers, planted files, and suspects who swear they were nowhere near the scene. Your crew has hidden groups of alibis and informants through the precinct map; sweep the rival station first, expose their story, and keep your own witnesses from getting rolled up.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -472,8 +487,8 @@ export default function SafesAndEvidence() {
               alignItems: "start"
             }}
           >
-            <SafesGrid title="Your Evidence Board" grid={game.playerGrid} owner="player" status={game.status} />
-            <SafesGrid title="AI Case Board" grid={game.aiGrid} owner="ai" status={game.status} onTarget={playerFire} />
+            <SafesGrid title="Your Precinct Map" grid={game.playerGrid} owner="player" status={game.status} />
+            <SafesGrid title="Rival Station Map" grid={game.aiGrid} owner="ai" status={game.status} onTarget={playerFire} />
           </div>
         </>
       )}

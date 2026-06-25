@@ -8,9 +8,9 @@ import TheSweep from "./TheSweep";
 
 const soloGames = [
   {
-    name: "Safes & Evidence",
+    name: "Alibis & Informants",
     status: "Playable",
-    note: "Crack the hidden safes before the AI clears your evidence board."
+    note: "Sweep rival police-station maps for hidden alibis and informants."
   },
   {
     name: "Three Mark's Monte",
@@ -23,9 +23,9 @@ const soloGames = [
     note: "Raise bids, call bluffs, and outlast the AI at liar's dice."
   },
   {
-    name: "21 Spies",
+    name: "The House Always Lies",
     status: "Playable",
-    note: "Play blackjack against the house with bets, doubles, and dealer tells."
+    note: "Play the crooked blackjack table with bets, doubles, and dealer tells."
   },
   {
     name: "Final Offer",

@@ -326,10 +326,10 @@ export default function OwnTheHouse() {
         <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
           <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
-            21 Spies
+            The House Always Lies
           </h2>
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
-            Blackjack against the house. Count the cards you can see, manage the bet, and decide when to stand.
+            An undercover blackjack table in the back room of a crooked club. Beat the dealer without crossing 21, double your stake when the read is strong, and remember: the house smiles most when it is setting a trap.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -353,6 +353,10 @@ export default function OwnTheHouse() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.45)", color: C.muted, fontWeight: 800, lineHeight: 1.45, marginBottom: 16 }}>
+        How to play: Hit draws another card. Stand keeps your total and lets the dealer play. Double Down doubles your bet, gives you exactly one more card, then forces you to stand. Beginner tip: stand on 17 or more, usually hit 11 or less, and consider doubling when your first two cards total 10 or 11 and the dealer is showing a weak card.
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginBottom: 16 }}>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const VALUES = [100, 500, 1000, 5000, 10000, 50000, 100000, 250000, 500000, 1000000];
+const VALUES = [0, 100, 500, 1000, 5000, 10000, 25000, 50000, 75000, 100000, 150000, 250000, 400000, 500000, 750000, 1000000];
 
 const DIFFICULTIES = {
   easy: { label: "Easy", min: 0.78, max: 0.95 },
@@ -23,6 +23,7 @@ const C = {
 };
 
 function money(value) {
+  if (value === 0) return "BANKRUPT";
   return `$${value.toLocaleString()}`;
 }
 
@@ -50,7 +51,8 @@ function calculateOffer(cases, chosenCaseId, difficulty) {
     .map((briefcase) => briefcase.value);
   const average = unopenedValues.reduce((sum, value) => sum + value, 0) / unopenedValues.length;
   const settings = DIFFICULTIES[difficulty];
-  const pressure = 1 + (9 - unopenedValues.length) * 0.035;
+  const openedCount = cases.filter((briefcase) => briefcase.opened).length;
+  const pressure = 1 + openedCount * (0.34 / Math.max(1, cases.length - 1));
   const multiplier = settings.min + Math.random() * (settings.max - settings.min);
   const chosenValue = cases.find((briefcase) => briefcase.id === chosenCaseId)?.value ?? average;
   const riskTilt = chosenValue > average ? 0.92 : 1.04;
@@ -161,14 +163,32 @@ function ValueBoard({ cases, chosenCaseId, phase }) {
 export default function FinalOffer() {
   const [difficulty, setDifficulty] = useState("medium");
   const [game, setGame] = useState(null);
+  const [offerText, setOfferText] = useState("Waiting");
 
   const sealedCases = useMemo(
-    () => game?.cases.filter((briefcase) => !briefcase.opened).length ?? 10,
+    () => game?.cases.filter((briefcase) => !briefcase.opened).length ?? VALUES.length,
     [game?.cases]
   );
   const chosenCase = game?.cases.find((briefcase) => briefcase.id === game.chosenCaseId);
-  const casesToOpen = game?.cases.filter((briefcase) => !briefcase.opened && briefcase.id !== game.chosenCaseId).length ?? 9;
+  const casesToOpen = game?.cases.filter((briefcase) => !briefcase.opened && briefcase.id !== game.chosenCaseId).length ?? VALUES.length - 1;
   const openedCount = game?.cases.filter((briefcase) => briefcase.opened).length ?? 0;
+  const lastOpenedCase = game?.cases.find((briefcase) => briefcase.id === game.lastOpenedId);
+
+  useEffect(() => {
+    if (!game?.offer || game.phase !== "offer") {
+      return undefined;
+    }
+
+    const full = money(game.offer);
+    const timers = [
+      window.setTimeout(() => setOfferText("The Banker offers..."), 0),
+      window.setTimeout(() => setOfferText(full.slice(0, 1)), 650)
+    ];
+    for (let i = 1; i < full.length; i += 1) {
+      timers.push(window.setTimeout(() => setOfferText(full.slice(0, i + 1)), 650 + i * 90));
+    }
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [game?.offer, game?.phase]);
 
   const start = (chosenDifficulty = difficulty) => {
     setDifficulty(chosenDifficulty);
@@ -198,6 +218,17 @@ export default function FinalOffer() {
       const cases = current.cases.map((briefcase) =>
         briefcase.id === caseId ? { ...briefcase, opened: true } : briefcase
       );
+      if (target.value === 0) {
+        return {
+          ...current,
+          cases,
+          phase: "done",
+          offer: null,
+          acceptedOffer: 0,
+          lastOpenedId: caseId,
+          message: `Case ${caseId} was the Bankrupt box. The Banker takes the file and the deal is dead.`
+        };
+      }
       const unopenedOtherCases = cases.filter((briefcase) => !briefcase.opened && briefcase.id !== current.chosenCaseId);
 
       if (unopenedOtherCases.length === 0) {
@@ -274,7 +305,7 @@ export default function FinalOffer() {
             Final Offer
           </h2>
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
-            Pick your sealed case, reveal the rest, and decide whether the Banker is buying your nerve too cheaply.
+            A crooked evidence auction is underway in the basement of the county lockup. Sixteen cases hold cash, leverage, and one Bankrupt bomb that can wipe out the whole play. Keep your case sealed, expose the decoys, and decide whether the Banker is buying your nerve too cheaply.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -319,12 +350,12 @@ export default function FinalOffer() {
         <div style={panelStyle()}>
           <div style={labelStyle()}>BANKER OFFER</div>
           <div style={{ color: C.gold, fontWeight: 900, fontSize: "clamp(24px, 5vw, 38px)", lineHeight: 1 }}>
-            {game?.offer ? money(game.offer) : "Waiting"}
+            {game?.offer && game.phase === "offer" ? offerText : "Waiting"}
           </div>
         </div>
         <div style={panelStyle()}>
           <div style={labelStyle()}>CASES TO OPEN</div>
-          <div style={{ color: C.cream, fontWeight: 900, fontSize: 24 }}>{game?.chosenCaseId ? casesToOpen : 9}</div>
+          <div style={{ color: C.cream, fontWeight: 900, fontSize: 24 }}>{game?.chosenCaseId ? casesToOpen : VALUES.length - 1}</div>
         </div>
         <div style={panelStyle()}>
           <div style={labelStyle()}>SEALED TOTAL</div>
@@ -337,6 +368,25 @@ export default function FinalOffer() {
           </div>
         </div>
       </div>
+
+      {lastOpenedCase && (
+        <div
+          style={{
+            border: `2px solid ${lastOpenedCase.value === 0 ? C.hit : C.gold}`,
+            borderRadius: 8,
+            padding: "16px 18px",
+            marginBottom: 16,
+            background: lastOpenedCase.value === 0 ? "rgba(207,79,69,.18)" : "rgba(255,193,94,.13)",
+            textAlign: "center",
+            boxShadow: "0 18px 36px rgba(0,0,0,.28)"
+          }}
+        >
+          <div style={{ color: C.muted, fontSize: 12, fontWeight: 900, letterSpacing: 1.8 }}>REVEALED CASE {lastOpenedCase.id}</div>
+          <div style={{ color: lastOpenedCase.value === 0 ? "#ffd2ce" : C.gold, fontSize: "clamp(34px, 8vw, 72px)", fontWeight: 900, lineHeight: 1 }}>
+            {money(lastOpenedCase.value)}
+          </div>
+        </div>
+      )}
 
       {game && <div style={{ marginBottom: 16 }}><ValueBoard cases={game.cases} chosenCaseId={game.chosenCaseId} phase={game.phase} /></div>}
 
@@ -351,7 +401,7 @@ export default function FinalOffer() {
         }}
       >
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
-          {(game?.cases ?? Array.from({ length: 10 }, (_, index) => ({ id: index + 1, value: 0, opened: false }))).map((briefcase) => {
+          {(game?.cases ?? Array.from({ length: VALUES.length }, (_, index) => ({ id: index + 1, value: 0, opened: false }))).map((briefcase) => {
             const chosen = briefcase.id === game?.chosenCaseId;
             const canOpen = game?.phase === "choose" || (game?.phase === "opening" && !chosen && !briefcase.opened);
             const onClick = game?.phase === "choose" ? () => chooseCase(briefcase.id) : () => openCase(briefcase.id);

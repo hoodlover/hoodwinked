@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 
 const DIFFICULTY = {
-  easy: { label: "Easy", shuffles: 4, speed: 500 },
-  medium: { label: "Medium", shuffles: 6, speed: 300 },
-  hard: { label: "Hard", shuffles: 8, speed: 150 }
+  easy: { label: "Easy", shuffles: 4, speed: 700 },
+  medium: { label: "Medium", shuffles: 6, speed: 500 },
+  hard: { label: "Hard", shuffles: 8, speed: 320 }
 };
 
 const C = {
@@ -51,9 +51,9 @@ function initialGame() {
 
 function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
   const reveal = phase === "revealed";
-  const lifted = reveal && selected;
   const clickable = phase === "picking";
   const isPrize = cupId === prizeCup;
+  const lifted = (phase === "hiding" && isPrize) || (reveal && (selected || isPrize));
   const slotLeft = `calc(${slot * 33.333 + 16.666}% - 48px)`;
 
   return (
@@ -64,12 +64,11 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
         bottom: 20,
         width: 96,
         height: 132,
-        transition: "left 260ms ease, transform 260ms ease",
-        transform: lifted ? "translateY(-44px) rotate(-4deg)" : "translateY(0)",
+        transition: "left 420ms cubic-bezier(.2,.85,.2,1)",
         zIndex: lifted ? 3 : 2
       }}
     >
-      {reveal && isPrize && (
+      {(phase === "hiding" || reveal) && isPrize && (
         <div
           aria-hidden="true"
           style={{
@@ -84,7 +83,8 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
             borderRadius: "50%",
             background: "radial-gradient(circle at 35% 30%, #fff4bf, #ffc15e 52%, #a76819)",
             boxShadow: "0 8px 18px rgba(0,0,0,.36)",
-            fontSize: 26
+            fontSize: 24,
+            zIndex: 1
           }}
         >
           ★
@@ -105,8 +105,10 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
           height: 118,
           cursor: clickable ? "pointer" : "default",
           filter: clickable ? "drop-shadow(0 16px 18px rgba(0,0,0,.38))" : "drop-shadow(0 12px 16px rgba(0,0,0,.3))",
-          transform: clickable ? "translateY(-4px)" : "none",
-          transition: "transform 180ms ease, filter 180ms ease"
+          transform: lifted ? "translateY(-52px) rotate(-4deg)" : clickable ? "translateY(-4px)" : "none",
+          transition: "transform 360ms ease, filter 180ms ease",
+          position: "relative",
+          zIndex: 2
         }}
       >
         <span
@@ -117,8 +119,8 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
             height: 108,
             margin: "4px auto 0",
             background: `linear-gradient(90deg, ${C.redDark}, ${C.red} 18%, ${C.redLight} 45%, ${C.red} 72%, ${C.redDark})`,
-            clipPath: "polygon(10% 0, 90% 0, 76% 100%, 24% 100%)",
-            borderRadius: "12px 12px 20px 20px",
+            clipPath: "polygon(24% 0, 76% 0, 92% 100%, 8% 100%)",
+            borderRadius: "20px 20px 12px 12px",
             boxShadow: "inset 0 8px 0 rgba(255,255,255,.16), inset 0 -10px 0 rgba(0,0,0,.16)"
           }}
         >
@@ -169,7 +171,7 @@ export default function ShellGame() {
 
     const timer = window.setTimeout(() => {
       setGame((current) => (current.phase === "hiding" ? { ...current, phase: "shuffling" } : current));
-    }, 650);
+    }, 1400);
 
     return () => window.clearTimeout(timer);
   }, [game.phase]);
@@ -247,7 +249,7 @@ export default function ShellGame() {
             Three Mark&apos;s Monte
           </h2>
           <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
-            A classic shell-game hustle with three red cups, one hidden prize, and a single clean pick.
+            A street-corner misdirection test from the Hoodwinked evidence locker. Watch the yellow marker vanish under a cup, track the shuffle, and call the con before the marks start laughing.
           </p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(70px, 1fr))", gap: 8, minWidth: "min(100%, 380px)" }}>
