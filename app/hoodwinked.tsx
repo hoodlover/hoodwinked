@@ -67,7 +67,7 @@ const C = {
 const HEAVY_TEXT_SHADOW = "0 5px 0 rgba(0,0,0,.5), 0 10px 22px rgba(0,0,0,.86), 0 0 4px rgba(0,0,0,.96)";
 
 const PLAY_URL = "playhoodwinked.com";
-const APP_VERSION = "0.3.17";
+const APP_VERSION = "0.3.18";
 
 const AVATAR_FILES = [
   "01-victoria.webp",
@@ -493,7 +493,9 @@ const FONT_CSS = `
 @keyframes parlor-stage-drop{0%{transform:translateY(-60px) scale(.7);letter-spacing:14px;filter:blur(6px);opacity:0;}55%{transform:translateY(8px) scale(1.06);letter-spacing:0;filter:blur(0);opacity:1;}75%{transform:translateY(-4px) scale(.99);}100%{transform:translateY(0) scale(1);opacity:1;}}
 @keyframes parlor-pin-in{0%{transform:translateY(10px) rotate(var(--rot,0deg)) scale(.92);opacity:0;}100%{transform:translateY(0) rotate(var(--rot,0deg)) scale(1);opacity:1;}}
 @keyframes parlor-pill-shine{0%{transform:translateX(-140%) skewX(-18deg);opacity:0;}18%{opacity:.65;}48%{opacity:.32;}100%{transform:translateX(190%) skewX(-18deg);opacity:0;}}
+@keyframes parlor-letter-turn-left{0%{transform:perspective(700px) rotateY(-92deg);opacity:.28;filter:brightness(.72);}58%{transform:perspective(700px) rotateY(9deg);opacity:1;filter:brightness(1.1);}100%{transform:perspective(700px) rotateY(0deg);opacity:1;filter:brightness(1);}}
 .parlor-root .stagedrop{animation:parlor-stage-drop .9s cubic-bezier(.22,1.18,.36,1) both;}
+.parlor-root .letter-flip{animation:parlor-letter-turn-left .58s cubic-bezier(.2,.8,.2,1) both;transform-origin:left center;backface-visibility:hidden;}
 @keyframes parlor-typing{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-3px);opacity:1;}}
 .parlor-root .typing-dot{display:inline-block;width:4px;height:4px;border-radius:999px;margin:0 1px;animation:parlor-typing 1s infinite ease-in-out;}
 @keyframes parlor-streak{0%{transform:scale(1);text-shadow:0 0 0 transparent;}30%{transform:scale(1.22);text-shadow:0 0 22px var(--glow,#FFC15E);}70%{transform:scale(1.22);text-shadow:0 0 22px var(--glow,#FFC15E);}100%{transform:scale(1);text-shadow:0 0 0 transparent;}}
@@ -519,7 +521,7 @@ const FONT_CSS = `
 .parlor-root .fadeup{animation:parlor-fadeup .35s ease both;}
 .parlor-root .glow{animation:parlor-glow 2.2s ease-in-out infinite;}
 @media (prefers-reduced-motion: reduce){
-  .parlor-root .bulb,.parlor-root .popin,.parlor-root .fadeup,.parlor-root .glow,.parlor-root .stagedrop,.parlor-root .typing-dot,.parlor-root .streak,.parlor-root .suspect-pin,.parlor-root .waiting-pill::after{animation:none !important;}
+  .parlor-root .bulb,.parlor-root .popin,.parlor-root .fadeup,.parlor-root .glow,.parlor-root .stagedrop,.parlor-root .typing-dot,.parlor-root .streak,.parlor-root .suspect-pin,.parlor-root .waiting-pill::after,.parlor-root .letter-flip{animation:none !important;}
 }
 `;
 
@@ -992,13 +994,15 @@ function LetterHeistBoard({
         justifyContent: "center",
         alignItems: "center",
         gap: "12px 20px",
-        maxWidth: 1120,
+        width: "fit-content",
+        maxWidth: "calc(100% - 24px)",
         margin: "0 auto 18px",
         padding: "14px",
         borderRadius: 12,
         background: `linear-gradient(180deg, ${C.bgDeep} 0%, rgba(19,32,26,.82) 100%)`,
         border: `1px solid ${C.goldDim}88`,
-        boxShadow: "inset 0 0 0 1px rgba(255,255,255,.05), 0 18px 34px rgba(0,0,0,.32)"
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,.05), 0 18px 34px rgba(0,0,0,.32)",
+        perspective: 900
       }}
     >
       {words.map((word, wordIndex) => (
@@ -1015,7 +1019,7 @@ function LetterHeistBoard({
             return (
               <span
                 key={`${wordIndex}-${i}-${ch}`}
-                className={visible ? "popin" : undefined}
+                className={visible ? "letter-flip" : undefined}
                 style={{
                   width: "clamp(26px, 4.1vw, 54px)",
                   height: "clamp(34px, 5vw, 68px)",
