@@ -114,15 +114,60 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
   );
 }
 
+function ValueBoard({ cases, chosenCaseId, phase }) {
+  const openedByValue = new Map(cases.filter((briefcase) => briefcase.opened).map((briefcase) => [briefcase.value, briefcase.id]));
+  const chosenCase = cases.find((briefcase) => briefcase.id === chosenCaseId);
+  const revealChosen = phase === "done";
+
+  return (
+    <div style={panelStyle()}>
+      <div style={labelStyle()}>CASE AMOUNTS</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))", gap: 8 }}>
+        {VALUES.map((value) => {
+          const openedCaseId = openedByValue.get(value);
+          const chosen = revealChosen && chosenCase?.value === value;
+          return (
+            <div
+              key={value}
+              style={{
+                border: `1px solid ${openedCaseId || chosen ? C.gold : "rgba(129,164,117,.5)"}`,
+                borderRadius: 8,
+                padding: "8px 10px",
+                background: openedCaseId
+                  ? "rgba(9,19,14,.78)"
+                  : chosen
+                    ? "rgba(255,193,94,.2)"
+                    : "rgba(47,86,50,.32)",
+                color: openedCaseId ? C.muted : C.gold,
+                fontWeight: 900,
+                minHeight: 52,
+                display: "grid",
+                alignContent: "center",
+                textDecoration: openedCaseId ? "line-through" : "none"
+              }}
+            >
+              <span>{money(value)}</span>
+              <span style={{ color: openedCaseId ? C.muted : chosen ? C.cream : "#9aaa91", fontSize: 10, letterSpacing: 1.1, marginTop: 2, textDecoration: "none" }}>
+                {openedCaseId ? `CASE ${openedCaseId}` : chosen ? "YOUR CASE" : "IN PLAY"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function FinalOffer() {
   const [difficulty, setDifficulty] = useState("medium");
   const [game, setGame] = useState(null);
 
-  const remainingCases = useMemo(
+  const sealedCases = useMemo(
     () => game?.cases.filter((briefcase) => !briefcase.opened).length ?? 10,
     [game?.cases]
   );
   const chosenCase = game?.cases.find((briefcase) => briefcase.id === game.chosenCaseId);
+  const casesToOpen = game?.cases.filter((briefcase) => !briefcase.opened && briefcase.id !== game.chosenCaseId).length ?? 9;
   const openedCount = game?.cases.filter((briefcase) => briefcase.opened).length ?? 0;
 
   const start = (chosenDifficulty = difficulty) => {
@@ -177,7 +222,7 @@ export default function FinalOffer() {
         phase: "offer",
         offer,
         lastOpenedId: caseId,
-        message: `Case ${caseId} held ${money(target.value)}.`
+        message: `Opened case ${caseId}: ${money(target.value)}.`
       };
     });
   };
@@ -278,8 +323,12 @@ export default function FinalOffer() {
           </div>
         </div>
         <div style={panelStyle()}>
-          <div style={labelStyle()}>REMAINING CASES</div>
-          <div style={{ color: C.cream, fontWeight: 900, fontSize: 24 }}>{remainingCases}</div>
+          <div style={labelStyle()}>CASES TO OPEN</div>
+          <div style={{ color: C.cream, fontWeight: 900, fontSize: 24 }}>{game?.chosenCaseId ? casesToOpen : 9}</div>
+        </div>
+        <div style={panelStyle()}>
+          <div style={labelStyle()}>SEALED TOTAL</div>
+          <div style={{ color: C.cream, fontWeight: 900, fontSize: 24 }}>{sealedCases}</div>
         </div>
         <div style={panelStyle()}>
           <div style={labelStyle()}>YOUR CASE</div>
@@ -288,6 +337,8 @@ export default function FinalOffer() {
           </div>
         </div>
       </div>
+
+      {game && <div style={{ marginBottom: 16 }}><ValueBoard cases={game.cases} chosenCaseId={game.chosenCaseId} phase={game.phase} /></div>}
 
       <div
         style={{
