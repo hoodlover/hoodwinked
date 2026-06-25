@@ -153,45 +153,76 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
   );
 }
 
-function ValueBoard({ cases, chosenCaseId, phase }) {
+function ValueBoard({ cases, chosenCaseId, phase, message, openedCount, acceptedOffer, onAcceptOffer, onRejectOffer }) {
   const openedByValue = new Map(cases.filter((briefcase) => briefcase.opened).map((briefcase) => [briefcase.value, briefcase.id]));
   const chosenCase = cases.find((briefcase) => briefcase.id === chosenCaseId);
   const revealChosen = phase === "done";
+  const showOfferActions = phase === "offer";
 
   return (
     <div style={panelStyle()}>
       <div style={labelStyle()}>CASE AMOUNTS</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))", gap: 8 }}>
-        {VALUES.map((value) => {
-          const openedCaseId = openedByValue.get(value);
-          const chosen = revealChosen && chosenCase?.value === value;
-          return (
-            <div
-              key={value}
-              style={{
-                border: `1px solid ${openedCaseId || chosen ? C.gold : "rgba(129,164,117,.5)"}`,
-                borderRadius: 8,
-                padding: "8px 10px",
-                background: openedCaseId
-                  ? "rgba(9,19,14,.78)"
-                  : chosen
-                    ? "rgba(255,193,94,.2)"
-                    : "rgba(47,86,50,.32)",
-                color: openedCaseId ? C.muted : C.gold,
-                fontWeight: 900,
-                minHeight: 52,
-                display: "grid",
-                alignContent: "center",
-                textDecoration: openedCaseId ? "line-through" : "none"
-              }}
-            >
-              <span>{money(value)}</span>
-              <span style={{ color: openedCaseId ? C.muted : chosen ? C.cream : "#9aaa91", fontSize: 10, letterSpacing: 1.1, marginTop: 2, textDecoration: "none" }}>
-                {openedCaseId ? `CASE ${openedCaseId}` : chosen ? "YOUR CASE" : "IN PLAY"}
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 360px)", gap: 16, alignItems: "end" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))", gap: 8 }}>
+          {VALUES.map((value) => {
+            const openedCaseId = openedByValue.get(value);
+            const chosen = revealChosen && chosenCase?.value === value;
+            return (
+              <div
+                key={value}
+                style={{
+                  border: `1px solid ${openedCaseId || chosen ? C.gold : "rgba(129,164,117,.5)"}`,
+                  borderRadius: 8,
+                  padding: "8px 10px",
+                  background: openedCaseId
+                    ? "rgba(9,19,14,.78)"
+                    : chosen
+                      ? "rgba(255,193,94,.2)"
+                      : "rgba(47,86,50,.32)",
+                  color: openedCaseId ? C.muted : C.gold,
+                  fontWeight: 900,
+                  minHeight: 52,
+                  display: "grid",
+                  alignContent: "center",
+                  textDecoration: openedCaseId ? "line-through" : "none"
+                }}
+              >
+                <span>{money(value)}</span>
+                <span style={{ color: openedCaseId ? C.muted : chosen ? C.cream : "#9aaa91", fontSize: 10, letterSpacing: 1.1, marginTop: 2, textDecoration: "none" }}>
+                  {openedCaseId ? `CASE ${openedCaseId}` : chosen ? "YOUR CASE" : "IN PLAY"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gap: 10,
+            alignContent: "end",
+            minHeight: 112,
+            padding: "4px 0 0"
+          }}
+        >
+          <div style={{ color: phase === "done" ? C.gold : C.muted, fontWeight: 900, lineHeight: 1.35, fontSize: "clamp(16px, 2vw, 22px)" }}>
+            {message}
+            {phase === "done" && chosenCase && (
+              <span style={{ display: "block", color: C.cream, marginTop: 4, fontSize: 14 }}>
+                Final result: {acceptedOffer ? money(acceptedOffer) : money(chosenCase.value)} after {openedCount} reveals.
               </span>
+            )}
+          </div>
+          {showOfferActions && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <button type="button" onClick={onAcceptOffer} style={primaryButton(true)}>
+                Accept Offer
+              </button>
+              <button type="button" onClick={onRejectOffer} style={controlButton(true)}>
+                Open Next Case
+              </button>
             </div>
-          );
-        })}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -434,7 +465,20 @@ export default function FinalOffer() {
         </div>
       )}
 
-      {game && <div style={{ marginBottom: 16 }}><ValueBoard cases={game.cases} chosenCaseId={game.chosenCaseId} phase={game.phase} /></div>}
+      {game && (
+        <div style={{ marginBottom: 16 }}>
+          <ValueBoard
+            cases={game.cases}
+            chosenCaseId={game.chosenCaseId}
+            phase={game.phase}
+            message={game.message}
+            openedCount={openedCount}
+            acceptedOffer={game.acceptedOffer}
+            onAcceptOffer={acceptOffer}
+            onRejectOffer={rejectOffer}
+          />
+        </div>
+      )}
 
       <div
         style={{
@@ -466,26 +510,11 @@ export default function FinalOffer() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(260px, 1fr) auto", gap: 12, alignItems: "center" }}>
-        <div style={{ color: game?.phase === "done" ? C.gold : C.muted, fontWeight: 900, lineHeight: 1.45 }}>
-          {game?.message ?? "Start a game, then choose one case to keep unopened."}
-          {game?.phase === "done" && chosenCase && (
-            <span style={{ display: "block", color: C.cream, marginTop: 4 }}>
-              Final result: {game.acceptedOffer ? money(game.acceptedOffer) : money(chosenCase.value)} after {openedCount} reveals.
-            </span>
-          )}
+      {!game && (
+        <div style={{ color: C.muted, fontWeight: 900, lineHeight: 1.45 }}>
+          Start a game, then choose one case to keep unopened.
         </div>
-        {game?.phase === "offer" && (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <button type="button" onClick={acceptOffer} style={primaryButton(true)}>
-              Accept Offer
-            </button>
-            <button type="button" onClick={rejectOffer} style={controlButton(true)}>
-              Open Next Case
-            </button>
-          </div>
-        )}
-      </div>
+      )}
     </section>
   );
 }
