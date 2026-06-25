@@ -224,11 +224,21 @@ function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCoun
             }}
           >
             <div style={labelStyle()}>BANKER OFFER</div>
-            <div style={{ color: C.gold, fontWeight: 900, fontSize: "clamp(26px, 4vw, 46px)", lineHeight: 1 }}>
+            <div
+              style={{
+                color: C.gold,
+                fontWeight: 900,
+                fontSize: "clamp(20px, 2.7vw, 32px)",
+                lineHeight: 1,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis"
+              }}
+            >
               {offerText}
             </div>
           </div>
-          <div style={{ color: phase === "done" ? C.gold : C.muted, fontWeight: 900, lineHeight: 1.35, fontSize: "clamp(16px, 2vw, 22px)" }}>
+          <div style={{ color: phase === "done" ? C.gold : C.muted, fontWeight: 900, lineHeight: 1.3, fontSize: "clamp(13px, 1.35vw, 16px)" }}>
             {message}
             {phase === "done" && chosenCase && (
               <span style={{ display: "block", color: C.cream, marginTop: 4, fontSize: 14 }}>

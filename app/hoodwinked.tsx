@@ -67,7 +67,7 @@ const C = {
 const HEAVY_TEXT_SHADOW = "0 5px 0 rgba(0,0,0,.5), 0 10px 22px rgba(0,0,0,.86), 0 0 4px rgba(0,0,0,.96)";
 
 const PLAY_URL = "playhoodwinked.com";
-const APP_VERSION = "0.3.15";
+const APP_VERSION = "0.3.16";
 
 const AVATAR_FILES = [
   "01-victoria.webp",
