@@ -7,13 +7,13 @@ import { usePartySocket } from "partysocket/react";
 import {
   ALL_MODES,
   FEUD_GUESS_SECONDS,
-  FEUD_TOP_BONUS,
   PICTURE_GUESS_SECONDS,
   POINTS_PER_VOTE,
   TRIVIA_ANSWER_SECONDS,
   VOTING_SECONDS,
   WHEEL_GUESS_SECONDS,
   WHEEL_LETTER_BUDGET,
+  feudAnswerPoints,
   WRITING_SECONDS,
   joinedIds,
   makeInitialState,
@@ -647,6 +647,25 @@ const CASE_BOARD_LABELS = [
   "Question Again"
 ];
 
+const CASE_BOARD_NAMES = [
+  "Marlow",
+  "Vega",
+  "Knox",
+  "Quinn",
+  "Sloane",
+  "Rook",
+  "Vale",
+  "Cross",
+  "Mercer",
+  "Nyx",
+  "Hale",
+  "Stone",
+  "Blair",
+  "Wren",
+  "Fox",
+  "Ash"
+];
+
 function hashString(input: string): number {
   let hash = 2166136261;
   for (let i = 0; i < input.length; i += 1) {
@@ -687,39 +706,39 @@ function getSuspectPinZones(phase: Phase, variant: SuspectPinVariant) {
 
   if (phase === "lobby") {
     return [
-      { left: 9, top: 26, size: 112, zIndex: 2 },
-      { left: 88, top: 25, size: 116, zIndex: 2 },
-      { left: 7, top: 63, size: 110, zIndex: 2 },
-      { left: 17, top: 75, size: 104, zIndex: 3 },
-      { left: 84, top: 64, size: 112, zIndex: 2 },
-      { left: 93, top: 77, size: 104, zIndex: 3 },
-      { left: 18, top: 15, size: 96, zIndex: 1 },
-      { left: 78, top: 15, size: 96, zIndex: 1 }
+      { left: 9, top: 26, size: 172, zIndex: 2 },
+      { left: 88, top: 25, size: 176, zIndex: 2 },
+      { left: 7, top: 63, size: 168, zIndex: 2 },
+      { left: 17, top: 75, size: 156, zIndex: 3 },
+      { left: 84, top: 64, size: 172, zIndex: 2 },
+      { left: 93, top: 77, size: 156, zIndex: 3 },
+      { left: 18, top: 15, size: 142, zIndex: 1 },
+      { left: 78, top: 15, size: 142, zIndex: 1 }
     ];
   }
 
   if (phase === "scoreboard" || phase === "gameover") {
     return [
-      { left: 5, top: 16, size: 96, zIndex: 2 },
-      { left: 94, top: 17, size: 98, zIndex: 2 },
-      { left: 9, top: 68, size: 106, zIndex: 2 },
-      { left: 19, top: 78, size: 94, zIndex: 3 },
-      { left: 80, top: 67, size: 106, zIndex: 2 },
-      { left: 92, top: 78, size: 94, zIndex: 3 },
-      { left: 5, top: 42, size: 84, zIndex: 1 },
-      { left: 95, top: 43, size: 84, zIndex: 1 }
+      { left: 5, top: 16, size: 146, zIndex: 2 },
+      { left: 94, top: 17, size: 150, zIndex: 2 },
+      { left: 9, top: 68, size: 158, zIndex: 2 },
+      { left: 19, top: 78, size: 140, zIndex: 3 },
+      { left: 80, top: 67, size: 158, zIndex: 2 },
+      { left: 92, top: 78, size: 140, zIndex: 3 },
+      { left: 5, top: 42, size: 128, zIndex: 1 },
+      { left: 95, top: 43, size: 128, zIndex: 1 }
     ];
   }
 
   return [
-    { left: 6, top: 18, size: 86, zIndex: 1 },
-    { left: 94, top: 19, size: 88, zIndex: 1 },
-    { left: 8, top: 64, size: 100, zIndex: 2 },
-    { left: 18, top: 76, size: 92, zIndex: 3 },
-    { left: 82, top: 64, size: 100, zIndex: 2 },
-    { left: 92, top: 77, size: 92, zIndex: 3 },
-    { left: 4, top: 43, size: 78, zIndex: 1 },
-    { left: 96, top: 44, size: 78, zIndex: 1 }
+    { left: 6, top: 18, size: 132, zIndex: 1 },
+    { left: 94, top: 19, size: 134, zIndex: 1 },
+    { left: 8, top: 64, size: 150, zIndex: 2 },
+    { left: 18, top: 76, size: 138, zIndex: 3 },
+    { left: 82, top: 64, size: 150, zIndex: 2 },
+    { left: 92, top: 77, size: 138, zIndex: 3 },
+    { left: 4, top: 43, size: 120, zIndex: 1 },
+    { left: 96, top: 44, size: 120, zIndex: 1 }
   ];
 }
 
@@ -737,7 +756,7 @@ function buildSuspectPins(seedKey: string, phase: Phase, variant: SuspectPinVari
 
   return zones.map((zone, i) => ({
     option: pool[i % pool.length],
-    label: CASE_BOARD_LABELS[Math.floor(rand() * CASE_BOARD_LABELS.length)],
+    label: `${CASE_BOARD_LABELS[Math.floor(rand() * CASE_BOARD_LABELS.length)]}: ${CASE_BOARD_NAMES[Math.floor(rand() * CASE_BOARD_NAMES.length)]}`,
     left: zone.left + (rand() * 5 - 2.5),
     top: zone.top + (rand() * 5 - 2.5),
     rotate: rand() * 22 - 11,
@@ -827,7 +846,7 @@ function SuspectPins({ state, variant = "board" }: { state: State; variant?: Sus
               textTransform: "uppercase"
             }}
           >
-            {pin.label} {String(i + 1).padStart(2, "0")}
+            {pin.label}
           </div>
         </div>
       ))}
@@ -912,7 +931,7 @@ function LandingSuspectPins() {
               textTransform: "uppercase"
             }}
           >
-            {pin.label} {String(i + 1).padStart(2, "0")}
+            {pin.label}
           </div>
         </div>
       ))}
@@ -1026,7 +1045,7 @@ function getFeudFirstHits(state: State) {
     if (!player) return;
     hits[m.idx] = {
       player,
-      points: (q.answers[m.idx]?.points ?? 0) + (m.idx === 0 ? FEUD_TOP_BONUS : 0),
+      points: feudAnswerPoints(q, m.idx),
       at: m.at
     };
   });
@@ -1036,12 +1055,14 @@ function getFeudFirstHits(state: State) {
 function FeudBoardRow({
   rank,
   answer,
+  points,
   hit,
   revealed,
   delay = 0
 }: {
   rank: number;
   answer: FeudAnswer;
+  points: number;
   hit?: { player: Player; points: number };
   revealed: boolean;
   delay?: number;
@@ -1119,7 +1140,7 @@ function FeudBoardRow({
           textShadow: "0 2px 4px rgba(0,0,0,.6)"
         }}
       >
-        {revealed ? answer.points : hit ? hit.points : "—"}
+        {revealed ? points : hit ? hit.points : "—"}
       </div>
     </div>
   );
@@ -1207,6 +1228,7 @@ function Board({
   const lowTime = remaining > 0 && remaining < 10_000;
 
   const [introRound, setIntroRound] = useState<number | null>(null);
+  const feudIntroKey = useRef<string | null>(null);
   useEffect(() => {
     if (state.phase !== "writing") return;
     // Drive a timed UI flow off the round transition; cleared by setTimeout below.
@@ -1216,6 +1238,19 @@ function Board({
     return () => clearTimeout(id);
   }, [state.phase, state.round]);
   const introVisible = state.phase === "writing" && introRound === state.round;
+
+  useEffect(() => {
+    if (state.phase !== "writing" || state.mode !== "feud" || state.phaseDeadline) return;
+    const q = state.feud.questions[state.round - 1];
+    if (!q) return;
+    const key = `${state.roomCode}-${state.round}-${q.id}`;
+    if (feudIntroKey.current === key) return;
+    feudIntroKey.current = key;
+    speakFeudAnswer(`Okay... 100 people surveyed... ${q.prompt}`, () => {
+      dispatch({ type: "START_FEUD_COUNTDOWN" });
+    });
+    return () => stopFeudVoice();
+  }, [state.phase, state.mode, state.phaseDeadline, state.feud.questions, state.round, state.roomCode, dispatch]);
 
   return (
     <div
@@ -1235,7 +1270,7 @@ function Board({
       <div className="board-inner" style={{ padding: "20px 18px 12px", position: "relative", zIndex: 1 }}>
         <div className="flex items-center justify-between board-header" style={{ marginBottom: 14 }}>
           <div className="flex items-center" style={{ gap: 10 }}>
-            <BrandLogo size={140} compact />
+            <BrandLogo size={210} compact />
             <div>
               <div className="disp" style={{ fontSize: 34, fontWeight: 800, color: C.gold, letterSpacing: 1, textShadow: HEAVY_TEXT_SHADOW }}>
                 HOODWINKED
@@ -1911,6 +1946,7 @@ function Board({
                     key={`hidden-${i}`}
                     rank={i + 1}
                     answer={a}
+                    points={feudAnswerPoints(q, i)}
                     hit={firstHits[i]}
                     revealed={false}
                   />
@@ -2127,7 +2163,6 @@ function Board({
             const top = ranked[0];
             if (!top) return null;
             const winners = ranked.filter((p) => p.score === top.score);
-            const isTie = winners.length > 1;
             const confettiPalette = [
               ...winners.map((w) => w.color),
               C.gold,
@@ -2138,43 +2173,6 @@ function Board({
             return (
               <div className="popin" style={{ textAlign: "center", padding: "18px 0" }}>
                 <Confetti palette={confettiPalette} />
-                <div className="body" style={{ color: C.creamDim, letterSpacing: 3, fontSize: 12, fontWeight: 900, textShadow: HEAVY_TEXT_SHADOW }}>
-                  {isTie ? `${winners.length}-WAY TIE` : "WINNER"}
-                </div>
-                {isTie ? (
-                  <div className="flex flex-wrap justify-center" style={{ gap: 16, margin: "10px 0 4px" }}>
-                    {winners.map((w) => (
-                      <div
-                        key={w.id}
-                        className="disp"
-                        style={{
-                          fontSize: 42,
-                          fontWeight: 800,
-                          color: w.color,
-                          textShadow: `${HEAVY_TEXT_SHADOW}, 0 0 24px ${w.color}66`
-                        }}
-                      >
-                        {w.name}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    className="disp"
-                    style={{
-                      fontSize: "clamp(38px, 10vw, 56px)",
-                      fontWeight: 800,
-                      color: top.color,
-                      textShadow: `${HEAVY_TEXT_SHADOW}, 0 0 30px ${top.color}66`,
-                      margin: "6px 0 4px"
-                    }}
-                  >
-                    {top.name}
-                  </div>
-                )}
-                <div className="disp" style={{ fontSize: 24, color: C.gold, marginBottom: 20, textShadow: HEAVY_TEXT_SHADOW }}>
-                  {top.score} pts
-                </div>
                 <FinalPodium ranked={ranked} />
                 <Leaderboard state={state} />
                 <div style={{ marginTop: 22 }}>
@@ -3192,22 +3190,33 @@ function WheelRevealCard({ state, dispatch }: { state: State; dispatch: React.Di
 function FeudRevealCard({ state, dispatch }: { state: State; dispatch: React.Dispatch<Action> }) {
   const q = state.feud.questions[state.round - 1];
   const [revealedCount, setRevealedCount] = useState(0);
+  const firstHits = getFeudFirstHits(state);
   useEffect(() => {
     if (!q) return;
+    const revealHits = getFeudFirstHits(state);
     let cancelled = false;
     const timers: number[] = [];
     let count = 0;
     const revealNext = () => {
       if (cancelled || count >= q.answers.length) return;
       count += 1;
-      const answer = q.answers[q.answers.length - count];
-      speakFeudAnswer("Survey says?", () => {
+      const answerIndex = q.answers.length - count;
+      const answer = q.answers[answerIndex];
+      const hit = revealHits[answerIndex];
+      const prompt = answerIndex === 0
+        ? "And the number one answer on the board?"
+        : hit
+          ? `Show me ${answer.text}`
+          : "Survey says?";
+      speakFeudAnswer(prompt, () => {
         if (cancelled) return;
         playRevealTick();
         setRevealedCount(count);
-        speakFeudAnswer(answer.text, () => {
-          if (!cancelled) timers.push(window.setTimeout(revealNext, 220));
-        });
+        const afterReveal = () => {
+          if (!cancelled) timers.push(window.setTimeout(revealNext, 260));
+        };
+        if (answerIndex === 0 || !hit) speakFeudAnswer(answer.text, afterReveal);
+        else afterReveal();
       });
     };
     timers.push(window.setTimeout(revealNext, 550));
@@ -3216,9 +3225,8 @@ function FeudRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
       timers.forEach((id) => window.clearTimeout(id));
       stopFeudVoice();
     };
-  }, [q]);
+  }, [q, state]);
   if (!q) return null;
-  const firstHits = getFeudFirstHits(state);
   const playerHits: Record<string, Set<number>> = {};
   Object.entries(state.feud.guesses).forEach(([pid, arr]) => {
     const set = (playerHits[pid] ??= new Set());
@@ -3258,6 +3266,7 @@ function FeudRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
               key={`reveal-${i}`}
               rank={i + 1}
               answer={a}
+              points={feudAnswerPoints(q, i)}
               hit={firstHits[i]}
               revealed={revealed}
               delay={(q.answers.length - i - 1) * 80}

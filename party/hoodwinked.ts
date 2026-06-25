@@ -13,6 +13,7 @@ const HOST_ACTIONS = new Set<Action["type"]>([
   "TOGGLE_MODE",
   "SET_MODE",
   "START_GAME",
+  "START_FEUD_COUNTDOWN",
   "FORCE_VOTING",
   "FORCE_REVEAL",
   "NEXT_REVEAL",

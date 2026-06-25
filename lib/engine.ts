@@ -28,8 +28,7 @@ export const WHEEL_SOLVE_BONUS = 200;
 export const WHEEL_LETTER_BUDGET = 3; // letters each player may reveal per round
 
 // Family Feud
-export const FEUD_GUESS_SECONDS = 40;
-export const FEUD_TOP_BONUS = 50;
+export const FEUD_GUESS_SECONDS = 50;
 
 export const PROMPTS = [
   "The worst possible name for a new cargo ship",
@@ -1016,6 +1015,15 @@ export const FEUD_QUESTIONS: FeudQuestion[] = [
   }
 ];
 
+export function feudAnswerPoints(question: FeudQuestion, index: number): number {
+  const rawTotal = question.answers.reduce((sum, answer) => sum + answer.points, 0);
+  if (!rawTotal) return 0;
+  const exact = question.answers.map((answer) => (answer.points / rawTotal) * 100);
+  const floored = exact.map(Math.floor);
+  const remainder = 100 - floored.reduce((sum, points) => sum + points, 0);
+  return floored[index] + (index < remainder ? 1 : 0);
+}
+
 /* ---- TYPES --------------------------------------------------------------- */
 export type Phase = "lobby" | "writing" | "voting" | "reveal" | "scoreboard" | "gameover";
 export type Mode = "classic" | "quiplash" | "trivia" | "picture" | "wheel" | "feud";
@@ -1110,6 +1118,7 @@ export type Action =
   | { type: "TYPING"; playerId: string; at: number }
   | { type: "GIVE_UP"; playerId: string }
   | { type: "READY_NEXT"; playerId: string }
+  | { type: "START_FEUD_COUNTDOWN" }
   | { type: "TOGGLE_MODE" }
   | { type: "SET_MODE"; mode: Mode }
   | { type: "SUBMIT_QUIP"; promptId: string; playerId: string; text: string }
@@ -1340,7 +1349,7 @@ function startRound(state: State, roundNum: number): State {
       return {
         ...base,
         prompt: null,
-        phaseDeadline: deadline(FEUD_GUESS_SECONDS),
+        phaseDeadline: null,
         feud: { questions, guesses: {} }
       };
     }
@@ -1385,6 +1394,12 @@ export function reducer(state: State, action: Action): State {
       if (!state.modeSelected) return state;
       if (ids.length < minPlayers(state.mode)) return state;
       return startRound(state, 1);
+    }
+
+    case "START_FEUD_COUNTDOWN": {
+      if (state.phase !== "writing" || state.mode !== "feud") return state;
+      if (state.phaseDeadline) return state;
+      return { ...state, phaseDeadline: deadline(FEUD_GUESS_SECONDS) };
     }
 
     case "SUBMIT_ANSWER": {
@@ -1921,8 +1936,7 @@ function tallyFeud(state: State): State {
     Object.entries(firstHits).forEach(([rawIdx, pid]) => {
       if (pid !== p.id) return;
       const idx = Number(rawIdx);
-      pts += q.answers[idx]?.points ?? 0;
-      if (idx === 0) pts += FEUD_TOP_BONUS;
+      pts += feudAnswerPoints(q, idx);
     });
     lastPoints[p.id] = pts;
     players[p.id] = { ...p, score: p.score + pts };

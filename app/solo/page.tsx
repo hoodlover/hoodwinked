@@ -1,11 +1,41 @@
 import Link from "next/link";
+import FinalOffer from "./FinalOffer";
+import HoodwinkOrDice from "./HoodwinkOrDice";
+import OwnTheHouse from "./OwnTheHouse";
 import SafesAndEvidence from "./SafesAndEvidence";
+import ShellGame from "./ShellGame";
+import TheSweep from "./TheSweep";
 
 const soloGames = [
   {
     name: "Safes & Evidence",
     status: "Playable",
     note: "Crack the hidden safes before the AI clears your evidence board."
+  },
+  {
+    name: "Three Mark's Monte",
+    status: "Playable",
+    note: "Track the hidden prize through a fast red-cup shuffle."
+  },
+  {
+    name: "Hoodwink or Dice",
+    status: "Playable",
+    note: "Raise bids, call bluffs, and outlast the AI at liar's dice."
+  },
+  {
+    name: "21 Spies",
+    status: "Playable",
+    note: "Play blackjack against the house with bets, doubles, and dealer tells."
+  },
+  {
+    name: "Final Offer",
+    status: "Playable",
+    note: "Open briefcases, read the Banker, and decide when to take the deal."
+  },
+  {
+    name: "The Sweep",
+    status: "Playable",
+    note: "Reveal genuine clues on a 10x10 board without tripping red herrings."
   },
   {
     name: "Cipher Sweep",
@@ -117,6 +147,11 @@ export default function SoloGamesPage() {
         </section>
 
         <SafesAndEvidence />
+        <ShellGame />
+        <HoodwinkOrDice />
+        <OwnTheHouse />
+        <FinalOffer />
+        <TheSweep />
       </div>
     </main>
   );
