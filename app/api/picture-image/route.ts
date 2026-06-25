@@ -71,11 +71,21 @@ export async function POST(request: Request) {
 
   const prompt = buildPrompt(answer, hint, customPrompt);
 
-  if (!apiKey || process.env.IMAGE_PROVIDER === "free") {
+  if (process.env.IMAGE_PROVIDER !== "openai") {
     const response = freeImageFallback(prompt, answer);
     return NextResponse.json({
       ...response,
-      warning: !apiKey ? "Using free image fallback because OPENAI_API_KEY is not configured." : undefined
+      warning: process.env.IMAGE_PROVIDER === "free" || !apiKey
+        ? undefined
+        : "Using free image provider. Set IMAGE_PROVIDER=openai to use OpenAI images."
+    });
+  }
+
+  if (!apiKey) {
+    const response = freeImageFallback(prompt, answer);
+    return NextResponse.json({
+      ...response,
+      warning: "Using free image fallback because OPENAI_API_KEY is not configured."
     });
   }
 

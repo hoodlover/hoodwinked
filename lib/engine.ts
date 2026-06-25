@@ -28,7 +28,7 @@ export const WHEEL_SOLVE_BONUS = 200;
 export const WHEEL_LETTER_BUDGET = 3; // letters each player may reveal per round
 
 // Family Feud
-export const FEUD_GUESS_SECONDS = 30;
+export const FEUD_GUESS_SECONDS = 40;
 export const FEUD_TOP_BONUS = 50;
 
 export const PROMPTS = [
@@ -1083,7 +1083,9 @@ export type State = {
   phaseDeadline: number | null;
   typing: Record<string, number>;
   giveUps: Record<string, boolean>;
+  nextReady: Record<string, boolean>;
   mode: Mode;
+  modeSelected: boolean;
   quipPrompts: QuipPrompt[];
   quipIndex: number;
   quipVotes: Record<string, Record<string, string>>;
@@ -1107,6 +1109,7 @@ export type Action =
   | { type: "RESET" }
   | { type: "TYPING"; playerId: string; at: number }
   | { type: "GIVE_UP"; playerId: string }
+  | { type: "READY_NEXT"; playerId: string }
   | { type: "TOGGLE_MODE" }
   | { type: "SET_MODE"; mode: Mode }
   | { type: "SUBMIT_QUIP"; promptId: string; playerId: string; text: string }
@@ -1241,7 +1244,9 @@ export function makeInitialState(): State {
     phaseDeadline: null,
     typing: {},
     giveUps: {},
+    nextReady: {},
     mode: "classic",
+    modeSelected: false,
     quipPrompts: [],
     quipIndex: 0,
     quipVotes: {},
@@ -1269,7 +1274,8 @@ function startRound(state: State, roundNum: number): State {
     revealIndex: 0,
     lastPoints: {},
     typing: {},
-    giveUps: {}
+    giveUps: {},
+    nextReady: {}
   };
   switch (state.mode) {
     case "classic": {
@@ -1365,17 +1371,18 @@ export function reducer(state: State, action: Action): State {
 
     case "TOGGLE_MODE": {
       if (state.phase !== "lobby") return state;
-      return { ...state, mode: state.mode === "classic" ? "quiplash" : "classic" };
+      return { ...state, mode: state.mode === "classic" ? "quiplash" : "classic", modeSelected: true };
     }
 
     case "SET_MODE": {
       if (state.phase !== "lobby") return state;
       if (!ALL_MODES.includes(action.mode)) return state;
-      return { ...state, mode: action.mode };
+      return { ...state, mode: action.mode, modeSelected: true };
     }
 
     case "START_GAME": {
       const ids = joinedIds(state);
+      if (!state.modeSelected) return state;
       if (ids.length < minPlayers(state.mode)) return state;
       return startRound(state, 1);
     }
@@ -1439,14 +1446,29 @@ export function reducer(state: State, action: Action): State {
     case "NEXT_REVEAL": {
       if (state.phase !== "reveal") return state;
       const next = state.revealIndex + 1;
-      if (next >= state.revealOrder.length) return { ...state, phase: "scoreboard" };
+      if (next >= state.revealOrder.length) return { ...state, phase: "scoreboard", nextReady: {} };
       return { ...state, revealIndex: next };
     }
 
     case "NEXT_ROUND": {
       if (state.phase !== "scoreboard") return state;
-      if (state.round >= state.totalRounds) return { ...state, phase: "gameover", phaseDeadline: null };
+      if (state.round >= state.totalRounds) return { ...state, phase: "gameover", phaseDeadline: null, nextReady: {} };
       return startRound(state, state.round + 1);
+    }
+
+    case "READY_NEXT": {
+      if (state.phase !== "scoreboard" && state.phase !== "gameover") return state;
+      if (!state.players[action.playerId]) return state;
+      const nextReady = { ...(state.nextReady ?? {}), [action.playerId]: true };
+      const allReady = joinedIds(state).every((id) => nextReady[id]);
+      if (!allReady) return { ...state, nextReady };
+      if (state.phase === "scoreboard") {
+        if (state.round >= state.totalRounds) return { ...state, phase: "gameover", phaseDeadline: null, nextReady: {} };
+        return startRound({ ...state, nextReady }, state.round + 1);
+      }
+      const players: Record<string, Player> = {};
+      Object.values(state.players).forEach((p) => (players[p.id] = { ...p, score: 0 }));
+      return { ...makeInitialState(), roomCode: state.roomCode, players };
     }
 
     case "PLAY_AGAIN": {
@@ -1576,7 +1598,7 @@ export function reducer(state: State, action: Action): State {
         if (nextIdx < state.quipPrompts.length) {
           return { ...state, quipIndex: nextIdx };
         }
-        return { ...state, phase: "scoreboard" };
+        return { ...state, phase: "scoreboard", nextReady: {} };
       }
       return state;
     }

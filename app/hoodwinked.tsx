@@ -458,6 +458,7 @@ const FONT_CSS = `
 @keyframes parlor-fall{0%{transform:translate3d(0,-12vh,0) rotate(0deg);opacity:0;}10%{opacity:1;}100%{transform:translate3d(var(--dx,0),110vh,0) rotate(var(--rot,540deg));opacity:1;}}
 @keyframes parlor-stage-drop{0%{transform:translateY(-60px) scale(.7);letter-spacing:14px;filter:blur(6px);opacity:0;}55%{transform:translateY(8px) scale(1.06);letter-spacing:0;filter:blur(0);opacity:1;}75%{transform:translateY(-4px) scale(.99);}100%{transform:translateY(0) scale(1);opacity:1;}}
 @keyframes parlor-pin-in{0%{transform:translateY(10px) rotate(var(--rot,0deg)) scale(.92);opacity:0;}100%{transform:translateY(0) rotate(var(--rot,0deg)) scale(1);opacity:1;}}
+@keyframes parlor-pill-shine{0%{transform:translateX(-140%) skewX(-18deg);opacity:0;}18%{opacity:.65;}48%{opacity:.32;}100%{transform:translateX(190%) skewX(-18deg);opacity:0;}}
 .parlor-root .stagedrop{animation:parlor-stage-drop .9s cubic-bezier(.22,1.18,.36,1) both;}
 @keyframes parlor-typing{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-3px);opacity:1;}}
 .parlor-root .typing-dot{display:inline-block;width:4px;height:4px;border-radius:999px;margin:0 1px;animation:parlor-typing 1s infinite ease-in-out;}
@@ -465,11 +466,16 @@ const FONT_CSS = `
 .parlor-root .streak{animation:parlor-streak 1.8s ease-out 1 both;display:inline-block;}
 .parlor-root .suspect-pins{display:block;}
 .parlor-root .suspect-pin{animation:parlor-pin-in .55s cubic-bezier(.22,1.18,.36,1) both;}
+.parlor-root .mode-chip:hover{transform:scale(1.12) !important;z-index:6 !important;box-shadow:0 22px 44px rgba(0,0,0,.42),0 0 0 1px rgba(255,193,94,.28) !important;border-color:${C.gold} !important;}
+.parlor-root .waiting-pill{position:relative;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;border-radius:999px;padding:8px 20px;background:rgba(10,19,14,.42);border:1px solid rgba(255,193,94,.22);box-shadow:0 14px 32px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.05);}
+.parlor-root .waiting-pill::after{content:"";position:absolute;inset:-20% auto -20% -40%;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);animation:parlor-pill-shine 2.9s ease-in-out infinite;}
+.parlor-root .landing-suspect-pins{display:block;}
 @media (max-width: 640px) {
   .parlor-root .phones-row { display: none !important; }
   .parlor-root .board-inner { padding: 8px 4px !important; }
   .parlor-root .board-wrap { padding: 12px !important; border-radius: 16px !important; }
   .parlor-root .suspect-pins { display: none !important; }
+  .parlor-root .landing-suspect-pins { display: none !important; }
 }
 @media (max-width: 420px) {
   .parlor-root .board-header { flex-wrap: wrap; gap: 6px; }
@@ -479,7 +485,7 @@ const FONT_CSS = `
 .parlor-root .fadeup{animation:parlor-fadeup .35s ease both;}
 .parlor-root .glow{animation:parlor-glow 2.2s ease-in-out infinite;}
 @media (prefers-reduced-motion: reduce){
-  .parlor-root .bulb,.parlor-root .popin,.parlor-root .fadeup,.parlor-root .glow,.parlor-root .stagedrop,.parlor-root .typing-dot,.parlor-root .streak,.parlor-root .suspect-pin{animation:none !important;}
+  .parlor-root .bulb,.parlor-root .popin,.parlor-root .fadeup,.parlor-root .glow,.parlor-root .stagedrop,.parlor-root .typing-dot,.parlor-root .streak,.parlor-root .suspect-pin,.parlor-root .waiting-pill::after{animation:none !important;}
 }
 `;
 
@@ -493,28 +499,48 @@ function Confetti({ count = 90, palette }: { count?: number; palette: string[] }
     const base = {
       colors,
       disableForReducedMotion: true,
-      scalar: 0.9,
-      ticks: 180,
+      scalar: 1.05,
+      ticks: 240,
       zIndex: 80
     };
     confetti({
       ...base,
-      particleCount: Math.round(count * 0.55),
-      spread: 64,
-      startVelocity: 42,
-      origin: { x: 0.28, y: 0.25 },
-      angle: 55
+      particleCount: Math.round(count * 0.45),
+      spread: 72,
+      startVelocity: 58,
+      origin: { x: 0.14, y: 0.72 },
+      angle: 48
     });
     window.setTimeout(() => {
       confetti({
         ...base,
         particleCount: Math.round(count * 0.45),
-        spread: 70,
-        startVelocity: 40,
-        origin: { x: 0.72, y: 0.25 },
-        angle: 125
+        spread: 72,
+        startVelocity: 58,
+        origin: { x: 0.86, y: 0.72 },
+        angle: 132
       });
-    }, 120);
+    }, 90);
+    window.setTimeout(() => {
+      confetti({
+        ...base,
+        particleCount: Math.round(count * 0.35),
+        spread: 110,
+        startVelocity: 38,
+        origin: { x: 0.5, y: 0.34 }
+      });
+    }, 210);
+    window.setTimeout(() => {
+      confetti({
+        ...base,
+        particleCount: Math.round(count * 0.7),
+        spread: 130,
+        startVelocity: 18,
+        gravity: 0.85,
+        scalar: 0.78,
+        origin: { x: 0.5, y: -0.08 }
+      });
+    }, 520);
   }, [count, paletteKey]);
   return null;
 }
@@ -600,6 +626,8 @@ type SuspectPin = {
   zIndex: number;
 };
 
+type SuspectPinVariant = "board" | "landing";
+
 const CASE_BOARD_LABELS = [
   "Suspect",
   "Bystander",
@@ -637,18 +665,69 @@ function seededRandom(seed: number) {
   };
 }
 
-function buildSuspectPins(seedKey: string): SuspectPin[] {
-  const rand = seededRandom(hashString(seedKey));
-  const zones = [
-    { left: 9, top: 22, size: 70, zIndex: 2 },
-    { left: 17, top: 31, size: 78, zIndex: 3 },
-    { left: 87, top: 20, size: 76, zIndex: 2 },
-    { left: 94, top: 34, size: 70, zIndex: 3 },
-    { left: 8, top: 66, size: 76, zIndex: 2 },
-    { left: 15, top: 78, size: 68, zIndex: 3 },
-    { left: 91, top: 67, size: 78, zIndex: 2 },
-    { left: 83, top: 79, size: 72, zIndex: 3 }
+function getSuspectPinZones(phase: Phase, variant: SuspectPinVariant) {
+  if (variant === "landing") {
+    return [
+      { left: 4, top: 12, size: 158, zIndex: 2 },
+      { left: 14, top: 29, size: 146, zIndex: 3 },
+      { left: 84, top: 13, size: 152, zIndex: 2 },
+      { left: 92, top: 30, size: 142, zIndex: 3 },
+      { left: 7, top: 58, size: 148, zIndex: 2 },
+      { left: 19, top: 75, size: 136, zIndex: 3 },
+      { left: 80, top: 59, size: 150, zIndex: 2 },
+      { left: 92, top: 76, size: 138, zIndex: 3 },
+      { left: 30, top: 9, size: 124, zIndex: 1 },
+      { left: 66, top: 10, size: 124, zIndex: 1 },
+      { left: 35, top: 82, size: 118, zIndex: 1 },
+      { left: 62, top: 82, size: 118, zIndex: 1 },
+      { left: 2, top: 40, size: 122, zIndex: 1 },
+      { left: 96, top: 43, size: 122, zIndex: 1 }
+    ];
+  }
+
+  if (phase === "lobby") {
+    return [
+      { left: 9, top: 26, size: 112, zIndex: 2 },
+      { left: 88, top: 25, size: 116, zIndex: 2 },
+      { left: 7, top: 63, size: 110, zIndex: 2 },
+      { left: 17, top: 75, size: 104, zIndex: 3 },
+      { left: 84, top: 64, size: 112, zIndex: 2 },
+      { left: 93, top: 77, size: 104, zIndex: 3 },
+      { left: 18, top: 15, size: 96, zIndex: 1 },
+      { left: 78, top: 15, size: 96, zIndex: 1 }
+    ];
+  }
+
+  if (phase === "scoreboard" || phase === "gameover") {
+    return [
+      { left: 5, top: 16, size: 96, zIndex: 2 },
+      { left: 94, top: 17, size: 98, zIndex: 2 },
+      { left: 9, top: 68, size: 106, zIndex: 2 },
+      { left: 19, top: 78, size: 94, zIndex: 3 },
+      { left: 80, top: 67, size: 106, zIndex: 2 },
+      { left: 92, top: 78, size: 94, zIndex: 3 },
+      { left: 5, top: 42, size: 84, zIndex: 1 },
+      { left: 95, top: 43, size: 84, zIndex: 1 }
+    ];
+  }
+
+  return [
+    { left: 6, top: 18, size: 86, zIndex: 1 },
+    { left: 94, top: 19, size: 88, zIndex: 1 },
+    { left: 8, top: 64, size: 100, zIndex: 2 },
+    { left: 18, top: 76, size: 92, zIndex: 3 },
+    { left: 82, top: 64, size: 100, zIndex: 2 },
+    { left: 92, top: 77, size: 92, zIndex: 3 },
+    { left: 4, top: 43, size: 78, zIndex: 1 },
+    { left: 96, top: 44, size: 78, zIndex: 1 }
   ];
+}
+
+function buildSuspectPins(seedKey: string, phase: Phase, variant: SuspectPinVariant): SuspectPin[] {
+  const rand = seededRandom(hashString(seedKey));
+  const zones = getSuspectPinZones(phase, variant);
+  const opacityBase = variant === "landing" ? 0.27 : phase === "lobby" ? 0.22 : 0.17;
+  const opacityJitter = variant === "landing" ? 0.1 : 0.07;
   const pool = [...AVATAR_OPTIONS];
 
   for (let i = pool.length - 1; i > 0; i -= 1) {
@@ -663,15 +742,15 @@ function buildSuspectPins(seedKey: string): SuspectPin[] {
     top: zone.top + (rand() * 5 - 2.5),
     rotate: rand() * 22 - 11,
     size: zone.size + Math.round(rand() * 10 - 5),
-    opacity: 0.2 + rand() * 0.08,
+    opacity: opacityBase + rand() * opacityJitter,
     delay: i * 55,
     zIndex: zone.zIndex
   }));
 }
 
-function SuspectPins({ state }: { state: State }) {
-  const seedKey = `${state.roomCode}-${state.mode}-${state.phase}-${state.round}-${Object.keys(state.players).length}`;
-  const pins = useMemo(() => buildSuspectPins(seedKey), [seedKey]);
+function SuspectPins({ state, variant = "board" }: { state: State; variant?: SuspectPinVariant }) {
+  const seedKey = `${variant}-${state.roomCode}-${state.mode}-${state.phase}-${state.round}-${Object.keys(state.players).length}`;
+  const pins = useMemo(() => buildSuspectPins(seedKey, state.phase, variant), [seedKey, state.phase, variant]);
 
   return (
     <div className="suspect-pins" aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
@@ -742,6 +821,91 @@ function SuspectPins({ state }: { state: State }) {
               whiteSpace: "nowrap",
               color: "#2b2118",
               fontSize: 7,
+              fontWeight: 800,
+              letterSpacing: 0.8,
+              textAlign: "center",
+              textTransform: "uppercase"
+            }}
+          >
+            {pin.label} {String(i + 1).padStart(2, "0")}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LandingSuspectPins() {
+  const pins = useMemo(() => buildSuspectPins("landing-home", "lobby", "landing"), []);
+  return (
+    <div className="landing-suspect-pins" aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+      {pins.map((pin, i) => (
+        <div
+          key={`${pin.option.id}-landing-${i}`}
+          className="suspect-pin"
+          style={{
+            position: "absolute",
+            left: `${pin.left}%`,
+            top: `${pin.top}%`,
+            width: pin.size,
+            padding: "7px 7px 16px",
+            background: "linear-gradient(180deg, rgba(251,243,228,.94), rgba(218,204,174,.88))",
+            border: "1px solid rgba(42,28,16,.28)",
+            borderRadius: 4,
+            boxShadow: "0 18px 38px rgba(0,0,0,.34)",
+            opacity: pin.opacity,
+            transform: `translate(-50%, -50%) rotate(${pin.rotate}deg)`,
+            ["--rot" as string]: `${pin.rotate}deg`,
+            animationDelay: `${pin.delay}ms`,
+            zIndex: pin.zIndex
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/bluepin.webp"
+            alt=""
+            width={24}
+            height={24}
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: -12,
+              width: 24,
+              height: 24,
+              transform: "translateX(-50%) rotate(-12deg)",
+              objectFit: "contain",
+              filter: "drop-shadow(0 2px 3px rgba(0,0,0,.45))",
+              zIndex: 2
+            }}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={pin.option.src}
+            alt=""
+            width={pin.size}
+            height={pin.size}
+            draggable={false}
+            style={{
+              display: "block",
+              width: "100%",
+              aspectRatio: "1 / 1",
+              objectFit: "cover",
+              borderRadius: 2,
+              filter: "sepia(.16) contrast(.98) saturate(.86)"
+            }}
+          />
+          <div
+            className="body"
+            style={{
+              position: "absolute",
+              left: 8,
+              right: 8,
+              bottom: 4,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              color: "#2b2118",
+              fontSize: 8,
               fontWeight: 800,
               letterSpacing: 0.8,
               textAlign: "center",
@@ -1073,10 +1237,10 @@ function Board({
           <div className="flex items-center" style={{ gap: 10 }}>
             <BrandLogo size={140} compact />
             <div>
-              <div className="disp" style={{ fontSize: 34, fontWeight: 800, color: C.gold, letterSpacing: 1 }}>
+              <div className="disp" style={{ fontSize: 34, fontWeight: 800, color: C.gold, letterSpacing: 1, textShadow: HEAVY_TEXT_SHADOW }}>
                 HOODWINKED
               </div>
-              <div className="body" style={{ color: C.creamDim, fontSize: 12, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
+              <div className="body" style={{ color: C.creamDim, fontSize: 12, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", textShadow: HEAVY_TEXT_SHADOW }}>
                 Fool the room. Win the night.
               </div>
             </div>
@@ -1111,7 +1275,7 @@ function Board({
             </div>
           )}
           {state.phase !== "lobby" && state.phase !== "gameover" && (
-            <div className="body" style={{ color: C.creamDim, fontSize: 16, fontWeight: 700 }}>
+            <div className="body" style={{ color: C.creamDim, fontSize: 16, fontWeight: 700, textShadow: HEAVY_TEXT_SHADOW }}>
               Round {state.round} / {state.totalRounds}
             </div>
           )}
@@ -1146,7 +1310,7 @@ function Board({
                 ↺
               </button>
             )}
-            <div className="body" style={{ color: C.creamDim, fontSize: 15 }}>
+            <div className="body" style={{ color: C.creamDim, fontSize: 15, textShadow: HEAVY_TEXT_SHADOW }}>
               Room <b style={{ color: C.cream, letterSpacing: 3 }}>{state.roomCode}</b>
             </div>
           </div>
@@ -1191,7 +1355,7 @@ function Board({
 
         {state.phase === "lobby" && (
           <div className="popin" style={{ textAlign: "center", padding: "26px 0 18px" }}>
-            <div className="body" style={{ color: C.creamDim, fontSize: 14, marginBottom: 6 }}>
+            <div className="body" style={{ color: C.creamDim, fontSize: 16, fontWeight: 800, marginBottom: 8, textShadow: HEAVY_TEXT_SHADOW }}>
               Go to <span style={{ color: C.cream, fontWeight: 800 }}>{PLAY_URL}</span> and enter code
             </div>
             <div
@@ -1201,7 +1365,8 @@ function Board({
                 fontWeight: 800,
                 color: C.gold,
                 letterSpacing: "clamp(4px, 1.5vw, 8px)",
-                lineHeight: 1
+                lineHeight: 1,
+                textShadow: HEAVY_TEXT_SHADOW
               }}
             >
               {state.roomCode}
@@ -1211,7 +1376,7 @@ function Board({
               style={{ gap: 10, margin: "24px auto", maxWidth: 760 }}
             >
               {players.length === 0 && (
-                <span className="body" style={{ color: C.creamDim }}>
+                <span className="body waiting-pill" style={{ color: C.cream, fontSize: 18, fontWeight: 900, textShadow: HEAVY_TEXT_SHADOW }}>
                   Waiting for players…
                 </span>
               )}
@@ -1248,12 +1413,12 @@ function Board({
             >
               {ALL_MODES.map((m) => {
                 const info = MODE_INFO[m];
-                const active = state.mode === m;
+                const active = state.modeSelected && state.mode === m;
                 return (
                   <button
                     key={m}
-                    onClick={() => !active && dispatch({ type: "SET_MODE", mode: m })}
-                    className="disp"
+                    onClick={() => dispatch({ type: "SET_MODE", mode: m })}
+                    className={`disp mode-chip${active ? " active" : ""}`}
                     style={modeChip(active)}
                   >
                     {/* Generated mode card includes the name, so the visible label is for accessibility only. */}
@@ -1312,7 +1477,7 @@ function Board({
             </div>
             {(() => {
               const min = MODE_INFO[state.mode].min;
-              const enabled = players.length >= min;
+              const enabled = state.modeSelected && players.length >= min;
               return (
                 <button
                   onClick={() => dispatch({ type: "START_GAME" })}
@@ -1320,7 +1485,7 @@ function Board({
                   className="disp"
                   style={hostBtn(enabled)}
                 >
-                  {enabled ? "Start the show" : `Need ${min}+ players`}
+                  {!state.modeSelected ? "Choose a game" : enabled ? "Start the show" : `Need ${min}+ players`}
                 </button>
               );
             })()}
@@ -1949,6 +2114,9 @@ function Board({
               >
                 {state.round >= state.totalRounds ? "Final results" : "Next round"}
               </button>
+              <div className="body" style={{ color: C.creamDim, fontSize: 12, fontWeight: 800, marginTop: 10, letterSpacing: 1, textShadow: HEAVY_TEXT_SHADOW }}>
+                {Object.keys(state.nextReady ?? {}).length} / {joinedIds(state).length} players ready
+              </div>
             </div>
           </div>
         )}
@@ -1960,7 +2128,6 @@ function Board({
             if (!top) return null;
             const winners = ranked.filter((p) => p.score === top.score);
             const isTie = winners.length > 1;
-            const second = ranked.find((p) => p.score < top.score) ?? null;
             const confettiPalette = [
               ...winners.map((w) => w.color),
               C.gold,
@@ -1971,7 +2138,7 @@ function Board({
             return (
               <div className="popin" style={{ textAlign: "center", padding: "18px 0" }}>
                 <Confetti palette={confettiPalette} />
-                <div className="body" style={{ color: C.creamDim, letterSpacing: 3, fontSize: 12, fontWeight: 700 }}>
+                <div className="body" style={{ color: C.creamDim, letterSpacing: 3, fontSize: 12, fontWeight: 900, textShadow: HEAVY_TEXT_SHADOW }}>
                   {isTie ? `${winners.length}-WAY TIE` : "WINNER"}
                 </div>
                 {isTie ? (
@@ -1984,7 +2151,7 @@ function Board({
                           fontSize: 42,
                           fontWeight: 800,
                           color: w.color,
-                          textShadow: `0 0 24px ${w.color}66`
+                          textShadow: `${HEAVY_TEXT_SHADOW}, 0 0 24px ${w.color}66`
                         }}
                       >
                         {w.name}
@@ -1998,17 +2165,17 @@ function Board({
                       fontSize: "clamp(38px, 10vw, 56px)",
                       fontWeight: 800,
                       color: top.color,
-                      textShadow: `0 0 30px ${top.color}66`,
+                      textShadow: `${HEAVY_TEXT_SHADOW}, 0 0 30px ${top.color}66`,
                       margin: "6px 0 4px"
                     }}
                   >
                     {top.name}
                   </div>
                 )}
-                <div className="disp" style={{ fontSize: 24, color: C.gold, marginBottom: 20 }}>
+                <div className="disp" style={{ fontSize: 24, color: C.gold, marginBottom: 20, textShadow: HEAVY_TEXT_SHADOW }}>
                   {top.score} pts
                 </div>
-                <FinalPodium winners={winners} second={second} />
+                <FinalPodium ranked={ranked} />
                 <Leaderboard state={state} />
                 <div style={{ marginTop: 22 }}>
                   <button
@@ -3034,11 +3201,11 @@ function FeudRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
       if (cancelled || count >= q.answers.length) return;
       count += 1;
       const answer = q.answers[q.answers.length - count];
-      speakFeudAnswer("Survey says...", () => {
+      speakFeudAnswer("Survey says?", () => {
         if (cancelled) return;
         playRevealTick();
         setRevealedCount(count);
-        speakFeudAnswer(`${answer.text}!`, () => {
+        speakFeudAnswer(answer.text, () => {
           if (!cancelled) timers.push(window.setTimeout(revealNext, 220));
         });
       });
@@ -3349,97 +3516,59 @@ function Leaderboard({ state, highlightGainers = false }: { state: State; highli
   );
 }
 
-function TrophyIcon({ size = 74 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 96 96" role="img" aria-label="Gold trophy">
-      <defs>
-        <linearGradient id="hoodwinked-trophy-gold" x1="20" y1="8" x2="78" y2="88">
-          <stop offset="0" stopColor="#FFF0A8" />
-          <stop offset=".48" stopColor="#FFC15E" />
-          <stop offset="1" stopColor="#A96618" />
-        </linearGradient>
-      </defs>
-      <path d="M31 16h34v20c0 13-7 23-17 23S31 49 31 36V16Z" fill="url(#hoodwinked-trophy-gold)" stroke="#4A2B08" strokeWidth="4" />
-      <path d="M31 23H17c0 18 7 28 19 31" fill="none" stroke="url(#hoodwinked-trophy-gold)" strokeWidth="8" strokeLinecap="round" />
-      <path d="M65 23h14c0 18-7 28-19 31" fill="none" stroke="url(#hoodwinked-trophy-gold)" strokeWidth="8" strokeLinecap="round" />
-      <path d="M43 58h10v15H43z" fill="#C8892A" stroke="#4A2B08" strokeWidth="3" />
-      <path d="M29 75h38l5 10H24l5-10Z" fill="url(#hoodwinked-trophy-gold)" stroke="#4A2B08" strokeWidth="4" />
-      <path d="M40 25h16M39 34h18" stroke="#FFF4B8" strokeWidth="3" strokeLinecap="round" opacity=".65" />
-    </svg>
-  );
-}
+function FinalPodium({ ranked }: { ranked: Player[] }) {
+  const places = [
+    { player: ranked[1], place: "2ND", label: "SECOND PLACE", height: 132, color: "#A9D0FF", order: 1 },
+    { player: ranked[0], place: "1ST", label: "FIRST PLACE", height: 178, color: C.gold, order: 2 },
+    { player: ranked[2], place: "3RD", label: "THIRD PLACE", height: 108, color: C.mint, order: 3 }
+  ].filter((entry): entry is { player: Player; place: string; label: string; height: number; color: string; order: number } => !!entry.player);
 
-function RibbonIcon({ size = 56 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 80 96" role="img" aria-label="Blue ribbon">
-      <defs>
-        <linearGradient id="hoodwinked-ribbon-blue" x1="18" y1="8" x2="62" y2="88">
-          <stop offset="0" stopColor="#D7ECFF" />
-          <stop offset=".45" stopColor="#63A8FF" />
-          <stop offset="1" stopColor="#244D8C" />
-        </linearGradient>
-      </defs>
-      <circle cx="40" cy="32" r="24" fill="url(#hoodwinked-ribbon-blue)" stroke="#102A52" strokeWidth="5" />
-      <circle cx="40" cy="32" r="12" fill="#D7ECFF" opacity=".75" />
-      <path d="M27 52 18 88l22-13 22 13-9-36" fill="url(#hoodwinked-ribbon-blue)" stroke="#102A52" strokeWidth="5" strokeLinejoin="round" />
-      <path d="M33 26h14v7H33zM33 38h14" stroke="#102A52" strokeWidth="5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function FinalPodium({ winners, second }: { winners: Player[]; second: Player | null }) {
   return (
     <div
-      className="flex flex-wrap justify-center"
-      style={{ gap: 14, margin: "0 auto 22px", maxWidth: 720 }}
+      className="flex flex-wrap items-end justify-center"
+      style={{ gap: 14, margin: "8px auto 28px", maxWidth: 980 }}
     >
-      {winners.map((winner) => (
+      {places.map(({ player, place, label, height, color }) => (
         <div
-          key={winner.id}
+          key={player.id}
           style={{
-            minWidth: 190,
-            padding: "16px 18px",
-            borderRadius: 14,
-            border: `1px solid ${C.gold}`,
-            background: `linear-gradient(180deg, ${C.gold}22 0%, ${C.bgDeep} 100%)`,
-            boxShadow: `0 0 28px ${C.gold}33`
+            width: place === "1ST" ? 240 : 210,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: 8
           }}
         >
-          <TrophyIcon size={78} />
-          <div className="body" style={{ color: C.gold, fontWeight: 900, letterSpacing: 2, fontSize: 11, marginTop: 8 }}>
-            1ST PLACE
+          <div className="disp" style={{ color, fontSize: place === "1ST" ? 30 : 24, fontWeight: 900, lineHeight: 1, textShadow: HEAVY_TEXT_SHADOW }}>
+            {player.score} pts
           </div>
-          <div className="flex items-center justify-center" style={{ gap: 8, marginTop: 8 }}>
-            <AvatarBadge avatar={winner.avatar} color={winner.color} size={72} selected />
-            <span className="disp" style={{ color: C.cream, fontWeight: 800, fontSize: 22 }}>
-              {winner.name}
-            </span>
+          <div className="disp" style={{ color: C.cream, fontSize: place === "1ST" ? 28 : 22, fontWeight: 900, lineHeight: 1.05, textShadow: HEAVY_TEXT_SHADOW }}>
+            {player.name}
+          </div>
+          <AvatarBadge avatar={player.avatar} color={player.color} size={place === "1ST" ? 132 : 108} selected={place === "1ST"} />
+          <div
+            style={{
+              width: "100%",
+              minHeight: height,
+              borderRadius: "12px 12px 6px 6px",
+              border: `1px solid ${color}`,
+              background: `linear-gradient(180deg, ${color}44 0%, ${C.bgDeep} 84%)`,
+              boxShadow: `0 20px 42px rgba(0,0,0,.34), 0 0 30px ${color}33`,
+              display: "grid",
+              placeItems: "center",
+              padding: "18px 14px"
+            }}
+          >
+            <div className="disp" style={{ color, fontSize: place === "1ST" ? 42 : 34, fontWeight: 900, textShadow: HEAVY_TEXT_SHADOW }}>
+              {place}
+            </div>
+            <div className="body" style={{ color: C.cream, fontSize: 11, fontWeight: 900, letterSpacing: 2, textShadow: HEAVY_TEXT_SHADOW }}>
+              {label}
+            </div>
           </div>
         </div>
       ))}
-      {second && (
-        <div
-          style={{
-            minWidth: 170,
-            padding: "14px 16px",
-            borderRadius: 14,
-            border: "1px solid #63A8FF",
-            background: "linear-gradient(180deg, rgba(99,168,255,.18) 0%, rgba(19,32,26,.92) 100%)",
-            boxShadow: "0 0 24px rgba(99,168,255,.22)"
-          }}
-        >
-          <RibbonIcon size={62} />
-          <div className="body" style={{ color: "#A9D0FF", fontWeight: 900, letterSpacing: 2, fontSize: 10, marginTop: 8 }}>
-            2ND PLACE
-          </div>
-          <div className="flex items-center justify-center" style={{ gap: 8, marginTop: 8 }}>
-            <AvatarBadge avatar={second.avatar} color={second.color} size={60} />
-            <span className="disp" style={{ color: C.cream, fontWeight: 800, fontSize: 19 }}>
-              {second.name}
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -3502,6 +3631,10 @@ function Phone({
   const hasAnswered = player && state.answers[player.id] != null;
   const hasVoted = player && state.votes[player.id] != null;
   const gaveUp = !!(player && state.giveUps[player.id]);
+  const readyMap = state.nextReady ?? {};
+  const readyForNext = !!(player && readyMap[player.id]);
+  const readyCount = Object.keys(readyMap).length;
+  const joinedCount = joinedIds(state).length;
   const playerDoneWriting = !!player && (
     (state.mode === "classic" && hasAnswered) ||
     (state.mode === "quiplash" &&
@@ -3520,7 +3653,6 @@ function Phone({
     dispatch({ type: "PLAY_AGAIN" });
   };
   const confirmGiveUp = () => {
-    if (typeof window !== "undefined" && !window.confirm("Give up on this round?")) return;
     if (player) dispatch({ type: "GIVE_UP", playerId: player.id });
   };
 
@@ -3857,6 +3989,21 @@ function Phone({
             </div>
           )}
 
+          {state.phase === "scoreboard" && (
+            <button
+              onClick={() => dispatch({ type: "READY_NEXT", playerId: player.id })}
+              disabled={readyForNext}
+              className="body"
+              style={phoneBtn(!readyForNext, player.color, true)}
+            >
+              {readyForNext
+                ? `Ready ${readyCount}/${joinedCount}`
+                : state.round >= state.totalRounds
+                  ? "Ready for final"
+                  : "Ready for next round"}
+            </button>
+          )}
+
           {state.phase === "gameover" && (
             <div className="body" style={{ ...phoneNote, color: player.color }}>
               GG — {player.score} pts
@@ -4012,28 +4159,31 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
         display: "grid",
         placeItems: "center",
         padding: 24,
-        textAlign: "center"
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden"
       }}
     >
       <style>{FONT_CSS}</style>
-      <div style={{ width: "100%", maxWidth: 560 }}>
-        <BrandLogo size={248} responsive />
-        <div className="body" style={{ color: C.creamDim, fontSize: 12, fontWeight: 800, letterSpacing: 2, marginBottom: 10 }}>
+      <LandingSuspectPins />
+      <div style={{ width: "100%", maxWidth: 860, position: "relative", zIndex: 1 }}>
+        <BrandLogo size={496} responsive />
+        <div className="body" style={{ color: C.creamDim, fontSize: "clamp(13px, 1.4vw, 18px)", fontWeight: 900, letterSpacing: 3, marginBottom: 12, textShadow: HEAVY_TEXT_SHADOW }}>
           {PLAY_URL}
         </div>
-        <div className="disp" style={{ fontSize: "clamp(42px, 12vw, 66px)", fontWeight: 800, color: C.gold, letterSpacing: 4, lineHeight: 0.95 }}>
+        <div className="disp" style={{ fontSize: "clamp(52px, 11vw, 112px)", fontWeight: 900, color: C.gold, letterSpacing: 5, lineHeight: 0.9, textShadow: HEAVY_TEXT_SHADOW }}>
           HOODWINKED
         </div>
         <div
           className="disp"
           style={{
             color: C.cream,
-            marginTop: 12,
-            marginBottom: 30,
-            fontSize: "clamp(18px, 4.6vw, 28px)",
-            fontWeight: 800,
+            marginTop: 16,
+            marginBottom: 36,
+            fontSize: "clamp(24px, 4.8vw, 46px)",
+            fontWeight: 900,
             lineHeight: 1.15,
-            textShadow: `0 0 18px ${C.gold}33`
+            textShadow: HEAVY_TEXT_SHADOW
           }}
         >
           FOOL THE ROOM. WIN THE NIGHT.
