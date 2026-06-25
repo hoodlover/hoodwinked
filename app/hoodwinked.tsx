@@ -319,6 +319,8 @@ function saveAvatar(deviceId: string, avatar: string) {
 let audioCtx: AudioContext | null = null;
 let audioMuted = false;
 let currentVoiceAudio: HTMLAudioElement | null = null;
+const VOICE_FETCH_TIMEOUT_MS = 12_000;
+const VOICE_FALLBACK_TIMEOUT_MS = 8_000;
 
 function stopFeudVoice() {
   if (typeof window !== "undefined") window.speechSynthesis?.cancel();
@@ -377,6 +379,15 @@ function playRevealTick() {
 }
 
 function speakBrowserVoice(text: string, onDone: () => void) {
+  const finishOnce = (() => {
+    let done = false;
+    return () => {
+      if (done) return;
+      done = true;
+      window.setTimeout(onDone, 260);
+    };
+  })();
+
   if (audioMuted || typeof window === "undefined" || !("speechSynthesis" in window)) {
     window.setTimeout(onDone, 650);
     return;
@@ -386,7 +397,11 @@ function speakBrowserVoice(text: string, onDone: () => void) {
     utterance.rate = 0.92;
     utterance.pitch = 0.9;
     utterance.volume = 0.95;
-    const finish = () => window.setTimeout(onDone, 260);
+    const fallbackTimer = window.setTimeout(finishOnce, Math.max(VOICE_FALLBACK_TIMEOUT_MS, text.length * 65));
+    const finish = () => {
+      window.clearTimeout(fallbackTimer);
+      finishOnce();
+    };
     utterance.onend = finish;
     utterance.onerror = finish;
     window.speechSynthesis.cancel();
@@ -402,28 +417,45 @@ async function speakFeudAnswer(text: string, onDone: () => void) {
     return;
   }
 
+  let timeoutId: number | null = null;
   try {
     stopFeudVoice();
+    const controller = new AbortController();
+    timeoutId = window.setTimeout(() => controller.abort(), VOICE_FETCH_TIMEOUT_MS);
     const response = await fetch("/api/voice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ text }),
+      signal: controller.signal
     });
+    if (timeoutId != null) window.clearTimeout(timeoutId);
     if (!response.ok) throw new Error("Voice API unavailable");
 
     const blob = await response.blob();
     const src = URL.createObjectURL(blob);
     const audio = new Audio(src);
     currentVoiceAudio = audio;
+    const finishOnce = (() => {
+      let done = false;
+      return () => {
+        if (done) return;
+        done = true;
+        if (currentVoiceAudio === audio) currentVoiceAudio = null;
+        URL.revokeObjectURL(src);
+        window.setTimeout(onDone, 160);
+      };
+    })();
+    const playbackTimer = window.setTimeout(finishOnce, Math.max(VOICE_FALLBACK_TIMEOUT_MS, text.length * 75));
     const finish = () => {
-      if (currentVoiceAudio === audio) currentVoiceAudio = null;
-      URL.revokeObjectURL(src);
-      window.setTimeout(onDone, 160);
+      window.clearTimeout(playbackTimer);
+      finishOnce();
     };
     audio.onended = finish;
     audio.onerror = finish;
     await audio.play();
-  } catch {
+  } catch (error) {
+    if (timeoutId != null) window.clearTimeout(timeoutId);
+    if (process.env.NODE_ENV !== "production") console.warn("Feud voice fallback:", error);
     speakBrowserVoice(text, onDone);
   }
 }
