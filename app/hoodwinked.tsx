@@ -68,7 +68,7 @@ const C = {
 const HEAVY_TEXT_SHADOW = "0 5px 0 rgba(0,0,0,.5), 0 10px 22px rgba(0,0,0,.86), 0 0 4px rgba(0,0,0,.96)";
 
 const PLAY_URL = "playhoodwinked.com";
-const APP_VERSION = "0.3.19";
+const APP_VERSION = "0.3.20";
 
 const AVATAR_FILES = [
   "01-victoria.webp",
@@ -4396,9 +4396,9 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
         <div className="body" style={{ color: C.creamDim, fontSize: 12, marginTop: 24, lineHeight: 1.6 }}>
           <Link
             href="/?local=1"
-            style={{ color: C.line, textDecoration: "none", borderBottom: `1px dotted ${C.line}` }}
+            style={{ color: C.line, textDecoration: "none", borderBottom: `1px dotted ${C.line}`, fontSize: 11 }}
           >
-            Try the local prototype →
+            Use demo mode
           </Link>
           <div style={{ color: C.line, fontSize: 11, fontWeight: 800, letterSpacing: 1.6, marginTop: 10 }}>
             v{APP_VERSION}

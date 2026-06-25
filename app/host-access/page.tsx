@@ -43,6 +43,9 @@ export default async function HostAccessPage() {
             </Link>
           )}
         </div>
+        <Link href="/?local=1" style={demoLink}>
+          Use demo mode
+        </Link>
       </section>
     </main>
   );
@@ -66,4 +69,14 @@ const ghostButton: CSSProperties = {
   background: "transparent",
   color: "#fbf3e4",
   border: "1px solid rgba(251, 243, 228, .35)"
+};
+
+const demoLink: CSSProperties = {
+  display: "inline-flex",
+  marginTop: 18,
+  color: "#8fab80",
+  fontSize: 12,
+  fontWeight: 700,
+  textDecoration: "none",
+  borderBottom: "1px dotted #8fab80"
 };

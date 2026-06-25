@@ -4,11 +4,14 @@ import { isApprovedHostEmail } from "@/lib/host-access";
 
 const protectedHostPrefixes = ["/host", "/room", "/board"];
 
+function isSignedInDemoPage(pathname: string, searchParams: URLSearchParams): boolean {
+  return pathname === "/" && searchParams.get("local") === "1";
+}
+
 function isProtectedHostPage(pathname: string, searchParams: URLSearchParams): boolean {
   if (protectedHostPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
     return true;
   }
-  if (searchParams.get("local") === "1") return true;
   const role = searchParams.get("role")?.toLowerCase().replace(/[^a-z]/g, "");
   return role === "host";
 }
@@ -22,9 +25,10 @@ function signInUrl(requestUrl: URL): URL {
 export default auth((request) => {
   const { pathname, searchParams } = request.nextUrl;
   const isPictureApi = pathname === "/api/picture-image";
+  const needsSignedInDemo = isSignedInDemoPage(pathname, searchParams);
   const needsApprovedHost = isPictureApi || isProtectedHostPage(pathname, searchParams);
 
-  if (!needsApprovedHost) return NextResponse.next();
+  if (!needsSignedInDemo && !needsApprovedHost) return NextResponse.next();
 
   const email = request.auth?.user?.email ?? null;
   if (!email) {
@@ -33,6 +37,8 @@ export default auth((request) => {
     }
     return NextResponse.redirect(signInUrl(request.nextUrl));
   }
+
+  if (needsSignedInDemo && !needsApprovedHost) return NextResponse.next();
 
   if (!isApprovedHostEmail(email)) {
     if (isPictureApi) {
