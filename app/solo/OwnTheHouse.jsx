@@ -326,7 +326,7 @@ export default function OwnTheHouse() {
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/the_house_always_lies/the-house-always-lies.webp"
+            src="/the_house_always_lies/the-house-always-lies.png"
             alt=""
             aria-hidden="true"
             style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}

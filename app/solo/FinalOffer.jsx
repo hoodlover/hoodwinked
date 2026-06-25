@@ -88,7 +88,7 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
       disabled={!canOpen}
       aria-label={`Briefcase ${briefcase.id}${opened ? ` opened with ${money(briefcase.value)}` : ""}`}
       style={{
-        minHeight: 128,
+        minHeight: 160,
         borderRadius: 8,
         border: chosen ? `2px solid ${C.gold}` : opened ? `1px solid ${C.gold}` : `1px solid ${C.line}`,
         background: chosen
@@ -120,9 +120,9 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
         alt=""
         aria-hidden="true"
         style={{
-          width: "min(100%, 150px)",
+          width: "min(100%, 188px)",
           height: "auto",
-          maxHeight: 104,
+          maxHeight: 132,
           objectFit: "contain",
           filter: opened ? "drop-shadow(0 12px 18px rgba(0,0,0,.3))" : "drop-shadow(0 10px 16px rgba(0,0,0,.34))"
         }}
@@ -339,7 +339,7 @@ export default function FinalOffer() {
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 860 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/final_offer/final-offer.webp"
+            src="/final_offer/final-offer.png"
             alt=""
             aria-hidden="true"
             style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
@@ -441,12 +441,13 @@ export default function FinalOffer() {
           border: `1px solid ${C.line}`,
           borderRadius: 8,
           padding: 14,
+          overflowX: "auto",
           background:
             "radial-gradient(circle at 50% 25%, rgba(255,193,94,.12), transparent 34%), linear-gradient(180deg, rgba(47,86,50,.72), rgba(9,19,14,.82))",
           marginBottom: 16
         }}
       >
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(132px, 1fr))", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(150px, 1fr))", gap: 14, minWidth: 960 }}>
           {(game?.cases ?? Array.from({ length: VALUES.length }, (_, index) => ({ id: index + 1, value: 0, opened: false }))).map((briefcase) => {
             const chosen = briefcase.id === game?.chosenCaseId;
             const canOpen = game?.phase === "choose" || (game?.phase === "opening" && !chosen && !briefcase.opened);

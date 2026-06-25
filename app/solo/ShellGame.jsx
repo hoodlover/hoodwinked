@@ -54,7 +54,7 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
   const clickable = phase === "picking";
   const isPrize = cupId === prizeCup;
   const lifted = (phase === "hiding" && isPrize) || (reveal && (selected || isPrize));
-  const slotLeft = `calc(${slot * 33.333 + 16.666}% - 48px)`;
+  const slotLeft = `calc(${slot * 33.333 + 16.666}% - 96px)`;
 
   return (
     <div
@@ -62,8 +62,8 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
         position: "absolute",
         left: slotLeft,
         bottom: 20,
-        width: 96,
-        height: 132,
+        width: 192,
+        height: 264,
         transition: "left 500ms cubic-bezier(.2,.85,.2,1)",
         zIndex: lifted ? 3 : 2
       }}
@@ -76,8 +76,8 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
             left: "50%",
             bottom: 0,
             transform: "translateX(-50%)",
-            width: 62,
-            height: 42,
+            width: 124,
+            height: 84,
             display: "grid",
             placeItems: "center",
             borderRadius: 8,
@@ -88,7 +88,7 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/three_marks_monte/cup_ball_cash.webp"
+            src="/three_marks_monte/cup_ball_cash.png"
             alt=""
             style={{ width: "100%", height: "100%", objectFit: "contain" }}
           />
@@ -105,11 +105,11 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
           border: "none",
           background: "transparent",
           padding: 0,
-          width: 96,
-          height: 118,
+          width: 192,
+          height: 236,
           cursor: clickable ? "pointer" : "default",
           filter: clickable ? "drop-shadow(0 16px 18px rgba(0,0,0,.38))" : "drop-shadow(0 12px 16px rgba(0,0,0,.3))",
-          transform: lifted ? "translateY(-58px) rotate(-4deg)" : clickable ? "translateY(-4px)" : "none",
+          transform: lifted ? "translateY(-116px) rotate(-4deg)" : clickable ? "translateY(-6px)" : "none",
           transition: "transform 380ms ease, filter 180ms ease",
           position: "relative",
           zIndex: 2
@@ -120,7 +120,7 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
           src="/three_marks_monte/solocup.png"
           alt=""
           aria-hidden="true"
-          style={{ width: 96, height: 118, objectFit: "contain" }}
+          style={{ width: 192, height: 236, objectFit: "contain" }}
         />
       </button>
     </div>
@@ -300,7 +300,7 @@ export default function ShellGame() {
       <div
         style={{
           position: "relative",
-          height: "clamp(220px, 36vw, 300px)",
+          height: "clamp(380px, 48vw, 520px)",
           overflow: "hidden",
           borderRadius: 8,
           border: `1px solid ${C.line}`,

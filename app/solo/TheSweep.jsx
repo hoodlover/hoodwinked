@@ -19,7 +19,7 @@ const C = {
   line: "#81a475",
   safe: "#d8e5cc",
   clue: "#ffc15e",
-  trap: "#cf4f45",
+  trap: "#ffc15e",
   tile: "#8c9388",
   tileDark: "#5d665b",
   green: "#6fb071",
@@ -150,8 +150,8 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
       disabled={disabled}
       aria-label={`Tile ${row(tile.index) + 1}-${col(tile.index) + 1}${tile.flagged ? " flagged" : ""}`}
       style={{
-        width: "clamp(30px, 8.4vw, 40px)",
-        height: "clamp(30px, 8.4vw, 40px)",
+        width: "clamp(36px, 8.4vw, 52px)",
+        height: "clamp(36px, 8.4vw, 52px)",
         borderRadius: 5,
         border: tile.revealed ? "1px solid rgba(9,19,14,.18)" : "1px solid rgba(255,255,255,.18)",
         background: tile.revealed
@@ -173,7 +173,7 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
       {image ? (
         <span style={{ position: "relative", display: "grid", placeItems: "center", width: "100%", height: "100%" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image} alt="" aria-hidden="true" style={{ width: "82%", height: "82%", objectFit: "contain" }} />
+          <img src={image} alt="" aria-hidden="true" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }} />
           {showClue && number && (
             <span
               style={{
@@ -196,7 +196,7 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
         </span>
       ) : tile.flagged && !tile.revealed ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src="/the_sweep/marker_flag.webp" alt="Flagged" style={{ width: "76%", height: "76%", objectFit: "contain" }} />
+        <img src="/the_sweep/marker_flag.webp" alt="Flagged" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }} />
       ) : number}
     </button>
   );
@@ -306,7 +306,7 @@ export default function TheSweep() {
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/the_sweep/the-sweep.webp"
+            src="/the_sweep/the-sweep.png"
             alt=""
             aria-hidden="true"
             style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
@@ -354,17 +354,27 @@ export default function TheSweep() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 16 }}>
         <div style={panelStyle()}>
           <div style={labelStyle()}>CLUES</div>
-          <div style={{ color: C.cream, fontWeight: 900, fontSize: 22 }}>
-            {stats.cluesFound} / {settings.clues}
+          <div style={countBoxStyle()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/the_sweep/clue+1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <span>{stats.cluesFound} / {settings.clues}</span>
           </div>
         </div>
         <div style={panelStyle()}>
           <div style={labelStyle()}>TRAPS</div>
-          <div style={{ color: C.cream, fontWeight: 900, fontSize: 22 }}>{settings.traps}</div>
+          <div style={countBoxStyle()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/the_sweep/trap_1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <span>{settings.traps}</span>
+          </div>
         </div>
         <div style={panelStyle()}>
           <div style={labelStyle()}>FLAGS</div>
-          <div style={{ color: C.cream, fontWeight: 900, fontSize: 22 }}>{stats.flags}</div>
+          <div style={countBoxStyle()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/the_sweep/marker_flag.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <span>{stats.flags}</span>
+          </div>
         </div>
         <div style={panelStyle()}>
           <div style={labelStyle()}>STATUS</div>
@@ -387,7 +397,7 @@ export default function TheSweep() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${SIZE}, clamp(30px, 8.4vw, 40px))`,
+            gridTemplateColumns: `repeat(${SIZE}, clamp(36px, 8.4vw, 52px))`,
             gap: 4,
             width: "fit-content",
             margin: "0 auto"
@@ -435,6 +445,28 @@ function labelStyle() {
     letterSpacing: 1.3,
     fontSize: 12,
     marginBottom: 8
+  };
+}
+
+function countBoxStyle() {
+  return {
+    color: C.cream,
+    fontWeight: 900,
+    fontSize: 30,
+    display: "flex",
+    alignItems: "center",
+    gap: 12
+  };
+}
+
+function countIconStyle() {
+  return {
+    width: 56,
+    height: 56,
+    objectFit: "cover",
+    borderRadius: 6,
+    border: "1px solid rgba(255,193,94,.42)",
+    background: "rgba(251,243,228,.08)"
   };
 }
 

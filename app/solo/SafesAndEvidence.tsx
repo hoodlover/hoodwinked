@@ -75,8 +75,8 @@ const C = {
   line: "#81a475",
   alibi: "#936f31",
   informant: "#3d7d68",
-  hit: "#cf4f45",
-  miss: "#9dc7e8",
+  hit: "#ffc15e",
+  miss: "#d9d2bd",
   dark: "#09130e"
 };
 
@@ -231,14 +231,14 @@ function SafesGrid({
   status: Status;
   onTarget?: (index: number) => void;
 }) {
-  const mapImage = owner === "player" ? "/a_and_I/jailmap.webp" : "/a_and_I/citymap_1.webp";
+  const mapImage = owner === "player" ? "/jailmap.webp" : "/a_and_I/citymap_1.webp";
   return (
     <section>
       <h3 style={{ margin: "0 0 10px", color: C.cream, fontSize: 18 }}>{title}</h3>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${SIZE}, minmax(26px, 40px))`,
+          gridTemplateColumns: `repeat(${SIZE}, minmax(34px, 54px))`,
           gap: 3,
           padding: 8,
           borderRadius: 8,
@@ -252,8 +252,8 @@ function SafesGrid({
         {grid.map((cell, index) => {
           const revealPiece = owner === "player" || cell.shot === "hit" || status !== "playing";
           const clickable = owner === "ai" && status === "playing" && !cell.shot;
-          const base = revealPiece && cell.pieceType === "alibi" ? C.alibi : revealPiece && cell.pieceType === "informant" ? C.informant : "#8c9388";
-          const background = cell.shot === "hit" ? C.hit : cell.shot === "miss" ? C.miss : base;
+          const base = revealPiece && cell.pieceType === "alibi" ? "rgba(255,193,94,.22)" : revealPiece && cell.pieceType === "informant" ? "rgba(61,125,104,.24)" : "rgba(251,243,228,.45)";
+          const background = cell.shot === "hit" ? "rgba(255,193,94,.28)" : cell.shot === "miss" ? "rgba(217,210,189,.8)" : base;
           const showFace = revealPiece && cell.pieceType && cell.shot !== "miss";
           return (
             <button
@@ -262,12 +262,12 @@ function SafesGrid({
               disabled={!clickable}
               aria-label={`${title} cell ${row(index) + 1}-${col(index) + 1}`}
               style={{
-                width: "clamp(26px, 7.6vw, 40px)",
-                height: "clamp(26px, 7.6vw, 40px)",
-                border: "1px solid rgba(255,255,255,.16)",
-                borderRadius: 4,
+                width: "clamp(34px, 8vw, 54px)",
+                height: "clamp(34px, 8vw, 54px)",
+                border: `1px solid ${cell.shot === "hit" ? C.gold : "rgba(251,243,228,.28)"}`,
+                borderRadius: 5,
                 background,
-                color: cell.shot === "hit" ? "#fff" : C.dark,
+                color: C.dark,
                 fontWeight: 900,
                 cursor: clickable ? "crosshair" : "default",
                 display: "grid",
@@ -284,9 +284,10 @@ function SafesGrid({
                   alt=""
                   aria-hidden="true"
                   style={{
-                    width: "88%",
-                    height: "88%",
-                    objectFit: "contain",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: 3,
                     filter: cell.shot === "hit" ? "drop-shadow(0 0 6px rgba(255,255,255,.5))" : "none"
                   }}
                 />
@@ -318,8 +319,8 @@ function PieceList({ title, pieces }: { title: string; pieces: Piece[] }) {
                 background: piece.type === "alibi" ? `${C.alibi}66` : `${C.informant}66`,
                 border: `1px solid ${sunk ? "#555" : piece.type === "alibi" ? C.alibi : C.informant}`,
                 borderRadius: 999,
-                padding: "5px 8px",
-                fontSize: 11,
+                padding: "7px 12px",
+                fontSize: 18,
                 fontWeight: 800,
                 textDecoration: sunk ? "line-through" : "none",
                 display: "inline-flex",
@@ -334,7 +335,7 @@ function PieceList({ title, pieces }: { title: string; pieces: Piece[] }) {
                   src={criminalIcon(piece.id, index)}
                   alt=""
                   aria-hidden="true"
-                  style={{ width: 18, height: 18, objectFit: "contain", opacity: sunk ? 0.45 : 1 }}
+                  style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 3, opacity: sunk ? 0.45 : 1 }}
                 />
               ))}
               <span>{piece.size} {piece.type}</span>
