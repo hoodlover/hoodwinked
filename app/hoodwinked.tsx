@@ -65,10 +65,10 @@ const C = {
   creamDim: "#B9C3B0"
 };
 
-const HEAVY_TEXT_SHADOW = "0 5px 0 rgba(0,0,0,.5), 0 10px 22px rgba(0,0,0,.86), 0 0 4px rgba(0,0,0,.96)";
+const HEAVY_TEXT_SHADOW = "0 8px 18px rgba(0,0,0,.72), 0 14px 34px rgba(0,0,0,.58), 0 0 10px rgba(0,0,0,.68)";
 
 const PLAY_URL = "playhoodwinked.com";
-const APP_VERSION = "0.3.20";
+const APP_VERSION = "0.3.21";
 
 const AVATAR_FILES = [
   "01-victoria.webp",
@@ -488,11 +488,12 @@ const FONT_CSS = `
 .parlor-root .justify-center{justify-content:center;}
 @keyframes parlor-twinkle{0%,100%{opacity:.35;}50%{opacity:1;}}
 @keyframes parlor-popin{0%{transform:scale(.85);opacity:0;}100%{transform:scale(1);opacity:1;}}
+@keyframes parlor-x-flash{0%{opacity:0;filter:drop-shadow(0 16px 28px rgba(0,0,0,.65)) brightness(1.4);}100%{opacity:1;filter:drop-shadow(0 16px 28px rgba(0,0,0,.65)) brightness(1);}}
 @keyframes parlor-fadeup{0%{transform:translateY(10px);opacity:0;}100%{transform:translateY(0);opacity:1;}}
 @keyframes parlor-glow{0%,100%{box-shadow:0 0 0 0 rgba(255,193,94,0);}50%{box-shadow:0 0 22px 2px rgba(255,193,94,.45);}}
 @keyframes parlor-fall{0%{transform:translate3d(0,-12vh,0) rotate(0deg);opacity:0;}10%{opacity:1;}100%{transform:translate3d(var(--dx,0),110vh,0) rotate(var(--rot,540deg));opacity:1;}}
 @keyframes parlor-stage-drop{0%{transform:translateY(-60px) scale(.7);letter-spacing:14px;filter:blur(6px);opacity:0;}55%{transform:translateY(8px) scale(1.06);letter-spacing:0;filter:blur(0);opacity:1;}75%{transform:translateY(-4px) scale(.99);}100%{transform:translateY(0) scale(1);opacity:1;}}
-@keyframes parlor-pin-in{0%{transform:translateY(10px) rotate(var(--rot,0deg)) scale(.92);opacity:0;}100%{transform:translateY(0) rotate(var(--rot,0deg)) scale(1);opacity:1;}}
+@keyframes parlor-pin-in{0%{transform:translateY(12px) rotate(calc(var(--rot,0deg) - 7deg)) scale(.92);opacity:0;}68%{transform:translateY(-2px) rotate(calc(var(--rot,0deg) + 2deg)) scale(1.02);opacity:1;}100%{transform:translateY(0) rotate(var(--rot,0deg)) scale(1);opacity:1;}}
 @keyframes parlor-pill-shine{0%{transform:translateX(-140%) skewX(-18deg);opacity:0;}18%{opacity:.65;}48%{opacity:.32;}100%{transform:translateX(190%) skewX(-18deg);opacity:0;}}
 @keyframes parlor-letter-turn-left{0%{transform:perspective(700px) rotateY(-92deg);opacity:.28;filter:brightness(.72);}58%{transform:perspective(700px) rotateY(9deg);opacity:1;filter:brightness(1.1);}100%{transform:perspective(700px) rotateY(0deg);opacity:1;filter:brightness(1);}}
 .parlor-root .stagedrop{animation:parlor-stage-drop .9s cubic-bezier(.22,1.18,.36,1) both;}
@@ -502,7 +503,7 @@ const FONT_CSS = `
 @keyframes parlor-streak{0%{transform:scale(1);text-shadow:0 0 0 transparent;}30%{transform:scale(1.22);text-shadow:0 0 22px var(--glow,#FFC15E);}70%{transform:scale(1.22);text-shadow:0 0 22px var(--glow,#FFC15E);}100%{transform:scale(1);text-shadow:0 0 0 transparent;}}
 .parlor-root .streak{animation:parlor-streak 1.8s ease-out 1 both;display:inline-block;}
 .parlor-root .suspect-pins{display:block;}
-.parlor-root .suspect-pin{animation:parlor-pin-in .55s cubic-bezier(.22,1.18,.36,1) both;}
+.parlor-root .suspect-card{animation:parlor-pin-in .55s cubic-bezier(.22,1.18,.36,1) both;transform-origin:50% 0;}
 .parlor-root .mode-chip:hover{transform:scale(1.12) !important;z-index:6 !important;box-shadow:0 22px 44px rgba(0,0,0,.42),0 0 0 1px rgba(255,193,94,.28) !important;border-color:${C.gold} !important;}
 .parlor-root .waiting-pill{position:relative;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;border-radius:999px;padding:8px 20px;background:rgba(10,19,14,.42);border:1px solid rgba(255,193,94,.22);box-shadow:0 14px 32px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.05);}
 .parlor-root .waiting-pill::after{content:"";position:absolute;inset:-20% auto -20% -40%;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);animation:parlor-pill-shine 2.9s ease-in-out infinite;}
@@ -522,7 +523,7 @@ const FONT_CSS = `
 .parlor-root .fadeup{animation:parlor-fadeup .35s ease both;}
 .parlor-root .glow{animation:parlor-glow 2.2s ease-in-out infinite;}
 @media (prefers-reduced-motion: reduce){
-  .parlor-root .bulb,.parlor-root .popin,.parlor-root .fadeup,.parlor-root .glow,.parlor-root .stagedrop,.parlor-root .typing-dot,.parlor-root .streak,.parlor-root .suspect-pin,.parlor-root .waiting-pill::after,.parlor-root .letter-flip{animation:none !important;}
+  .parlor-root .bulb,.parlor-root .popin,.parlor-root .fadeup,.parlor-root .glow,.parlor-root .stagedrop,.parlor-root .typing-dot,.parlor-root .streak,.parlor-root .suspect-card,.parlor-root .waiting-pill::after,.parlor-root .letter-flip{animation:none !important;}
 }
 `;
 
@@ -657,6 +658,7 @@ type SuspectPin = {
   left: number;
   top: number;
   rotate: number;
+  string: { angle: number; length: number; offset: number; color: string } | null;
   size: number;
   opacity: number;
   delay: number;
@@ -791,17 +793,28 @@ function buildSuspectPins(seedKey: string, phase: Phase, variant: SuspectPinVari
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
 
-  return zones.map((zone, i) => ({
-    option: pool[i % pool.length],
-    label: `${CASE_BOARD_LABELS[Math.floor(rand() * CASE_BOARD_LABELS.length)]}: ${CASE_BOARD_NAMES[Math.floor(rand() * CASE_BOARD_NAMES.length)]}`,
-    left: zone.left + (rand() * 5 - 2.5),
-    top: zone.top + (rand() * 5 - 2.5),
-    rotate: rand() * 22 - 11,
-    size: zone.size + Math.round(rand() * 10 - 5),
-    opacity: opacityBase + rand() * opacityJitter,
-    delay: i * 55,
-    zIndex: zone.zIndex
-  }));
+  return zones.map((zone, i) => {
+    const hasString = rand() > (variant === "landing" ? 0.72 : 0.78);
+    return {
+      option: pool[i % pool.length],
+      label: `${CASE_BOARD_LABELS[Math.floor(rand() * CASE_BOARD_LABELS.length)]}: ${CASE_BOARD_NAMES[Math.floor(rand() * CASE_BOARD_NAMES.length)]}`,
+      left: zone.left + (rand() * 5 - 2.5),
+      top: zone.top + (rand() * 5 - 2.5),
+      rotate: rand() * 34 - 17,
+      string: hasString
+        ? {
+            angle: rand() * 86 - 43,
+            length: zone.size * (0.42 + rand() * 0.42),
+            offset: rand() * 16 - 8,
+            color: rand() > 0.35 ? "#b3221f" : "#d8b35b"
+          }
+        : null,
+      size: zone.size + Math.round(rand() * 10 - 5),
+      opacity: opacityBase + rand() * opacityJitter,
+      delay: i * 55,
+      zIndex: zone.zIndex
+    };
+  });
 }
 
 function SuspectPins({ state, variant = "board" }: { state: State; variant?: SuspectPinVariant }) {
@@ -813,21 +826,12 @@ function SuspectPins({ state, variant = "board" }: { state: State; variant?: Sus
       {pins.map((pin, i) => (
         <div
           key={`${pin.option.id}-${i}-${seedKey}`}
-          className="suspect-pin"
           style={{
             position: "absolute",
             left: `${pin.left}%`,
             top: `${pin.top}%`,
             width: pin.size,
-            padding: "6px 6px 13px",
-            background: "linear-gradient(180deg, rgba(251,243,228,.92), rgba(218,204,174,.86))",
-            border: "1px solid rgba(42,28,16,.28)",
-            borderRadius: 4,
-            boxShadow: "0 12px 28px rgba(0,0,0,.32)",
             opacity: pin.opacity,
-            transform: `rotate(${pin.rotate}deg)`,
-            ["--rot" as string]: `${pin.rotate}deg`,
-            animationDelay: `${pin.delay}ms`,
             zIndex: pin.zIndex
           }}
         >
@@ -849,41 +853,75 @@ function SuspectPins({ state, variant = "board" }: { state: State; variant?: Sus
               zIndex: 2
             }}
           />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={pin.option.src}
-            alt=""
-            width={pin.size}
-            height={pin.size}
-            draggable={false}
-            style={{
-              display: "block",
-              width: "100%",
-              aspectRatio: "1 / 1",
-              objectFit: "cover",
-              borderRadius: 2,
-              filter: "sepia(.16) contrast(.98) saturate(.86)"
-            }}
-          />
+          {pin.string && (
+            <span
+              style={{
+                position: "absolute",
+                left: `calc(50% + ${pin.string.offset}px)`,
+                top: 0,
+                width: pin.string.length,
+                height: 2,
+                background: pin.string.color,
+                borderRadius: 999,
+                boxShadow: "0 1px 2px rgba(0,0,0,.35)",
+                opacity: 0.72,
+                transform: `rotate(${pin.string.angle}deg)`,
+                transformOrigin: "0 50%",
+                zIndex: 1
+              }}
+            />
+          )}
           <div
-            className="body"
+            className="suspect-card"
             style={{
-              position: "absolute",
-              left: 7,
-              right: 7,
-              bottom: 3,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              color: "#2b2118",
-              fontSize: 7,
-              fontWeight: 800,
-              letterSpacing: 0.8,
-              textAlign: "center",
-              textTransform: "uppercase"
+              position: "relative",
+              width: "100%",
+              padding: "6px 6px 13px",
+              background: "linear-gradient(180deg, rgba(251,243,228,.92), rgba(218,204,174,.86))",
+              border: "1px solid rgba(42,28,16,.28)",
+              borderRadius: 4,
+              boxShadow: "0 12px 28px rgba(0,0,0,.32)",
+              transform: `rotate(${pin.rotate}deg)`,
+              ["--rot" as string]: `${pin.rotate}deg`,
+              animationDelay: `${pin.delay}ms`
             }}
           >
-            {pin.label}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={pin.option.src}
+              alt=""
+              width={pin.size}
+              height={pin.size}
+              draggable={false}
+              style={{
+                display: "block",
+                width: "100%",
+                aspectRatio: "1 / 1",
+                objectFit: "cover",
+                borderRadius: 2,
+                filter: "sepia(.16) contrast(.98) saturate(.86)"
+              }}
+            />
+            <div
+              className="body"
+              style={{
+                position: "absolute",
+                left: 7,
+                right: 7,
+                bottom: 3,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                color: "#2b2118",
+                fontSize: 7,
+                fontWeight: 800,
+                letterSpacing: 0.8,
+                textAlign: "center",
+                textTransform: "uppercase"
+              }}
+            >
+              {pin.label}
+            </div>
           </div>
         </div>
       ))}
@@ -898,21 +936,13 @@ function LandingSuspectPins() {
       {pins.map((pin, i) => (
         <div
           key={`${pin.option.id}-landing-${i}`}
-          className="suspect-pin"
           style={{
             position: "absolute",
             left: `${pin.left}%`,
             top: `${pin.top}%`,
             width: pin.size,
-            padding: "7px 7px 16px",
-            background: "linear-gradient(180deg, rgba(251,243,228,.94), rgba(218,204,174,.88))",
-            border: "1px solid rgba(42,28,16,.28)",
-            borderRadius: 4,
-            boxShadow: "0 18px 38px rgba(0,0,0,.34)",
             opacity: pin.opacity,
-            transform: `translate(-50%, -50%) rotate(${pin.rotate}deg)`,
-            ["--rot" as string]: `${pin.rotate}deg`,
-            animationDelay: `${pin.delay}ms`,
+            transform: "translate(-50%, -50%)",
             zIndex: pin.zIndex
           }}
         >
@@ -934,41 +964,75 @@ function LandingSuspectPins() {
               zIndex: 2
             }}
           />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={pin.option.src}
-            alt=""
-            width={pin.size}
-            height={pin.size}
-            draggable={false}
-            style={{
-              display: "block",
-              width: "100%",
-              aspectRatio: "1 / 1",
-              objectFit: "cover",
-              borderRadius: 2,
-              filter: "sepia(.16) contrast(.98) saturate(.86)"
-            }}
-          />
+          {pin.string && (
+            <span
+              style={{
+                position: "absolute",
+                left: `calc(50% + ${pin.string.offset}px)`,
+                top: 0,
+                width: pin.string.length,
+                height: 2,
+                background: pin.string.color,
+                borderRadius: 999,
+                boxShadow: "0 1px 2px rgba(0,0,0,.35)",
+                opacity: 0.72,
+                transform: `rotate(${pin.string.angle}deg)`,
+                transformOrigin: "0 50%",
+                zIndex: 1
+              }}
+            />
+          )}
           <div
-            className="body"
+            className="suspect-card"
             style={{
-              position: "absolute",
-              left: 8,
-              right: 8,
-              bottom: 4,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              color: "#2b2118",
-              fontSize: 8,
-              fontWeight: 800,
-              letterSpacing: 0.8,
-              textAlign: "center",
-              textTransform: "uppercase"
+              position: "relative",
+              width: "100%",
+              padding: "7px 7px 16px",
+              background: "linear-gradient(180deg, rgba(251,243,228,.94), rgba(218,204,174,.88))",
+              border: "1px solid rgba(42,28,16,.28)",
+              borderRadius: 4,
+              boxShadow: "0 18px 38px rgba(0,0,0,.34)",
+              transform: `rotate(${pin.rotate}deg)`,
+              ["--rot" as string]: `${pin.rotate}deg`,
+              animationDelay: `${pin.delay}ms`
             }}
           >
-            {pin.label}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={pin.option.src}
+              alt=""
+              width={pin.size}
+              height={pin.size}
+              draggable={false}
+              style={{
+                display: "block",
+                width: "100%",
+                aspectRatio: "1 / 1",
+                objectFit: "cover",
+                borderRadius: 2,
+                filter: "sepia(.16) contrast(.98) saturate(.86)"
+              }}
+            />
+            <div
+              className="body"
+              style={{
+                position: "absolute",
+                left: 8,
+                right: 8,
+                bottom: 4,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                color: "#2b2118",
+                fontSize: 8,
+                fontWeight: 800,
+                letterSpacing: 0.8,
+                textAlign: "center",
+                textTransform: "uppercase"
+              }}
+            >
+              {pin.label}
+            </div>
           </div>
         </div>
       ))}
@@ -1853,7 +1917,6 @@ function Board({
                 {wrongGuess && (
                   <div
                     role="presentation"
-                    className="popin"
                     style={{
                       position: "absolute",
                       left: "50%",
@@ -1866,6 +1929,7 @@ function Board({
                       backgroundSize: "contain",
                       transform: "translate(-50%, -50%)",
                       filter: "drop-shadow(0 16px 28px rgba(0,0,0,.65))",
+                      animation: "parlor-x-flash .18s ease-out both",
                       pointerEvents: "none",
                       zIndex: 5
                     }}

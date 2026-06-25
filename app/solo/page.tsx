@@ -97,7 +97,7 @@ export default function SoloGamesPage() {
                 fontSize: "clamp(40px, 8vw, 86px)",
                 lineHeight: 0.95,
                 letterSpacing: 1,
-                textShadow: "0 8px 24px rgba(0,0,0,.82), 0 2px 5px rgba(0,0,0,.95)"
+                textShadow: "0 8px 18px rgba(0,0,0,.72), 0 14px 34px rgba(0,0,0,.58), 0 0 10px rgba(0,0,0,.68)"
               }}
             >
               Solo Cases
