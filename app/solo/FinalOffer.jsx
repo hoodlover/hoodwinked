@@ -164,7 +164,7 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
   );
 }
 
-function ValueBoard({ cases, chosenCaseId, phase, message, openedCount, acceptedOffer, onAcceptOffer, onRejectOffer }) {
+function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCount, acceptedOffer, onAcceptOffer, onRejectOffer }) {
   const openedByValue = new Map(cases.filter((briefcase) => briefcase.opened).map((briefcase) => [briefcase.value, briefcase.id]));
   const chosenCase = cases.find((briefcase) => briefcase.id === chosenCaseId);
   const revealChosen = phase === "done";
@@ -215,6 +215,19 @@ function ValueBoard({ cases, chosenCaseId, phase, message, openedCount, accepted
             padding: "4px 0 0"
           }}
         >
+          <div
+            style={{
+              border: `1px solid ${C.line}`,
+              borderRadius: 8,
+              padding: 12,
+              background: "rgba(9,19,14,.55)"
+            }}
+          >
+            <div style={labelStyle()}>BANKER OFFER</div>
+            <div style={{ color: C.gold, fontWeight: 900, fontSize: "clamp(26px, 4vw, 46px)", lineHeight: 1 }}>
+              {offerText}
+            </div>
+          </div>
           <div style={{ color: phase === "done" ? C.gold : C.muted, fontWeight: 900, lineHeight: 1.35, fontSize: "clamp(16px, 2vw, 22px)" }}>
             {message}
             {phase === "done" && chosenCase && (
@@ -437,12 +450,6 @@ export default function FinalOffer() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10, marginBottom: 16 }}>
         <div style={panelStyle()}>
-          <div style={labelStyle()}>BANKER OFFER</div>
-          <div style={{ color: C.gold, fontWeight: 900, fontSize: "clamp(24px, 5vw, 38px)", lineHeight: 1 }}>
-            {game?.offer && game.phase === "offer" ? offerText : "Waiting"}
-          </div>
-        </div>
-        <div style={panelStyle()}>
           <div style={labelStyle()}>CASES TO OPEN</div>
           <div style={{ color: C.cream, fontWeight: 900, fontSize: 24 }}>{game?.chosenCaseId ? casesToOpen : VALUES.length - 1}</div>
         </div>
@@ -483,6 +490,7 @@ export default function FinalOffer() {
             cases={game.cases}
             chosenCaseId={game.chosenCaseId}
             phase={game.phase}
+            offerText={game?.offer && game.phase === "offer" ? offerText : "Waiting"}
             message={game.message}
             openedCount={openedCount}
             acceptedOffer={game.acceptedOffer}
