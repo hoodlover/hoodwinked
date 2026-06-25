@@ -23,7 +23,7 @@ export const PICTURE_GUESS_SECONDS = 40;
 export const PICTURE_BASE_POINTS = 150;
 
 // Wheel of Fortune
-export const WHEEL_GUESS_SECONDS = 60;
+export const WHEEL_GUESS_SECONDS = 65;
 export const WHEEL_SOLVE_BONUS = 200;
 export const WHEEL_LETTER_BUDGET = 3; // letters each player may reveal per round
 
@@ -1060,12 +1060,17 @@ export type PictureState = {
 // Per-round Wheel of Fortune state. One puzzle per round.
 // Each guessed letter is stamped with the player AND the wedge value they rolled.
 export type WheelLetterHit = { playerId: string; value: number };
+export type WheelGuessFeedback = { playerId: string; letter: string; correct: boolean; at: number };
 export const WHEEL_WEDGE_VALUES = [50, 100, 100, 200, 200, 300, 500] as const;
 export type WheelState = {
   puzzles: WheelPuzzle[]; // length = totalRounds
   guessedLetters: Record<string, WheelLetterHit>; // letter -> { player, wedge value }
   solved: boolean;
   solverId: string | null;
+  currentPickerId: string | null;
+  pickedThisCycle: string[];
+  turnReadyAt: number;
+  lastGuess: WheelGuessFeedback | null;
 };
 
 // Per-round Family Feud state. One survey per round.
@@ -1215,6 +1220,52 @@ export function wheelLettersSpent(state: State, playerId: string): number {
   return Object.values(state.wheel.guessedLetters).filter((h) => h.playerId === playerId).length;
 }
 
+function wheelLetterIsCorrect(puzzle: WheelPuzzle | undefined, letter: string): boolean {
+  return !!puzzle && puzzle.text.toUpperCase().includes(letter);
+}
+
+export function wheelCanGuessLetter(state: State, playerId: string, now = Date.now()): boolean {
+  if (state.phase !== "writing" || state.mode !== "wheel") return false;
+  if (!state.players[playerId]) return false;
+  if (state.wheel.solved) return false;
+  if ((state.wheel.turnReadyAt ?? 0) > now) return false;
+  const currentPickerId = state.wheel.currentPickerId;
+  const currentPickerActive =
+    !!currentPickerId &&
+    !!state.players[currentPickerId] &&
+    !state.giveUps[currentPickerId] &&
+    wheelLettersSpent(state, currentPickerId) < WHEEL_LETTER_BUDGET;
+  if (currentPickerActive && currentPickerId !== playerId) return false;
+  return wheelLettersSpent(state, playerId) < WHEEL_LETTER_BUDGET;
+}
+
+function nextWheelTurnState(
+  state: State,
+  playerId: string,
+  correct: boolean,
+  spentAfterGuess: number
+): Pick<WheelState, "currentPickerId" | "pickedThisCycle" | "turnReadyAt"> {
+  if (correct && spentAfterGuess < WHEEL_LETTER_BUDGET) {
+    return {
+      currentPickerId: playerId,
+      pickedThisCycle: state.wheel.pickedThisCycle ?? [],
+      turnReadyAt: 0
+    };
+  }
+
+  const endedCycle = Array.from(new Set([...(state.wheel.pickedThisCycle ?? []), playerId]));
+  const ids = joinedIds(state).filter((id) => !state.giveUps[id] && wheelLettersSpent(state, id) < WHEEL_LETTER_BUDGET);
+  const playerIndex = Math.max(0, ids.indexOf(playerId));
+  const ordered = [...ids.slice(playerIndex + 1), ...ids.slice(0, playerIndex)];
+  const next = ordered.find((id) => !endedCycle.includes(id)) ?? null;
+
+  return {
+    currentPickerId: next,
+    pickedThisCycle: next ? endedCycle : [],
+    turnReadyAt: 0
+  };
+}
+
 export function wheelDisplay(text: string, revealed: Set<string>): string {
   return text
     .split("")
@@ -1230,7 +1281,7 @@ function emptyPicture(): PictureState {
   return { items: [], guesses: {} };
 }
 function emptyWheel(): WheelState {
-  return { puzzles: [], guessedLetters: {}, solved: false, solverId: null };
+  return { puzzles: [], guessedLetters: {}, solved: false, solverId: null, currentPickerId: null, pickedThisCycle: [], turnReadyAt: 0, lastGuess: null };
 }
 function emptyFeud(): FeudState {
   return { questions: [], guesses: {} };
@@ -1339,7 +1390,7 @@ function startRound(state: State, roundNum: number): State {
         ...base,
         prompt: null,
         phaseDeadline: deadline(WHEEL_GUESS_SECONDS),
-        wheel: { puzzles, guessedLetters: {}, solved: false, solverId: null }
+        wheel: { puzzles, guessedLetters: {}, solved: false, solverId: null, currentPickerId: null, pickedThisCycle: [], turnReadyAt: 0, lastGuess: null }
       };
     }
     case "feud": {
@@ -1716,6 +1767,7 @@ export function reducer(state: State, action: Action): State {
       if (state.phase !== "writing" || state.mode !== "wheel") return state;
       if (!state.players[action.playerId]) return state;
       if (state.wheel.solved) return state;
+      if (!wheelCanGuessLetter(state, action.playerId)) return state;
       const letter = (action.letter || "").toUpperCase().slice(0, 1);
       if (!letter || !/[A-Z]/.test(letter)) return state;
       if (state.wheel.guessedLetters[letter]) return state;
@@ -1729,7 +1781,19 @@ export function reducer(state: State, action: Action): State {
         ...state.wheel.guessedLetters,
         [letter]: { playerId: action.playerId, value }
       };
-      return { ...state, wheel: { ...state.wheel, guessedLetters } };
+      const puzzle = state.wheel.puzzles[state.round - 1];
+      const correct = wheelLetterIsCorrect(puzzle, letter);
+      const now = Date.now();
+      const turn = nextWheelTurnState(state, action.playerId, correct, spent + 1);
+      return {
+        ...state,
+        wheel: {
+          ...state.wheel,
+          guessedLetters,
+          ...turn,
+          lastGuess: { playerId: action.playerId, letter, correct, at: now }
+        }
+      };
     }
 
     case "SOLVE_WHEEL": {

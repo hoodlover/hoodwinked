@@ -20,6 +20,7 @@ import {
   makeRoomCode,
   matchesAnswer,
   reducer,
+  wheelCanGuessLetter,
   wheelLettersSpent,
   type Action,
   type FeudAnswer,
@@ -67,7 +68,7 @@ const C = {
 const HEAVY_TEXT_SHADOW = "0 5px 0 rgba(0,0,0,.5), 0 10px 22px rgba(0,0,0,.86), 0 0 4px rgba(0,0,0,.96)";
 
 const PLAY_URL = "playhoodwinked.com";
-const APP_VERSION = "0.3.18";
+const APP_VERSION = "0.3.19";
 
 const AVATAR_FILES = [
   "01-victoria.webp",
@@ -495,7 +496,7 @@ const FONT_CSS = `
 @keyframes parlor-pill-shine{0%{transform:translateX(-140%) skewX(-18deg);opacity:0;}18%{opacity:.65;}48%{opacity:.32;}100%{transform:translateX(190%) skewX(-18deg);opacity:0;}}
 @keyframes parlor-letter-turn-left{0%{transform:perspective(700px) rotateY(-92deg);opacity:.28;filter:brightness(.72);}58%{transform:perspective(700px) rotateY(9deg);opacity:1;filter:brightness(1.1);}100%{transform:perspective(700px) rotateY(0deg);opacity:1;filter:brightness(1);}}
 .parlor-root .stagedrop{animation:parlor-stage-drop .9s cubic-bezier(.22,1.18,.36,1) both;}
-.parlor-root .letter-flip{animation:parlor-letter-turn-left .58s cubic-bezier(.2,.8,.2,1) both;transform-origin:left center;backface-visibility:hidden;}
+.parlor-root .letter-flip{animation:parlor-letter-turn-left 1.03s cubic-bezier(.2,.8,.2,1) both;transform-origin:left center;backface-visibility:hidden;}
 @keyframes parlor-typing{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-3px);opacity:1;}}
 .parlor-root .typing-dot{display:inline-block;width:4px;height:4px;border-radius:999px;margin:0 1px;animation:parlor-typing 1s infinite ease-in-out;}
 @keyframes parlor-streak{0%{transform:scale(1);text-shadow:0 0 0 transparent;}30%{transform:scale(1.22);text-shadow:0 0 22px var(--glow,#FFC15E);}70%{transform:scale(1.22);text-shadow:0 0 22px var(--glow,#FFC15E);}100%{transform:scale(1);text-shadow:0 0 0 transparent;}}
@@ -1032,7 +1033,9 @@ function LetterHeistBoard({
                     : "linear-gradient(180deg, #f7f2e8 0%, #d8cfbc 100%)",
                   color: visible ? "#202020" : "transparent",
                   fontSize: "clamp(20px, 3.3vw, 44px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 900,
+                  letterSpacing: 0,
                   lineHeight: 1,
                   textTransform: "uppercase",
                   boxShadow: visible
@@ -1833,6 +1836,10 @@ function Board({
           const puzzle = state.wheel.puzzles[state.round - 1];
           if (!puzzle) return null;
           const revealed = new Set(Object.keys(state.wheel.guessedLetters));
+          const wrongGuess =
+            state.wheel.lastGuess && !state.wheel.lastGuess.correct && now - state.wheel.lastGuess.at < 1000
+              ? state.wheel.lastGuess
+              : null;
           return (
             <div className="fadeup" style={{ textAlign: "center", padding: "10px 0" }}>
               <div
@@ -1841,7 +1848,30 @@ function Board({
               >
                 {puzzle.category.toUpperCase()}
               </div>
-              <LetterHeistBoard text={puzzle.text} revealed={revealed} solved={state.wheel.solved} />
+              <div style={{ position: "relative", width: "fit-content", maxWidth: "100%", margin: "0 auto" }}>
+                <LetterHeistBoard text={puzzle.text} revealed={revealed} solved={state.wheel.solved} />
+                {wrongGuess && (
+                  <div
+                    role="presentation"
+                    className="popin"
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      width: "clamp(96px, 18vw, 180px)",
+                      height: "clamp(96px, 18vw, 180px)",
+                      backgroundImage: "url('/a_and_I/X.png')",
+                      backgroundPosition: "center",
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: "contain",
+                      transform: "translate(-50%, -50%)",
+                      filter: "drop-shadow(0 16px 28px rgba(0,0,0,.65))",
+                      pointerEvents: "none",
+                      zIndex: 5
+                    }}
+                  />
+                )}
+              </div>
               <div
                 className="flex flex-wrap justify-center"
                 style={{ gap: 6, marginBottom: 8, maxWidth: 640, margin: "0 auto 8px" }}
@@ -2463,6 +2493,8 @@ function WheelPhone({
   }
   const spent = wheelLettersSpent(state, player.id);
   const remaining = WHEEL_LETTER_BUDGET - spent;
+  const canPickLetter = wheelCanGuessLetter(state, player.id);
+  const activePicker = state.wheel.currentPickerId ? state.players[state.wheel.currentPickerId] : null;
   const usedSet = new Set(Object.keys(state.wheel.guessedLetters));
   const rows = ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ"];
   const trySolve = () => {
@@ -2536,6 +2568,19 @@ function WheelPhone({
           </span>
         </span>
       </div>
+      <div
+        className="body"
+        style={{
+          color: canPickLetter ? player.color : C.creamDim,
+          fontSize: 11,
+          fontWeight: 800,
+          marginBottom: 7,
+          minHeight: 16,
+          textAlign: "center"
+        }}
+      >
+        {canPickLetter ? "Your letter pick" : activePicker ? `${activePicker.name} is picking` : "Letter pick opens soon"}
+      </div>
 
       {/* Compact keyboard */}
       <div className="flex flex-col" style={{ gap: 3 }}>
@@ -2544,11 +2589,12 @@ function WheelPhone({
             {row.split("").map((ch) => {
               const used = usedSet.has(ch);
               const mine = state.wheel.guessedLetters[ch]?.playerId === player.id;
-              const exhausted = remaining <= 0 && !used;
+              const locked = !canPickLetter && !used;
+              const disabled = used || locked;
               return (
                 <button
                   key={ch}
-                  disabled={used || exhausted}
+                  disabled={disabled}
                   onClick={() => dispatch({ type: "GUESS_LETTER", playerId: player.id, letter: ch })}
                   className="disp"
                   style={{
@@ -2556,13 +2602,13 @@ function WheelPhone({
                     height: 26,
                     fontSize: 12,
                     fontWeight: 800,
-                    background: mine ? player.color : used ? C.bgDeep : exhausted ? C.bgDeep : C.surface,
-                    color: mine ? C.bgDeep : used || exhausted ? C.line : C.cream,
-                    border: `1px solid ${used || exhausted ? C.line : player.color}`,
+                    background: mine ? player.color : used ? C.bgDeep : locked ? C.bgDeep : C.surface,
+                    color: mine ? C.bgDeep : used || locked ? C.line : C.cream,
+                    border: `1px solid ${used || locked ? C.line : player.color}`,
                     borderRadius: 5,
-                    cursor: used || exhausted ? "not-allowed" : "pointer",
+                    cursor: disabled ? "not-allowed" : "pointer",
                     padding: 0,
-                    opacity: exhausted ? 0.45 : 1
+                    opacity: locked ? 0.45 : 1
                   }}
                 >
                   {ch}
