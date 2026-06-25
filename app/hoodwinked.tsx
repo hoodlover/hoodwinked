@@ -67,7 +67,7 @@ const C = {
 const HEAVY_TEXT_SHADOW = "0 5px 0 rgba(0,0,0,.5), 0 10px 22px rgba(0,0,0,.86), 0 0 4px rgba(0,0,0,.96)";
 
 const PLAY_URL = "playhoodwinked.com";
-const APP_VERSION = "0.3.14";
+const APP_VERSION = "0.3.15";
 
 const AVATAR_FILES = [
   "01-victoria.webp",
@@ -322,6 +322,7 @@ let audioMuted = false;
 let currentVoiceAudio: HTMLAudioElement | null = null;
 const VOICE_FETCH_TIMEOUT_MS = 12_000;
 const VOICE_FALLBACK_TIMEOUT_MS = 8_000;
+const FEUD_NUMBER_ONE_ANSWER_PAUSE_MS = 1_350;
 
 function stopFeudVoice() {
   if (typeof window !== "undefined") window.speechSynthesis?.cancel();
@@ -3248,8 +3249,15 @@ function FeudRevealCard({ state, dispatch }: { state: State; dispatch: React.Dis
         const afterReveal = () => {
           if (!cancelled) timers.push(window.setTimeout(revealNext, 260));
         };
-        if (answerIndex === 0 || !hit) speakFeudAnswer(answer.text, afterReveal);
-        else afterReveal();
+        if (answerIndex === 0) {
+          timers.push(window.setTimeout(() => {
+            if (!cancelled) speakFeudAnswer(answer.text, afterReveal);
+          }, FEUD_NUMBER_ONE_ANSWER_PAUSE_MS));
+        } else if (!hit) {
+          speakFeudAnswer(answer.text, afterReveal);
+        } else {
+          afterReveal();
+        }
       });
     };
     timers.push(window.setTimeout(revealNext, 550));
