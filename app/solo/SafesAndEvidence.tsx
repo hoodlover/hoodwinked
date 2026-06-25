@@ -231,7 +231,7 @@ function SafesGrid({
   status: Status;
   onTarget?: (index: number) => void;
 }) {
-  const mapImage = owner === "player" ? "/jailmap.webp" : "/a_and_I/citymap_1.webp";
+  const mapImage = owner === "player" ? "/a_and_I/jailmap.png" : "/a_and_I/citymap_1.webp";
   return (
     <section>
       <h3 style={{ margin: "0 0 10px", color: C.cream, fontSize: 18 }}>{title}</h3>
@@ -291,7 +291,14 @@ function SafesGrid({
                     filter: cell.shot === "hit" ? "drop-shadow(0 0 6px rgba(255,255,255,.5))" : "none"
                   }}
                 />
-              ) : cell.shot === "miss" ? "POOF" : ""}
+              ) : cell.shot === "miss" ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src="/a_and_I/knives.png"
+                  alt="Miss"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 3 }}
+                />
+              ) : ""}
             </button>
           );
         })}
@@ -303,12 +310,12 @@ function SafesGrid({
 function PieceList({ title, pieces }: { title: string; pieces: Piece[] }) {
   const left = remainingPieces(pieces);
   return (
-    <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
+    <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, background: "rgba(9,19,14,.55)", minWidth: 0 }}>
       <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>{title}</div>
-      <div style={{ color: C.cream, fontSize: 24, fontWeight: 900, margin: "4px 0" }}>
+      <div style={{ color: C.cream, fontSize: 20, fontWeight: 900, margin: "3px 0" }}>
         {left.length} / {pieces.length}
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
         {pieces.map((piece) => {
           const sunk = piece.hits.length >= piece.cells.length;
           return (
@@ -319,8 +326,8 @@ function PieceList({ title, pieces }: { title: string; pieces: Piece[] }) {
                 background: piece.type === "alibi" ? `${C.alibi}66` : `${C.informant}66`,
                 border: `1px solid ${sunk ? "#555" : piece.type === "alibi" ? C.alibi : C.informant}`,
                 borderRadius: 999,
-                padding: "7px 12px",
-                fontSize: 18,
+                padding: "5px 8px",
+                fontSize: 14,
                 fontWeight: 800,
                 textDecoration: sunk ? "line-through" : "none",
                 display: "inline-flex",
@@ -335,7 +342,7 @@ function PieceList({ title, pieces }: { title: string; pieces: Piece[] }) {
                   src={criminalIcon(piece.id, index)}
                   alt=""
                   aria-hidden="true"
-                  style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 3, opacity: sunk ? 0.45 : 1 }}
+                  style={{ width: 26, height: 26, objectFit: "cover", borderRadius: 3, opacity: sunk ? 0.45 : 1 }}
                 />
               ))}
               <span>{piece.size} {piece.type}</span>
@@ -455,10 +462,10 @@ export default function SafesAndEvidence() {
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/a_and_I/alibis-informants.webp"
+            src="/a_and_I/alibis-informants.png"
             alt=""
             aria-hidden="true"
-            style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
+            style={{ width: "clamp(64px, 10vw, 104px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
           />
           <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
@@ -525,19 +532,19 @@ export default function SafesAndEvidence() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr) minmax(180px, .5fr)",
               gap: 12,
               marginBottom: 16
             }}
           >
             <PieceList title="Your pieces remaining" pieces={game.playerPieces} />
             <PieceList title="AI pieces remaining" pieces={game.aiPieces} />
-            <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
+            <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, background: "rgba(9,19,14,.55)", minWidth: 0 }}>
               <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>STATUS</div>
-              <div style={{ color: game.status === "won" ? C.gold : game.status === "lost" ? C.hit : C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>
+              <div style={{ color: game.status === "won" ? C.gold : game.status === "lost" ? C.hit : C.cream, fontWeight: 900, fontSize: 16, marginTop: 6 }}>
                 {game.status === "won" ? "You win" : game.status === "lost" ? "AI wins" : "Your turn"}
               </div>
-              <p style={{ color: C.muted, margin: "6px 0 0", lineHeight: 1.4 }}>{game.message}</p>
+              <p style={{ color: C.muted, margin: "5px 0 0", lineHeight: 1.3, fontSize: 14 }}>{game.message}</p>
             </div>
           </div>
 

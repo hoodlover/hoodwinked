@@ -309,7 +309,7 @@ export default function TheSweep() {
             src="/the_sweep/the-sweep.png"
             alt=""
             aria-hidden="true"
-            style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
+            style={{ width: "clamp(64px, 10vw, 104px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
           />
           <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
@@ -357,6 +357,8 @@ export default function TheSweep() {
           <div style={countBoxStyle()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/the_sweep/clue+1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/the_sweep/clue-3.webp" alt="" aria-hidden="true" style={countIconStyle()} />
             <span>{stats.cluesFound} / {settings.clues}</span>
           </div>
         </div>
@@ -365,6 +367,8 @@ export default function TheSweep() {
           <div style={countBoxStyle()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/the_sweep/trap_1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/the_sweep/trap2.webp" alt="" aria-hidden="true" style={countIconStyle()} />
             <span>{settings.traps}</span>
           </div>
         </div>
@@ -455,14 +459,14 @@ function countBoxStyle() {
     fontSize: 30,
     display: "flex",
     alignItems: "center",
-    gap: 12
+    gap: 10
   };
 }
 
 function countIconStyle() {
   return {
-    width: 56,
-    height: 56,
+    width: 50,
+    height: 50,
     objectFit: "cover",
     borderRadius: 6,
     border: "1px solid rgba(255,193,94,.42)",

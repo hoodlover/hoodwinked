@@ -260,6 +260,10 @@ export default function HoodwinkOrDice() {
     });
   };
 
+  const changeDifficulty = () => {
+    setGame(null);
+  };
+
   return (
     <section
       style={{
@@ -278,7 +282,7 @@ export default function HoodwinkOrDice() {
             src="/hoodwin_or_dice/hoodwink-or-dice.png"
             alt=""
             aria-hidden="true"
-            style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
+            style={{ width: "clamp(64px, 10vw, 104px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
           />
           <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
@@ -431,6 +435,11 @@ export default function HoodwinkOrDice() {
                   {game.phase === "reveal" && (
                     <button type="button" onClick={nextRound} style={primaryButton(true)}>
                       Next round
+                    </button>
+                  )}
+                  {(game.phase === "reveal" || game.phase === "gameover") && (
+                    <button type="button" onClick={changeDifficulty} style={controlButton(true)}>
+                      Change difficulty
                     </button>
                   )}
                 </div>

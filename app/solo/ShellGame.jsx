@@ -221,10 +221,10 @@ export default function ShellGame() {
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/three_marks_monte/three-marks-monte.webp"
+            src="/three_marks_monte/three-marks-monte.png"
             alt=""
             aria-hidden="true"
-            style={{ width: "clamp(82px, 13vw, 132px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
+            style={{ width: "clamp(64px, 10vw, 104px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
           />
           <div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
