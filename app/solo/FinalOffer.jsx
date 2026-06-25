@@ -135,7 +135,7 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
           filter: opened ? "drop-shadow(0 12px 18px rgba(0,0,0,.3))" : "drop-shadow(0 10px 16px rgba(0,0,0,.34))"
         }}
       />
-      {opened && (
+      {opened && briefcase.value !== 0 && (
         <span
           style={{
             position: "absolute",
@@ -143,10 +143,10 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
             top: "50%",
             transform: "translate(-50%, -50%)",
             width: "calc(100% - 12px)",
-            color: briefcase.value === 0 ? "#ffd2ce" : C.gold,
-            fontSize: briefcase.value === 0 ? "clamp(17px, 2vw, 23px)" : "clamp(18px, 2.2vw, 27px)",
+            color: C.gold,
+            fontSize: "clamp(18px, 2.2vw, 27px)",
             fontWeight: 900,
-            letterSpacing: briefcase.value === 0 ? 1.1 : 0,
+            letterSpacing: 0,
             lineHeight: 1,
             textAlign: "center",
             textShadow: "0 3px 6px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.85)",
@@ -478,17 +478,32 @@ export default function FinalOffer() {
       {lastOpenedCase && (
         <div
           style={{
-            border: `2px solid ${lastOpenedCase.value === 0 ? C.hit : C.gold}`,
+            border: `2px solid ${lastOpenedCase.value === 0 ? "#6d171d" : C.gold}`,
             borderRadius: 8,
             padding: "16px 18px",
             marginBottom: 16,
-            background: lastOpenedCase.value === 0 ? "rgba(207,79,69,.18)" : "rgba(255,193,94,.13)",
+            background: lastOpenedCase.value === 0
+              ? "linear-gradient(180deg, rgba(54,16,21,.96), rgba(26,8,12,.96))"
+              : "rgba(255,193,94,.13)",
             textAlign: "center",
-            boxShadow: "0 18px 36px rgba(0,0,0,.28)"
+            boxShadow: lastOpenedCase.value === 0
+              ? "0 22px 50px rgba(0,0,0,.72), inset 0 0 0 1px rgba(109,23,29,.72), inset 0 0 34px rgba(109,23,29,.42)"
+              : "0 18px 36px rgba(0,0,0,.28)"
           }}
         >
           <div style={{ color: C.muted, fontSize: 12, fontWeight: 900, letterSpacing: 1.8 }}>REVEALED CASE {lastOpenedCase.id}</div>
-          <div style={{ color: lastOpenedCase.value === 0 ? "#ffd2ce" : C.gold, fontSize: "clamp(34px, 8vw, 72px)", fontWeight: 900, lineHeight: 1 }}>
+          <div
+            style={{
+              color: lastOpenedCase.value === 0 ? "#7b1c22" : C.gold,
+              fontSize: "clamp(34px, 8vw, 72px)",
+              fontWeight: 900,
+              lineHeight: 1,
+              textShadow: lastOpenedCase.value === 0
+                ? "0 5px 0 rgba(0,0,0,.95), 0 14px 26px rgba(0,0,0,.98), 0 0 18px rgba(0,0,0,.92)"
+                : "none",
+              WebkitTextStroke: lastOpenedCase.value === 0 ? "2px #4b1015" : "0"
+            }}
+          >
             {money(lastOpenedCase.value)}
           </div>
         </div>
