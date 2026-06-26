@@ -229,7 +229,7 @@ export default function CipherSweep() {
           </p>
         </header>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
           {Object.entries(DIFFICULTIES).map(([key, info]) => {
             const isActive = difficulty === key;
             return (
@@ -238,6 +238,9 @@ export default function CipherSweep() {
                 type="button"
                 onClick={() => setDifficulty(key)}
                 style={{
+                  flex: "1 1 160px",
+                  maxWidth: 240,
+                  minWidth: 0,
                   textAlign: "left",
                   padding: 14,
                   borderRadius: 10,
@@ -259,25 +262,32 @@ export default function CipherSweep() {
           })}
         </div>
 
-        <button
-          type="button"
-          onClick={() => startRound(difficulty)}
-          style={{
-            justifySelf: "start",
-            padding: "12px 22px",
-            borderRadius: 10,
-            border: `1px solid ${C.gold}`,
-            background: "linear-gradient(180deg, #ffd07a, #ffc15e)",
-            color: C.dark,
-            fontWeight: 900,
-            letterSpacing: 1.2,
-            fontSize: 14,
-            cursor: "pointer",
-            animation: "cipher-pulse 2.4s ease-in-out infinite"
-          }}
-        >
-          START CASE
-        </button>
+        <div style={{ display: "grid", justifyItems: "center", gap: 8, marginTop: 4 }}>
+          <span style={{ color: C.muted, fontSize: 12 }}>
+            Best so far:{" "}
+            <span style={{ color: C.gold, fontWeight: 900 }}>
+              {Math.max(best.easy || 0, best.medium || 0, best.hard || 0)}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() => startRound(difficulty)}
+            style={{
+              padding: "12px 22px",
+              borderRadius: 10,
+              border: `1px solid ${C.gold}`,
+              background: "linear-gradient(180deg, #ffd07a, #ffc15e)",
+              color: C.dark,
+              fontWeight: 900,
+              letterSpacing: 1.2,
+              fontSize: 14,
+              cursor: "pointer",
+              animation: "cipher-pulse 2.4s ease-in-out infinite"
+            }}
+          >
+            START CASE
+          </button>
+        </div>
       </section>
     );
   }

@@ -162,7 +162,20 @@ function createRound(lives, difficulty, starter = "you") {
 export default function HoodwinkOrDice() {
   const [difficulty, setDifficulty] = useState("medium");
   const [game, setGame] = useState(null);
+  const [winFlashVisible, setWinFlashVisible] = useState(false);
   const [, setCareer] = useState(SCORE_FALLBACK);
+
+  /* eslint-disable react-hooks/set-state-in-effect -- syncs banner visibility to game phase */
+  useEffect(() => {
+    if (game?.phase !== "gameover") {
+      setWinFlashVisible(false);
+      return;
+    }
+    setWinFlashVisible(true);
+    const t = setTimeout(() => setWinFlashVisible(false), 2400);
+    return () => clearTimeout(t);
+  }, [game?.phase]);
+  /* eslint-enable react-hooks/set-state-in-effect */
   const recordedRef = useRef(null);
 
   useEffect(() => {
@@ -318,6 +331,18 @@ export default function HoodwinkOrDice() {
           55% { opacity: 1; transform: scale(1.16); }
           100% { opacity: 1; transform: scale(1); }
         }
+        @keyframes hod-result-flash {
+          0% { opacity: 0; transform: scale(.6); }
+          8% { opacity: 1; transform: scale(1.16); }
+          16% { opacity: 0; transform: scale(.92); }
+          24% { opacity: 1; transform: scale(1.1); }
+          32% { opacity: 0; transform: scale(.92); }
+          40% { opacity: 1; transform: scale(1.1); }
+          48% { opacity: 0; transform: scale(.92); }
+          56% { opacity: 1; transform: scale(1); }
+          90% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(.98); }
+        }
         @media (max-width: 640px) {
           .hod-root { padding: 10px !important; margin-top: 12px !important; }
           .hod-root .hod-header { gap: 8px !important; margin-bottom: 10px !important; }
@@ -436,7 +461,7 @@ export default function HoodwinkOrDice() {
                   <Die key={`${die}-${index}`} value={die} hidden={game.turn === "ai" && !reveal} owner="you" />
                 ))}
               </div>
-              {game.phase === "gameover" && (
+              {game.phase === "gameover" && winFlashVisible && (
                 <div
                   aria-hidden="true"
                   style={{
@@ -445,7 +470,7 @@ export default function HoodwinkOrDice() {
                     display: "grid",
                     placeItems: "center",
                     pointerEvents: "none",
-                    animation: "hod-result-pop 520ms cubic-bezier(.22,1.18,.36,1) both",
+                    animation: "hod-result-flash 2400ms ease-in-out forwards",
                     zIndex: 5
                   }}
                 >

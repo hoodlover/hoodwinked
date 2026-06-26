@@ -292,7 +292,7 @@ export default function CaseFileBlitz() {
           </p>
         </header>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
           {Object.entries(DIFFICULTIES).map(([key, info]) => {
             const isActive = difficulty === key;
             return (
@@ -301,6 +301,9 @@ export default function CaseFileBlitz() {
                 type="button"
                 onClick={() => setDifficulty(key)}
                 style={{
+                  flex: "1 1 160px",
+                  maxWidth: 240,
+                  minWidth: 0,
                   textAlign: "left",
                   padding: 14,
                   borderRadius: 10,
@@ -328,7 +331,10 @@ export default function CaseFileBlitz() {
           })}
         </div>
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ display: "grid", justifyItems: "center", gap: 8, marginTop: 4 }}>
+          <span style={{ color: C.muted, fontSize: 12 }}>
+            Most correct in a round: <span style={{ color: C.gold, fontWeight: 900 }}>{best.mostCorrect || 0}</span>
+          </span>
           <button
             type="button"
             onClick={() => startRound(difficulty)}
@@ -347,9 +353,6 @@ export default function CaseFileBlitz() {
           >
             OPEN THE FILE
           </button>
-          <span style={{ color: C.muted, fontSize: 12 }}>
-            Most correct in a single round: <span style={{ color: C.gold, fontWeight: 900 }}>{best.mostCorrect || 0}</span>
-          </span>
         </div>
       </section>
     );

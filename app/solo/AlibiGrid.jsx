@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
 
 const DIFFICULTIES = {
-  easy: { label: "Easy", time: 75, gridRows: 2, gridCols: 3, studyMs: 3500, hitBonusSec: 2, missPenaltySec: 2, multiplier: 1 },
-  medium: { label: "Medium", time: 60, gridRows: 3, gridCols: 3, studyMs: 2500, hitBonusSec: 1, missPenaltySec: 3, multiplier: 2 },
-  hard: { label: "Hard", time: 45, gridRows: 3, gridCols: 4, studyMs: 1800, hitBonusSec: 1, missPenaltySec: 4, multiplier: 3 }
+  easy: { label: "Easy", time: 75, hitBonusSec: 2, missPenaltySec: 2, multiplier: 1 },
+  medium: { label: "Medium", time: 60, hitBonusSec: 1, missPenaltySec: 3, multiplier: 2 },
+  hard: { label: "Hard", time: 45, hitBonusSec: 1, missPenaltySec: 5, multiplier: 3 }
 };
 
 const C = {
@@ -22,40 +22,88 @@ const C = {
   blue: "#6fb6d8"
 };
 
-const ICON_POOL = [
-  "🕵️", "🎩", "🔫", "🗡️", "💼", "💰", "🔑", "📜", "📞", "🕰️",
-  "🚪", "🍷", "☕", "🚬", "💊", "🔍", "📷", "📰", "✉️", "🎟️",
-  "💎", "🏛️", "🚗", "🚕", "🛥️", "🚂", "⚖️", "🚓", "👮", "🎭",
-  "🔪", "🎲", "♠️", "♣️", "♥️", "♦️", "🎰", "🍸", "🥃", "🏨"
+const NAMES = [
+  "\"Knuckles\" Malone",
+  "\"Doc\" Holloway",
+  "\"Sally\" Klein",
+  "\"Vinny\" Caruso",
+  "\"Squeaky\" Pete",
+  "\"Big Mike\" Costa",
+  "\"Slim\" Reilly",
+  "\"Frankie\" Two-Times",
+  "\"Lefty\" Brennan",
+  "\"Rosie\" Marlowe",
+  "\"Tony Bones\" Petros",
+  "\"Ginger\" McAllister",
+  "\"Bugs\" Petrosky",
+  "\"Lou the Mouse\"",
+  "\"Eddie Stones\"",
+  "\"Bear\" Kowalski"
 ];
 
-const SCORE_SLUG = "the-lookout";
+const LOCATIONS = [
+  "the Roxy lounge",
+  "the docks",
+  "the train yard",
+  "the bus depot",
+  "Sally's diner",
+  "the gin joint on 9th",
+  "the back alley behind Fitzpatrick's",
+  "the warehouse on 5th",
+  "the museum gardens",
+  "City Park",
+  "the riverside",
+  "the gas station",
+  "the courthouse steps",
+  "the all-night newsstand",
+  "the boxing gym",
+  "the cigar lounge"
+];
+
+const TIMES = [
+  "around 8 PM",
+  "right after 9",
+  "just before 10",
+  "around 11",
+  "near midnight",
+  "after 1 in the morning",
+  "around 2 AM"
+];
+
+const CRIMES = [
+  "Bank heist at First National",
+  "Diamond exchange burglary",
+  "Payroll robbery downtown",
+  "Mansion break-in on Park Ave",
+  "Warehouse fire on 5th",
+  "Speakeasy shakedown",
+  "Museum theft — the ruby is gone",
+  "Train yard freight job",
+  "Bookie holdup at the Roxy",
+  "Jewelry store robbery",
+  "Cigar lounge stickup",
+  "Counterfeit press raid"
+];
+
+const SCORE_SLUG = "alibi-grid";
 const SCORE_FALLBACK = { easy: 0, medium: 0, hard: 0, bestStreak: 0 };
 
-const LO_KEYS = `
-  @keyframes lo-pop {
+const AG_KEYS = `
+  @keyframes ag-pop {
     0% { opacity: 0; transform: scale(.55); }
     55% { opacity: 1; transform: scale(1.16); }
     100% { opacity: 1; transform: scale(1); }
   }
-  @keyframes lo-shake {
+  @keyframes ag-shake {
     0%, 100% { transform: translateX(0); }
     20% { transform: translateX(-5px); }
     40% { transform: translateX(5px); }
     60% { transform: translateX(-3px); }
     80% { transform: translateX(3px); }
   }
-  @keyframes lo-flash {
-    0%, 100% { opacity: 1; }
-    50% { opacity: .35; }
-  }
-  @keyframes lo-pulse {
+  @keyframes ag-pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(255,193,94,.55); }
     50% { box-shadow: 0 0 0 14px rgba(255,193,94,0); }
-  }
-  @keyframes lo-progress {
-    0% { transform: scaleX(1); }
-    100% { transform: scaleX(0); }
   }
 `;
 
@@ -68,23 +116,55 @@ function shuffle(arr) {
   return copy;
 }
 
-function makePuzzle(cells) {
-  const shuffled = shuffle(ICON_POOL);
-  const original = shuffled.slice(0, cells);
-  const used = new Set(original);
-  const candidates = ICON_POOL.filter((i) => !used.has(i));
-  const replacement = candidates[Math.floor(Math.random() * candidates.length)];
-  const swapIdx = Math.floor(Math.random() * cells);
-  const swapped = [...original];
-  swapped[swapIdx] = replacement;
-  return { original, swapped, swapIdx };
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export default function TheLookout() {
+function makePuzzle() {
+  // Pick 4 suspects, 2 locations (scene + red-herring), 1 time, 1 crime
+  const names = shuffle(NAMES).slice(0, 4);
+  const locations = shuffle(LOCATIONS).slice(0, 2);
+  const time = pickRandom(TIMES);
+  const crime = pickRandom(CRIMES);
+
+  const liarIdx = Math.floor(Math.random() * 4);
+  const indices = [0, 1, 2, 3];
+  const truthfulIndices = indices.filter((i) => i !== liarIdx);
+  // Two witnesses corroborate at the scene location, one is elsewhere (red herring)
+  const [witnessA, witnessB, herringIdx] = shuffle(truthfulIndices);
+  const sceneLocation = locations[0];
+  const herringLocation = locations[1];
+  const liarName = names[liarIdx];
+
+  const statements = names.map((name, idx) => {
+    if (idx === witnessA) {
+      return `I was at ${sceneLocation} ${time}, having a drink with ${names[witnessB]}. ${liarName} was nowhere near us.`;
+    }
+    if (idx === witnessB) {
+      return `${names[witnessA]} and I were at ${sceneLocation} ${time}. Slow night, easy to remember. ${liarName} never showed.`;
+    }
+    if (idx === herringIdx) {
+      return `I was at ${herringLocation} ${time}. Quiet evening, kept to myself.`;
+    }
+    // liar
+    return `I was at ${sceneLocation} ${time}, plain and simple.`;
+  });
+
+  return {
+    crime,
+    time,
+    sceneLocation,
+    herringLocation,
+    names,
+    statements,
+    liarIdx
+  };
+}
+
+export default function AlibiGrid() {
   const [phase, setPhase] = useState("setup");
   const [difficulty, setDifficulty] = useState("medium");
   const [puzzle, setPuzzle] = useState(null);
-  const [puzzlePhase, setPuzzlePhase] = useState("studying");
   const [timeMs, setTimeMs] = useState(0);
   const [score, setScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
@@ -95,7 +175,6 @@ export default function TheLookout() {
   const [best, setBest] = useState(SCORE_FALLBACK);
   const [playerName, setPlayerName] = useState("");
   const tickRef = useRef(null);
-  const studyTimerRef = useRef(null);
   const advanceTimerRef = useRef(null);
   const endRef = useRef(0);
 
@@ -108,7 +187,6 @@ export default function TheLookout() {
 
   useEffect(() => () => {
     if (tickRef.current) clearInterval(tickRef.current);
-    if (studyTimerRef.current) clearTimeout(studyTimerRef.current);
     if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
   }, []);
 
@@ -117,8 +195,6 @@ export default function TheLookout() {
   const finishRound = useCallback(() => {
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = null;
-    if (studyTimerRef.current) clearTimeout(studyTimerRef.current);
-    studyTimerRef.current = null;
     if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
     advanceTimerRef.current = null;
     setPhase((current) => {
@@ -144,33 +220,22 @@ export default function TheLookout() {
     });
   }, [difficulty]);
 
-  const beginPuzzle = useCallback((lvlSettings) => {
-    const cells = lvlSettings.gridRows * lvlSettings.gridCols;
-    const fresh = makePuzzle(cells);
-    setPuzzle(fresh);
-    setPuzzlePhase("studying");
-    setFeedback(null);
-    if (studyTimerRef.current) clearTimeout(studyTimerRef.current);
-    studyTimerRef.current = setTimeout(() => {
-      setPuzzlePhase("answering");
-    }, lvlSettings.studyMs);
-  }, []);
-
   const startRound = useCallback(
     (chosen) => {
       const lvl = chosen || difficulty;
       const lvlSettings = DIFFICULTIES[lvl];
       setDifficulty(lvl);
+      setPuzzle(makePuzzle());
       setScore(0);
       setCorrectCount(0);
       setWrongCount(0);
       setStreak(0);
       setPeakStreak(0);
+      setFeedback(null);
       const totalMs = lvlSettings.time * 1000;
       setTimeMs(totalMs);
       endRef.current = Date.now() + totalMs;
       setPhase("play");
-      beginPuzzle(lvlSettings);
       if (tickRef.current) clearInterval(tickRef.current);
       tickRef.current = setInterval(() => {
         const remain = Math.max(0, endRef.current - Date.now());
@@ -182,13 +247,13 @@ export default function TheLookout() {
         }
       }, 100);
     },
-    [difficulty, finishRound, beginPuzzle]
+    [difficulty, finishRound]
   );
 
   /* eslint-disable react-hooks/purity -- click handler, not called during render */
-  const pickCell = (idx) => {
-    if (phase !== "play" || !puzzle || puzzlePhase !== "answering" || feedback) return;
-    const isCorrect = idx === puzzle.swapIdx;
+  const accuse = (idx) => {
+    if (phase !== "play" || !puzzle || feedback) return;
+    const isCorrect = idx === puzzle.liarIdx;
     if (isCorrect) {
       const remainSec = Math.max(0, Math.floor(timeMs / 1000));
       const gain = (100 + remainSec) * settings.multiplier;
@@ -200,30 +265,25 @@ export default function TheLookout() {
         return next;
       });
       endRef.current = Math.min(Date.now() + settings.time * 1000, endRef.current + settings.hitBonusSec * 1000);
-      setFeedback({ kind: "good", pickedIdx: idx, correctIdx: puzzle.swapIdx, note: `+${gain}`, at: Date.now() });
+      setFeedback({ kind: "good", pickedIdx: idx, liarIdx: puzzle.liarIdx, note: `+${gain}`, at: Date.now() });
     } else {
       endRef.current = endRef.current - settings.missPenaltySec * 1000;
       const remain = Math.max(0, endRef.current - Date.now());
       setTimeMs(remain);
       setWrongCount((n) => n + 1);
       setStreak(0);
-      setFeedback({
-        kind: "bad",
-        pickedIdx: idx,
-        correctIdx: puzzle.swapIdx,
-        note: `−${settings.missPenaltySec}s`,
-        at: Date.now()
-      });
+      setFeedback({ kind: "bad", pickedIdx: idx, liarIdx: puzzle.liarIdx, note: `−${settings.missPenaltySec}s`, at: Date.now() });
       if (remain <= 0) {
         if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-        advanceTimerRef.current = setTimeout(() => finishRound(), 700);
+        advanceTimerRef.current = setTimeout(() => finishRound(), 1000);
         return;
       }
     }
     if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
     advanceTimerRef.current = setTimeout(() => {
-      beginPuzzle(settings);
-    }, 800);
+      setPuzzle(makePuzzle());
+      setFeedback(null);
+    }, isCorrect ? 700 : 1100);
   };
   /* eslint-enable react-hooks/purity */
 
@@ -236,11 +296,11 @@ export default function TheLookout() {
   if (phase === "setup") {
     return (
       <section style={{ display: "grid", gap: 14 }}>
-        <style>{LO_KEYS}</style>
+        <style>{AG_KEYS}</style>
         <header style={{ display: "grid", gap: 4 }}>
-          <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1, fontVariant: "small-caps" }}>The Lookout</h2>
+          <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1, fontVariant: "small-caps" }}>Alibi Grid</h2>
           <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
-            Study the evidence board. The scene reshuffles — one item swaps. Tap the cell that changed before the clock runs out.
+            Four suspects, four stories, one lie. Read the statements, cross-check the witnesses, and tap the suspect whose alibi doesn&apos;t hold up.
           </p>
         </header>
 
@@ -271,10 +331,10 @@ export default function TheLookout() {
                   {info.label.toUpperCase()}
                 </div>
                 <div style={{ fontWeight: 800 }}>
-                  {info.gridRows}×{info.gridCols} · {info.time}s · {info.multiplier}× score
+                  {info.time}s · {info.multiplier}× score
                 </div>
                 <div style={{ color: C.muted, fontSize: 12 }}>
-                  {Math.round(info.studyMs / 100) / 10}s study window
+                  +{info.hitBonusSec}s correct · −{info.missPenaltySec}s wrong
                 </div>
                 <div style={{ color: C.muted, fontSize: 12, marginTop: 4 }}>Best: {best[key] || 0}</div>
               </button>
@@ -299,10 +359,10 @@ export default function TheLookout() {
               letterSpacing: 1.2,
               fontSize: 14,
               cursor: "pointer",
-              animation: "lo-pulse 2.4s ease-in-out infinite"
+              animation: "ag-pulse 2.4s ease-in-out infinite"
             }}
           >
-            TAKE THE WATCH
+            OPEN THE CASE FILE
           </button>
         </div>
       </section>
@@ -312,11 +372,9 @@ export default function TheLookout() {
   if (phase === "play" && puzzle) {
     const remainSec = Math.ceil(timeMs / 1000);
     const lowOnTime = remainSec <= 10;
-    const showStudying = puzzlePhase === "studying";
-    const gridItems = showStudying ? puzzle.original : puzzle.swapped;
     return (
       <section style={{ display: "grid", gap: 14 }}>
-        <style>{LO_KEYS}</style>
+        <style>{AG_KEYS}</style>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -384,143 +442,108 @@ export default function TheLookout() {
         <div
           style={{
             borderRadius: 14,
-            border: `1px solid ${C.line}`,
-            background: "linear-gradient(180deg, rgba(31,51,32,.85), rgba(10,19,14,.85))",
-            padding: "16px clamp(12px, 4vw, 22px) 20px",
-            display: "grid",
-            gap: 14,
-            animation: feedback?.kind === "bad" ? "lo-shake 380ms ease-in-out" : "none"
+            border: `1px solid ${C.gold}`,
+            background: "linear-gradient(180deg, rgba(255,193,94,.10), rgba(10,19,14,.78))",
+            padding: "12px 14px"
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
-            <span
-              style={{
-                color: showStudying ? C.gold : C.cream,
-                fontSize: 11,
-                fontWeight: 900,
-                letterSpacing: 1.4
-              }}
-            >
-              {showStudying ? "STUDY THE SCENE" : "WHAT CHANGED?"}
-            </span>
-            <span style={{ color: C.muted, fontSize: 11, fontWeight: 900, letterSpacing: 1.4 }}>
-              EVIDENCE BOARD
-            </span>
+          <div style={{ color: C.gold, fontSize: 11, fontWeight: 900, letterSpacing: 1.4 }}>THE CASE</div>
+          <div style={{ color: C.cream, fontSize: "clamp(15px, 3.8vw, 18px)", fontWeight: 800, marginTop: 4, lineHeight: 1.3 }}>
+            {puzzle.crime}
           </div>
-
-          {showStudying && (
-            <div
-              style={{
-                height: 4,
-                background: "rgba(10,19,14,.6)",
-                borderRadius: 999,
-                overflow: "hidden"
-              }}
-            >
-              <div
-                key={puzzle.swapIdx + "-bar"}
-                style={{
-                  height: "100%",
-                  background: C.gold,
-                  transformOrigin: "left",
-                  animation: `lo-progress ${settings.studyMs}ms linear forwards`
-                }}
-              />
-            </div>
-          )}
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${settings.gridCols}, minmax(0, 1fr))`,
-              gap: 8
-            }}
-          >
-            {gridItems.map((icon, idx) => {
-              const isPicked = feedback?.pickedIdx === idx;
-              const isCorrectCell = feedback && idx === feedback.correctIdx;
-              const showCorrect = !!feedback && isCorrectCell;
-              const showWrongPick = feedback?.kind === "bad" && isPicked && !isCorrectCell;
-              let borderColor = C.line;
-              let bg = "linear-gradient(180deg, rgba(31,51,32,.92), rgba(10,19,14,.92))";
-              if (showCorrect) {
-                borderColor = C.green;
-                bg = "linear-gradient(180deg, rgba(111,176,113,.32), rgba(38,71,40,.5))";
-              } else if (showWrongPick) {
-                borderColor = C.hit;
-                bg = "linear-gradient(180deg, rgba(207,79,69,.32), rgba(78,28,24,.5))";
-              }
-              const canClick = puzzlePhase === "answering" && !feedback;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => pickCell(idx)}
-                  disabled={!canClick}
-                  style={{
-                    position: "relative",
-                    aspectRatio: "1 / 1",
-                    borderRadius: 10,
-                    border: `2px solid ${borderColor}`,
-                    background: bg,
-                    color: C.cream,
-                    cursor: canClick ? "pointer" : "default",
-                    padding: 0,
-                    overflow: "hidden",
-                    transition: "border-color 160ms ease, background 200ms ease, transform 140ms ease",
-                    transform: showCorrect ? "scale(1.04)" : "scale(1)",
-                    minWidth: 0
-                  }}
-                >
-                  <span
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      height: "100%",
-                      display: "grid",
-                      placeItems: "center",
-                      fontSize: "clamp(28px, 10vw, 48px)",
-                      lineHeight: 1,
-                      textShadow: "0 4px 12px rgba(0,0,0,.45)",
-                      animation:
-                        feedback && idx === feedback.correctIdx
-                          ? "lo-pop 360ms ease-out"
-                          : "none"
-                    }}
-                  >
-                    {icon}
-                  </span>
-                </button>
-              );
-            })}
+          <div style={{ color: C.muted, fontSize: 12, marginTop: 4 }}>
+            Time on the wire: {puzzle.time}
           </div>
+        </div>
 
-          <div style={{ minHeight: 22, textAlign: "center" }}>
-            {feedback && (
-              <span
-                key={feedback.at}
+        <div
+          style={{
+            display: "grid",
+            gap: 10,
+            animation: feedback?.kind === "bad" ? "ag-shake 380ms ease-in-out" : "none"
+          }}
+        >
+          {puzzle.statements.map((statement, idx) => {
+            const isPicked = feedback?.pickedIdx === idx;
+            const isLiar = feedback && idx === feedback.liarIdx;
+            const showLiar = !!feedback && isLiar;
+            const showWrongPick = feedback?.kind === "bad" && isPicked && !isLiar;
+            let borderColor = C.line;
+            let bg = "linear-gradient(180deg, rgba(31,51,32,.85), rgba(10,19,14,.85))";
+            if (showLiar) {
+              borderColor = C.green;
+              bg = "linear-gradient(180deg, rgba(111,176,113,.32), rgba(38,71,40,.5))";
+            } else if (showWrongPick) {
+              borderColor = C.hit;
+              bg = "linear-gradient(180deg, rgba(207,79,69,.32), rgba(78,28,24,.5))";
+            }
+            const canClick = !feedback;
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => accuse(idx)}
+                disabled={!canClick}
                 style={{
-                  display: "inline-block",
-                  color: feedback.kind === "good" ? C.green : C.hit,
-                  fontWeight: 900,
-                  letterSpacing: 1.2,
-                  animation: "lo-pop 360ms ease-out"
+                  textAlign: "left",
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: `1px solid ${borderColor}`,
+                  background: bg,
+                  color: C.cream,
+                  cursor: canClick ? "pointer" : "default",
+                  transition: "border-color 160ms ease, background 200ms ease",
+                  display: "grid",
+                  gap: 6
                 }}
               >
-                {feedback.note}
-              </span>
-            )}
-            {!feedback && showStudying && (
-              <span style={{ color: C.muted, fontSize: 12 }}>
-                Memorize the layout before it shifts.
-              </span>
-            )}
-            {!feedback && !showStudying && (
-              <span style={{ color: C.gold, fontSize: 12, fontWeight: 800 }}>
-                Tap the cell that swapped.
-              </span>
-            )}
-          </div>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+                  <span
+                    style={{
+                      color: showLiar ? C.green : showWrongPick ? C.hit : C.gold,
+                      fontWeight: 900,
+                      letterSpacing: 0.5,
+                      fontSize: "clamp(13px, 3.4vw, 16px)",
+                      fontVariant: "small-caps"
+                    }}
+                  >
+                    {puzzle.names[idx]}
+                  </span>
+                  {showLiar && (
+                    <span style={{ color: C.green, fontSize: 11, fontWeight: 900, letterSpacing: 1.2 }}>LIAR</span>
+                  )}
+                  {showWrongPick && (
+                    <span style={{ color: C.hit, fontSize: 11, fontWeight: 900, letterSpacing: 1.2 }}>NOT THE LIAR</span>
+                  )}
+                </div>
+                <div style={{ color: C.cream, fontSize: "clamp(13px, 3.2vw, 14px)", lineHeight: 1.4, fontStyle: "italic" }}>
+                  &ldquo;{statement}&rdquo;
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ minHeight: 22, textAlign: "center" }}>
+          {feedback && (
+            <span
+              key={feedback.at}
+              style={{
+                display: "inline-block",
+                color: feedback.kind === "good" ? C.green : C.hit,
+                fontWeight: 900,
+                letterSpacing: 1.2,
+                animation: "ag-pop 360ms ease-out"
+              }}
+            >
+              {feedback.note}
+            </span>
+          )}
+          {!feedback && (
+            <span style={{ color: C.muted, fontSize: 12 }}>
+              Tap the suspect whose story doesn&apos;t add up.
+            </span>
+          )}
         </div>
       </section>
     );
@@ -531,10 +554,10 @@ export default function TheLookout() {
   const newStreak = peakStreak > 0 && peakStreak === best.bestStreak;
   return (
     <section style={{ display: "grid", gap: 14 }}>
-      <style>{LO_KEYS}</style>
+      <style>{AG_KEYS}</style>
       <header style={{ display: "grid", gap: 4 }}>
         <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1, fontVariant: "small-caps" }}>
-          Watch Over{playerName ? `, Detective ${playerName}` : ""}
+          Case Closed{playerName ? `, Detective ${playerName}` : ""}
         </h2>
         <p style={{ margin: 0, color: C.muted, fontSize: 13 }}>{settings.label} difficulty</p>
       </header>
@@ -555,8 +578,8 @@ export default function TheLookout() {
             <div style={{ color: C.gold, fontSize: "clamp(24px, 6vw, 36px)", fontWeight: 900 }}>{score}</div>
           </div>
           <div>
-            <div style={{ color: C.muted, fontSize: 11, fontWeight: 900, letterSpacing: 1.4 }}>STREAK</div>
-            <div style={{ color: C.blue, fontSize: "clamp(24px, 6vw, 36px)", fontWeight: 900 }}>{peakStreak}</div>
+            <div style={{ color: C.muted, fontSize: 11, fontWeight: 900, letterSpacing: 1.4 }}>CRACKED</div>
+            <div style={{ color: C.green, fontSize: "clamp(24px, 6vw, 36px)", fontWeight: 900 }}>{correctCount}</div>
           </div>
           <div>
             <div style={{ color: C.muted, fontSize: 11, fontWeight: 900, letterSpacing: 1.4 }}>ACCURACY</div>
@@ -607,7 +630,7 @@ export default function TheLookout() {
             cursor: "pointer"
           }}
         >
-          BACK ON WATCH
+          NEXT CASE FILE
         </button>
       </div>
     </section>

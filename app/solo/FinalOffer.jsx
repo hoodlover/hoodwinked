@@ -285,6 +285,7 @@ export default function FinalOffer() {
   const [game, setGame] = useState(null);
   const [offerText, setOfferText] = useState("Waiting");
   const [, setCareer] = useState(SCORE_FALLBACK);
+  const [bankruptBannerVisible, setBankruptBannerVisible] = useState(false);
   const recordedRef = useRef(null);
 
   useEffect(() => {
@@ -342,6 +343,20 @@ export default function FinalOffer() {
     }
     return () => timers.forEach((timer) => window.clearTimeout(timer));
   }, [game?.offer, game?.phase]);
+
+  /* eslint-disable react-hooks/set-state-in-effect -- syncs banner visibility to the bankrupt-case event */
+  useEffect(() => {
+    if (lastOpenedCase && lastOpenedCase.value === 0) {
+      setBankruptBannerVisible(true);
+      const t = window.setTimeout(() => setBankruptBannerVisible(false), 3000);
+      return () => window.clearTimeout(t);
+    }
+    setBankruptBannerVisible(false);
+    return undefined;
+    // lastOpenedCase identity changes per render; we only care about which case + its value
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastOpenedCase?.id, lastOpenedCase?.value]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const start = (chosenDifficulty = difficulty) => {
     setDifficulty(chosenDifficulty);
@@ -510,7 +525,7 @@ export default function FinalOffer() {
         </div>
       </div>
 
-      <div className="fo-pills-row" style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 6, marginBottom: 16 }}>
+      <div className="fo-pills-row" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, marginBottom: 8 }}>
         {Object.entries(DIFFICULTIES).map(([value, item]) => (
           <button
             key={value}
@@ -524,7 +539,7 @@ export default function FinalOffer() {
               borderRadius: 8,
               padding: "10px 6px",
               fontWeight: 900,
-              fontSize: "clamp(11px, 2.4vw, 14px)",
+              fontSize: "clamp(12px, 2.6vw, 14px)",
               cursor: canPickDifficulty ? "pointer" : "default",
               minWidth: 0,
               overflow: "hidden",
@@ -536,51 +551,48 @@ export default function FinalOffer() {
             {item.label}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => canPickDifficulty && setFireMode((v) => !v)}
-          disabled={!canPickDifficulty}
-          title={fireMode ? "Bankrupt case in play" : "No Bankrupt case"}
-          className="fo-diff-btn"
-          style={{
-            border: `1px solid ${fireMode ? "#cf4f45" : C.line}`,
-            background: fireMode ? "linear-gradient(180deg, rgba(207,79,69,.34), rgba(109,23,29,.46))" : "rgba(9,19,14,.5)",
-            color: fireMode ? "#ffd5cf" : C.cream,
-            borderRadius: 8,
-            padding: "10px 6px",
-            fontWeight: 900,
-            fontSize: "clamp(11px, 2.4vw, 14px)",
-            cursor: canPickDifficulty ? "pointer" : "default",
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap"
-          }}
-        >
-          Bankrupt? {fireMode ? "On" : "Off"}
-        </button>
-        <button
-          type="button"
-          onClick={() => start(difficulty)}
-          className="fo-diff-btn"
-          style={{
-            border: `1px solid ${C.green}`,
-            background: `linear-gradient(180deg, ${C.green}, #2c5630)`,
-            color: C.cream,
-            borderRadius: 8,
-            padding: "10px 6px",
-            fontWeight: 900,
-            fontSize: "clamp(11px, 2.4vw, 14px)",
-            cursor: "pointer",
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap"
-          }}
-        >
-          {game ? "New" : "Start"}
-        </button>
       </div>
+      <button
+        type="button"
+        onClick={() => canPickDifficulty && setFireMode((v) => !v)}
+        disabled={!canPickDifficulty}
+        title={fireMode ? "Bankrupt case in play" : "No Bankrupt case"}
+        className="fo-diff-btn"
+        style={{
+          width: "100%",
+          border: `1px solid ${fireMode ? "#cf4f45" : C.line}`,
+          background: fireMode ? "linear-gradient(180deg, rgba(207,79,69,.34), rgba(109,23,29,.46))" : "rgba(9,19,14,.5)",
+          color: fireMode ? "#ffd5cf" : C.cream,
+          borderRadius: 8,
+          padding: "10px 12px",
+          fontWeight: 900,
+          fontSize: "clamp(12px, 2.6vw, 14px)",
+          cursor: canPickDifficulty ? "pointer" : "default",
+          marginBottom: 8
+        }}
+      >
+        Bankruptcy? {fireMode ? "On" : "Off"}
+      </button>
+      <button
+        type="button"
+        onClick={() => start(difficulty)}
+        className="fo-diff-btn"
+        style={{
+          width: "100%",
+          border: `1px solid ${C.green}`,
+          background: "linear-gradient(180deg, #3d7a40, #1a3a1d)",
+          color: C.cream,
+          borderRadius: 8,
+          padding: "12px 12px",
+          fontWeight: 900,
+          fontSize: "clamp(13px, 2.8vw, 15px)",
+          letterSpacing: 1.2,
+          cursor: "pointer",
+          marginBottom: 16
+        }}
+      >
+        {game ? "Pick a New Case" : "Pick Your Case"}
+      </button>
 
       <div className="fo-status-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10, marginBottom: 16 }}>
         <div style={panelStyle()}>
@@ -673,7 +685,7 @@ export default function FinalOffer() {
             );
           })}
         </div>
-        {lastOpenedCase && lastOpenedCase.value === 0 && (
+        {lastOpenedCase && lastOpenedCase.value === 0 && bankruptBannerVisible && (
           <div
             aria-hidden="true"
             style={{

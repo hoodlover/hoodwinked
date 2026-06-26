@@ -272,7 +272,7 @@ export default function VaultRunner() {
           </p>
         </header>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
           {Object.entries(DIFFICULTIES).map(([key, info]) => {
             const isActive = difficulty === key;
             return (
@@ -281,6 +281,9 @@ export default function VaultRunner() {
                 type="button"
                 onClick={() => setDifficulty(key)}
                 style={{
+                  flex: "1 1 160px",
+                  maxWidth: 240,
+                  minWidth: 0,
                   textAlign: "left",
                   padding: 14,
                   borderRadius: 10,
@@ -307,7 +310,10 @@ export default function VaultRunner() {
           })}
         </div>
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ display: "grid", justifyItems: "center", gap: 8, marginTop: 4 }}>
+          <span style={{ color: C.muted, fontSize: 12 }}>
+            Deepest run: <span style={{ color: C.gold, fontWeight: 900 }}>{best.deepest || 0}</span> floors
+          </span>
           <button
             type="button"
             onClick={() => startRound(difficulty)}
@@ -315,7 +321,7 @@ export default function VaultRunner() {
               padding: "12px 22px",
               borderRadius: 10,
               border: `1px solid ${C.green}`,
-              background: `linear-gradient(180deg, ${C.green}, #2c5630)`,
+              background: "linear-gradient(180deg, #3d7a40, #1a3a1d)",
               color: C.cream,
               fontWeight: 900,
               letterSpacing: 1.2,
@@ -326,9 +332,6 @@ export default function VaultRunner() {
           >
             ENTER THE VAULT
           </button>
-          <span style={{ color: C.muted, fontSize: 12 }}>
-            Deepest run: <span style={{ color: C.gold, fontWeight: 900 }}>{best.deepest || 0}</span> floors
-          </span>
         </div>
       </section>
     );
@@ -730,7 +733,7 @@ export default function VaultRunner() {
             padding: "12px 14px",
             borderRadius: 10,
             border: `1px solid ${C.green}`,
-            background: `linear-gradient(180deg, ${C.green}, #2c5630)`,
+            background: "linear-gradient(180deg, #3d7a40, #1a3a1d)",
             color: C.cream,
             fontWeight: 900,
             letterSpacing: 1.2,

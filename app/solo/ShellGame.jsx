@@ -343,7 +343,7 @@ export default function ShellGame() {
             onClick={() => start(pendingDifficulty)}
             style={{
               border: `1px solid ${C.green}`,
-              background: `linear-gradient(180deg, ${C.green}, #2c5630)`,
+              background: "linear-gradient(180deg, #3d7a40, #1a3a1d)",
               color: C.cream,
               borderRadius: 8,
               padding: "10px 16px",

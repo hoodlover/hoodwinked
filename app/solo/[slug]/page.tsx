@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AlibiGrid from "../AlibiGrid";
 import CaseFileBlitz from "../CaseFileBlitz";
 import CipherSweep from "../CipherSweep";
 import FinalOffer from "../FinalOffer";
@@ -25,7 +26,8 @@ const COMPONENTS: ComponentMap = {
   "cipher-sweep": CipherSweep,
   "case-file-blitz": CaseFileBlitz,
   "vault-runner": VaultRunner,
-  "the-lookout": TheLookout
+  "the-lookout": TheLookout,
+  "alibi-grid": AlibiGrid
 };
 
 export function generateStaticParams() {

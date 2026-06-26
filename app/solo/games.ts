@@ -53,7 +53,7 @@ export const SOLO_GAMES: SoloGameMeta[] = [
   {
     slug: "alibi-grid",
     name: "Alibi Grid",
-    status: "coming-soon",
+    status: "playable",
     note: "Spot contradictions in a lineup of suspect claims."
   },
   {
