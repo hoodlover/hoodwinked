@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { readScore, writeScore } from "./scoreStore";
+import { readPlayerName, readScore, writeScore } from "./scoreStore";
 
 const DIFFICULTIES = {
   easy: { label: "Easy", time: 60, minLen: 3, maxLen: 4, maxShift: 6, hitBonus: 2, missPenalty: 2, multiplier: 1 },
@@ -98,6 +98,7 @@ export default function CipherSweep() {
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState(null);
   const [best, setBest] = useState({ easy: 0, medium: 0, hard: 0 });
+  const [playerName, setPlayerName] = useState("");
   const tickRef = useRef(null);
   const feedbackTimerRef = useRef(null);
   const endRef = useRef(0);
@@ -106,6 +107,7 @@ export default function CipherSweep() {
     // SSR returns fallback; hydrate the real value on mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setBest(readScore(SCORE_SLUG, SCORE_FALLBACK));
+    setPlayerName(readPlayerName());
   }, []);
 
   useEffect(() => () => {
@@ -221,7 +223,7 @@ export default function CipherSweep() {
       <section style={{ display: "grid", gap: 14 }}>
         <style>{SHAKE_KEYS}</style>
         <header style={{ display: "grid", gap: 4 }}>
-          <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1 }}>Cipher Sweep</h2>
+          <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1, fontVariant: "small-caps" }}>Cipher Sweep</h2>
           <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
             A coded mob message hits the wire. Rotate the cipher dial, crack each word, beat the clock.
           </p>
@@ -517,7 +519,9 @@ export default function CipherSweep() {
     <section style={{ display: "grid", gap: 14 }}>
       <style>{SHAKE_KEYS}</style>
       <header style={{ display: "grid", gap: 4 }}>
-        <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1 }}>Case Closed</h2>
+        <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1, fontVariant: "small-caps" }}>
+          Case Closed{playerName ? `, Detective ${playerName}` : ""}
+        </h2>
         <p style={{ margin: 0, color: C.muted, fontSize: 13 }}>{settings.label} difficulty</p>
       </header>
 

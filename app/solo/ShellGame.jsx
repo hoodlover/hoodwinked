@@ -142,6 +142,7 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick, arcing, shuffleSt
 export default function ShellGame() {
   const [game, setGame] = useState(initialGame);
   const [score, setScore] = useState(SCORE_FALLBACK);
+  const [pendingDifficulty, setPendingDifficulty] = useState("medium");
 
   useEffect(() => {
     // SSR returns fallback; hydrate the real value on mount.
@@ -291,7 +292,7 @@ export default function ShellGame() {
           />
           <div>
           <div className="monte-eyebrow" style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
-          <h2 className="monte-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
+          <h2 className="monte-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1, fontVariant: "small-caps" }}>
             Three Mark&apos;s Monte
           </h2>
           <p className="monte-blurb" style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
@@ -316,24 +317,42 @@ export default function ShellGame() {
 
       {game.phase === "setup" && (
         <div className="monte-diff-row" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
-          {Object.entries(DIFFICULTY).map(([value, item]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => start(value)}
-              style={{
-                border: `1px solid ${C.gold}`,
-                background: value === "medium" ? `linear-gradient(180deg, ${C.gold}, #dca33d)` : "rgba(9,19,14,.5)",
-                color: value === "medium" ? C.dark : C.cream,
-                borderRadius: 8,
-                padding: "10px 12px",
-                fontWeight: 900,
-                cursor: "pointer"
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
+          {Object.entries(DIFFICULTY).map(([value, item]) => {
+            const isPending = pendingDifficulty === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setPendingDifficulty(value)}
+                style={{
+                  border: `1px solid ${isPending ? C.gold : C.line}`,
+                  background: isPending ? `${C.gold}22` : "rgba(9,19,14,.5)",
+                  color: isPending ? C.gold : C.cream,
+                  borderRadius: 8,
+                  padding: "10px 12px",
+                  fontWeight: 900,
+                  cursor: "pointer"
+                }}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => start(pendingDifficulty)}
+            style={{
+              border: `1px solid ${C.green}`,
+              background: `linear-gradient(180deg, ${C.green}, #2c5630)`,
+              color: C.cream,
+              borderRadius: 8,
+              padding: "10px 16px",
+              fontWeight: 900,
+              cursor: "pointer"
+            }}
+          >
+            Start
+          </button>
         </div>
       )}
 

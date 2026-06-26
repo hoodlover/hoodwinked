@@ -180,8 +180,10 @@ function Card({ card, hidden }) {
     <div
       className="bj-card"
       style={{
-        width: 70,
-        height: 98,
+        flex: "0 0 calc(20% - 8px)",
+        maxWidth: 80,
+        aspectRatio: "5 / 7",
+        minWidth: 0,
         borderRadius: 8,
         border: hidden ? "1px solid rgba(255,255,255,.22)" : "1px solid rgba(9,19,14,.22)",
         background: hidden
@@ -191,10 +193,9 @@ function Card({ card, hidden }) {
         display: "grid",
         placeItems: "center",
         fontWeight: 900,
-        fontSize: hidden ? 24 : 22,
+        fontSize: "clamp(13px, 4.4vw, 22px)",
         boxShadow: "0 12px 24px rgba(0,0,0,.28)",
-        position: "relative",
-        flex: "0 0 auto"
+        position: "relative"
       }}
     >
       {hidden ? "?" : `${card.rank}${card.suit}`}
@@ -205,8 +206,8 @@ function Card({ card, hidden }) {
 function Hand({ title, cards, total, hideHole }) {
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 10 }}>
-        <h3 className="bj-hand-title" style={{ color: C.cream, margin: 0, fontSize: 18 }}>{title}</h3>
+      <div style={{ display: "flex", justifyContent: "flex-start", gap: 12, alignItems: "baseline", marginBottom: 6 }}>
+        <h3 className="bj-hand-title" style={{ color: C.cream, margin: 0, fontSize: 18, fontVariant: "small-caps" }}>{title}</h3>
         <div className="bj-hand-total" style={{ color: C.gold, fontWeight: 900 }}>Total: {total}</div>
       </div>
       <div className="bj-hand-row" style={{ display: "flex", gap: 10, flexWrap: "wrap", minHeight: 104 }}>
@@ -387,8 +388,8 @@ export default function OwnTheHouse() {
           .bj-root .bj-table-inner { gap: 14px !important; }
           .bj-root .bj-hand-title { font-size: 14px !important; }
           .bj-root .bj-hand-total { font-size: 12px !important; }
-          .bj-root .bj-hand-row { gap: 5px !important; min-height: 68px !important; flex-wrap: nowrap !important; overflow: visible !important; }
-          .bj-root .bj-card { width: 46px !important; height: 65px !important; font-size: 13px !important; border-radius: 6px !important; }
+          .bj-root .bj-hand-row { gap: 6px !important; min-height: 68px !important; flex-wrap: wrap !important; overflow: visible !important; }
+          .bj-root .bj-card { flex-basis: calc(20% - 5px) !important; border-radius: 6px !important; }
           .bj-root .bj-actions button { padding: 8px 10px !important; font-size: 13px !important; }
         }
       `}</style>
@@ -404,7 +405,7 @@ export default function OwnTheHouse() {
           />
           <div>
           <div className="bj-eyebrow" style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
-          <h2 className="bj-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
+          <h2 className="bj-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1, fontVariant: "small-caps" }}>
             The House Always Lies
           </h2>
           <p className="bj-blurb" style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>

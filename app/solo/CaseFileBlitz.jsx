@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { readScore, writeScore } from "./scoreStore";
+import { readPlayerName, readScore, writeScore } from "./scoreStore";
 
 const DIFFICULTIES = {
   easy: { label: "Easy", time: 75, bonusSec: 3, penaltySec: 0, multiplier: 1 },
@@ -134,6 +134,7 @@ export default function CaseFileBlitz() {
   const [wrongCount, setWrongCount] = useState(0);
   const [feedback, setFeedback] = useState(null);
   const [best, setBest] = useState(SCORE_FALLBACK);
+  const [playerName, setPlayerName] = useState("");
   const tickRef = useRef(null);
   const advanceTimerRef = useRef(null);
   const endRef = useRef(0);
@@ -142,6 +143,7 @@ export default function CaseFileBlitz() {
     // SSR returns fallback; hydrate the real value on mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setBest(readScore(SCORE_SLUG, SCORE_FALLBACK));
+    setPlayerName(readPlayerName());
   }, []);
 
   useEffect(() => () => {
@@ -284,7 +286,7 @@ export default function CaseFileBlitz() {
       <section style={{ display: "grid", gap: 14 }}>
         <style>{FLASH_KEYS}</style>
         <header style={{ display: "grid", gap: 4 }}>
-          <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1 }}>Case File Blitz</h2>
+          <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1, fontVariant: "small-caps" }}>Case File Blitz</h2>
           <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
             Rapid-fire crime trivia. Read fast, tap faster. Every right answer banks score and time.
           </p>
@@ -539,7 +541,9 @@ export default function CaseFileBlitz() {
     <section style={{ display: "grid", gap: 14 }}>
       <style>{FLASH_KEYS}</style>
       <header style={{ display: "grid", gap: 4 }}>
-        <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1 }}>File Closed</h2>
+        <h2 style={{ margin: 0, color: C.gold, fontSize: "clamp(26px, 5.5vw, 38px)", letterSpacing: 1, fontVariant: "small-caps" }}>
+          File Closed{playerName ? `, Detective ${playerName}` : ""}
+        </h2>
         <p style={{ margin: 0, color: C.muted, fontSize: 13 }}>{settings.label} difficulty</p>
       </header>
 

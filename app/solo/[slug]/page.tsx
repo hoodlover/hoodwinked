@@ -78,7 +78,7 @@ export default async function SoloGamePage({
               alt="Back to solo cases"
               width={404}
               height={51}
-              style={{ height: "clamp(20px, 4vw, 26px)", width: "auto", display: "block" }}
+              style={{ height: "clamp(20px, 4vw, 26px)", width: "clamp(140px, 28vw, 186px)", display: "block" }}
             />
           </Link>
           <Link href="/" aria-label="Back to Hoodwinked" style={{ display: "inline-flex", filter: "drop-shadow(0 2px 6px rgba(0,0,0,.42))" }}>
@@ -88,7 +88,7 @@ export default async function SoloGamePage({
               alt="Back to Hoodwinked"
               width={386}
               height={54}
-              style={{ height: "clamp(20px, 4vw, 26px)", width: "auto", display: "block" }}
+              style={{ height: "clamp(20px, 4vw, 26px)", width: "clamp(140px, 28vw, 186px)", display: "block" }}
             />
           </Link>
         </nav>

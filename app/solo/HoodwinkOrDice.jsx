@@ -355,7 +355,7 @@ export default function HoodwinkOrDice() {
           />
           <div>
           <div className="hod-eyebrow" style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
-          <h2 className="hod-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
+          <h2 className="hod-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1, fontVariant: "small-caps" }}>
             Hoodwink or Dice
           </h2>
           <p className="hod-blurb" style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
@@ -481,30 +481,6 @@ export default function HoodwinkOrDice() {
 
           <div className="hod-action-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, alignItems: "start" }}>
             <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
-              <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>BID HISTORY</div>
-              <div className="hod-history-list" style={{ display: "grid", gap: 6, maxHeight: 190, overflow: "auto" }}>
-                {game.bidHistory.length ? game.bidHistory.map((bid, index) => (
-                  <div
-                    key={`${bid.player}-${bid.count}-${bid.value}-${index}`}
-                    className="hod-history-item"
-                    style={{
-                      color: C.cream,
-                      border: "1px solid rgba(129,164,117,.38)",
-                      borderRadius: 6,
-                      padding: "7px 9px",
-                      background: bid.player === "you" ? "rgba(255,193,94,.12)" : "rgba(111,182,216,.13)",
-                      fontWeight: 800
-                    }}
-                  >
-                    {index + 1}. {bidText(bid)}
-                  </div>
-                )) : (
-                  <div style={{ color: C.muted, fontWeight: 800 }}>No bids yet.</div>
-                )}
-              </div>
-            </div>
-
-            <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
               <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>YOUR MOVE</div>
               {game.phase === "playing" ? (
                 <>
@@ -548,6 +524,30 @@ export default function HoodwinkOrDice() {
                   )}
                 </div>
               )}
+            </div>
+
+            <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
+              <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>BID HISTORY</div>
+              <div className="hod-history-list" style={{ display: "grid", gap: 6, maxHeight: 190, overflow: "auto" }}>
+                {game.bidHistory.length ? game.bidHistory.map((bid, index) => (
+                  <div
+                    key={`${bid.player}-${bid.count}-${bid.value}-${index}`}
+                    className="hod-history-item"
+                    style={{
+                      color: C.cream,
+                      border: "1px solid rgba(129,164,117,.38)",
+                      borderRadius: 6,
+                      padding: "7px 9px",
+                      background: bid.player === "you" ? "rgba(255,193,94,.12)" : "rgba(111,182,216,.13)",
+                      fontWeight: 800
+                    }}
+                  >
+                    {index + 1}. {bidText(bid)}
+                  </div>
+                )) : (
+                  <div style={{ color: C.muted, fontWeight: 800 }}>No bids yet.</div>
+                )}
+              </div>
             </div>
           </div>
         </>

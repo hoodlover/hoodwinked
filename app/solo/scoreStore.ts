@@ -1,4 +1,24 @@
 const PREFIX = "hoodwinked.solo.";
+const PLAYER_KEY = `${PREFIX}player`;
+const PLAYER_NAME_MAX = 24;
+
+export function readPlayerName(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(PLAYER_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function writePlayerName(name: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const trimmed = name.trim().slice(0, PLAYER_NAME_MAX);
+    if (trimmed) window.localStorage.setItem(PLAYER_KEY, trimmed);
+    else window.localStorage.removeItem(PLAYER_KEY);
+  } catch {}
+}
 
 export function readScore<T extends object>(slug: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PlayerNameBadge from "./PlayerNameBadge";
 import { SOLO_GAMES } from "./games";
 
 export default function SoloGamesPage() {
@@ -43,6 +44,7 @@ export default function SoloGamesPage() {
                 lineHeight: 1,
                 letterSpacing: 1,
                 overflowWrap: "anywhere",
+                fontVariant: "small-caps",
                 textShadow: "0 8px 18px rgba(0,0,0,.6), 0 0 10px rgba(0,0,0,.5)"
               }}
             >
@@ -51,6 +53,9 @@ export default function SoloGamesPage() {
             <p style={{ margin: "6px 0 0", color: "#d9d2bd", fontWeight: 800, letterSpacing: 1.2, fontSize: 13 }}>
               Grab a case and get ready!
             </p>
+            <div style={{ marginTop: 10 }}>
+              <PlayerNameBadge />
+            </div>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

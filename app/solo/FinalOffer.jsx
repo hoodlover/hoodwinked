@@ -488,7 +488,7 @@ export default function FinalOffer() {
           .fo-root .fo-case-tile span:last-child { font-size: 8px !important; letter-spacing: .6px !important; }
         }
       `}</style>
-      <div className="fo-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
+      <div className="fo-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 14 }}>
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 860 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -500,7 +500,7 @@ export default function FinalOffer() {
           />
           <div>
           <div className="fo-eyebrow" style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
-          <h2 className="fo-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
+          <h2 className="fo-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1, fontVariant: "small-caps" }}>
             Final Offer
           </h2>
           <p className="fo-blurb" style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
@@ -508,62 +508,78 @@ export default function FinalOffer() {
           </p>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-          {Object.entries(DIFFICULTIES).map(([value, item]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => canPickDifficulty && setDifficulty(value)}
-              disabled={!canPickDifficulty}
-              style={{
-                border: `1px solid ${difficulty === value ? C.gold : C.line}`,
-                background: difficulty === value ? `${C.gold}22` : "rgba(9,19,14,.5)",
-                color: difficulty === value ? C.gold : C.cream,
-                borderRadius: 8,
-                padding: "10px 12px",
-                fontWeight: 900,
-                cursor: canPickDifficulty ? "pointer" : "default"
-              }}
-              className="fo-diff-btn"
-            >
-              {item.label}
-            </button>
-          ))}
+      </div>
+
+      <div className="fo-pills-row" style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 6, marginBottom: 16 }}>
+        {Object.entries(DIFFICULTIES).map(([value, item]) => (
           <button
+            key={value}
             type="button"
-            onClick={() => canPickDifficulty && setFireMode((v) => !v)}
+            onClick={() => canPickDifficulty && setDifficulty(value)}
             disabled={!canPickDifficulty}
-            title={fireMode ? "Bankrupt case in play" : "No Bankrupt case"}
-            className="fo-diff-btn"
             style={{
-              border: `1px solid ${fireMode ? "#cf4f45" : C.line}`,
-              background: fireMode ? "linear-gradient(180deg, rgba(207,79,69,.34), rgba(109,23,29,.46))" : "rgba(9,19,14,.5)",
-              color: fireMode ? "#ffd5cf" : C.cream,
+              border: `1px solid ${difficulty === value ? C.gold : C.line}`,
+              background: difficulty === value ? `${C.gold}22` : "rgba(9,19,14,.5)",
+              color: difficulty === value ? C.gold : C.cream,
               borderRadius: 8,
-              padding: "10px 12px",
+              padding: "10px 6px",
               fontWeight: 900,
-              cursor: canPickDifficulty ? "pointer" : "default"
+              fontSize: "clamp(11px, 2.4vw, 14px)",
+              cursor: canPickDifficulty ? "pointer" : "default",
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap"
             }}
-          >
-            Bankruptcy? {fireMode ? "On" : "Off"}
-          </button>
-          <button
-            type="button"
-            onClick={() => start(difficulty)}
             className="fo-diff-btn"
-            style={{
-              border: `1px solid ${C.gold}`,
-              background: `linear-gradient(180deg, ${C.gold}, #dca33d)`,
-              color: C.dark,
-              borderRadius: 8,
-              padding: "10px 16px",
-              fontWeight: 900,
-              cursor: "pointer"
-            }}
           >
-            {game ? "New game" : "Start game"}
+            {item.label}
           </button>
-        </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => canPickDifficulty && setFireMode((v) => !v)}
+          disabled={!canPickDifficulty}
+          title={fireMode ? "Bankrupt case in play" : "No Bankrupt case"}
+          className="fo-diff-btn"
+          style={{
+            border: `1px solid ${fireMode ? "#cf4f45" : C.line}`,
+            background: fireMode ? "linear-gradient(180deg, rgba(207,79,69,.34), rgba(109,23,29,.46))" : "rgba(9,19,14,.5)",
+            color: fireMode ? "#ffd5cf" : C.cream,
+            borderRadius: 8,
+            padding: "10px 6px",
+            fontWeight: 900,
+            fontSize: "clamp(11px, 2.4vw, 14px)",
+            cursor: canPickDifficulty ? "pointer" : "default",
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          }}
+        >
+          Bankrupt? {fireMode ? "On" : "Off"}
+        </button>
+        <button
+          type="button"
+          onClick={() => start(difficulty)}
+          className="fo-diff-btn"
+          style={{
+            border: `1px solid ${C.green}`,
+            background: `linear-gradient(180deg, ${C.green}, #2c5630)`,
+            color: C.cream,
+            borderRadius: 8,
+            padding: "10px 6px",
+            fontWeight: 900,
+            fontSize: "clamp(11px, 2.4vw, 14px)",
+            cursor: "pointer",
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          }}
+        >
+          {game ? "New" : "Start"}
+        </button>
       </div>
 
       <div className="fo-status-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10, marginBottom: 16 }}>
