@@ -6,9 +6,9 @@ const SIZE = 10;
 const CELL_COUNT = SIZE * SIZE;
 
 const DIFFICULTIES = {
-  easy: { label: "Easy", clues: 4, traps: 2 },
-  medium: { label: "Medium", clues: 6, traps: 4 },
-  hard: { label: "Hard", clues: 7, traps: 5 }
+  easy: { label: "Easy", clues: 6, traps: 12 },
+  medium: { label: "Medium", clues: 8, traps: 18 },
+  hard: { label: "Hard", clues: 10, traps: 24 }
 };
 
 const C = {
@@ -84,7 +84,9 @@ function createBoard(difficulty, safeStart = null) {
     neighbors(safeStart).forEach((index) => excluded.add(index));
   }
   const traps = new Set(sampleCells(settings.traps, excluded));
-  const clues = new Set(sampleCells(settings.clues, traps));
+  const clueExclude = new Set(traps);
+  if (safeStart != null) clueExclude.add(safeStart);
+  const clues = new Set(sampleCells(settings.clues, clueExclude));
 
   return Array.from({ length: CELL_COUNT }, (_, index) => ({
     index,
@@ -102,15 +104,22 @@ function createGame(difficulty) {
     board: createBoard(difficulty),
     firstMove: true,
     status: "playing",
-    message: "First click is safe. Start anywhere on the board.",
+    message: "First click is safe. Reveal every non-trap tile to win.",
     lastRevealed: null
   };
 }
 
 function revealFrom(board, startIndex) {
   const next = board.map((tile) => ({ ...tile }));
-  const queue = [startIndex];
-  const seen = new Set();
+  const startTile = next[startIndex];
+  if (!startTile || startTile.revealed || startTile.flagged || startTile.trap) return next;
+
+  // The clicked tile always reveals. Clues never cascade — even a zero-clue stops here.
+  startTile.revealed = true;
+  if (startTile.clue || startTile.nearbyTraps !== 0) return next;
+
+  const queue = neighbors(startIndex).slice();
+  const seen = new Set([startIndex]);
 
   while (queue.length) {
     const index = queue.shift();
@@ -118,13 +127,12 @@ function revealFrom(board, startIndex) {
     seen.add(index);
 
     const tile = next[index];
-    if (tile.revealed || tile.flagged || tile.trap) continue;
+    if (tile.revealed || tile.flagged || tile.trap || tile.clue) continue;
     tile.revealed = true;
 
-    if (tile.nearbyTraps === 0 && !tile.clue) {
+    if (tile.nearbyTraps === 0) {
       neighbors(index).forEach((neighbor) => {
-        const neighborTile = next[neighbor];
-        if (!neighborTile.revealed && !neighborTile.flagged && !neighborTile.trap) queue.push(neighbor);
+        if (!seen.has(neighbor)) queue.push(neighbor);
       });
     }
   }
@@ -132,8 +140,15 @@ function revealFrom(board, startIndex) {
   return next;
 }
 
-function revealedClues(board) {
-  return board.filter((tile) => tile.clue && tile.revealed).length;
+function safeProgress(board) {
+  let total = 0;
+  let revealed = 0;
+  for (const tile of board) {
+    if (tile.trap) continue;
+    total += 1;
+    if (tile.revealed) revealed += 1;
+  }
+  return { total, revealed };
 }
 
 function Tile({ tile, disabled, onReveal, onFlag }) {
@@ -152,6 +167,8 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
       style={{
         width: "clamp(36px, 8.4vw, 52px)",
         height: "clamp(36px, 8.4vw, 52px)",
+        padding: 0,
+        overflow: "hidden",
         borderRadius: 5,
         border: tile.revealed ? "1px solid rgba(9,19,14,.18)" : "1px solid rgba(255,255,255,.18)",
         background: tile.revealed
@@ -171,22 +188,23 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
       }}
     >
       {image ? (
-        <span style={{ position: "relative", display: "grid", placeItems: "center", width: "100%", height: "100%" }}>
+        <span style={{ position: "relative", display: "block", width: "100%", height: "100%" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image} alt="" aria-hidden="true" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }} />
+          <img src={image} alt="" aria-hidden="true" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }} />
           {showClue && number && (
             <span
               style={{
                 position: "absolute",
-                right: 0,
-                bottom: -1,
-                minWidth: 15,
-                height: 15,
+                right: 1,
+                bottom: 1,
+                minWidth: 16,
+                height: 16,
+                padding: "0 4px",
                 borderRadius: 999,
                 background: C.dark,
                 color: NUMBER_COLORS[number],
-                fontSize: 10,
-                lineHeight: "15px",
+                fontSize: 11,
+                lineHeight: "16px",
                 border: "1px solid rgba(255,255,255,.35)"
               }}
             >
@@ -196,7 +214,7 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
         </span>
       ) : tile.flagged && !tile.revealed ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src="/the_sweep/marker_flag.webp" alt="Flagged" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }} />
+        <img src="/the_sweep/marker_flag.webp" alt="Flagged" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }} />
       ) : number}
     </button>
   );
@@ -209,12 +227,17 @@ export default function TheSweep() {
   const settings = DIFFICULTIES[difficulty];
   const stats = useMemo(() => {
     const board = game?.board ?? [];
+    const flags = board.filter((tile) => tile.flagged && !tile.revealed).length;
+    const { total, revealed } = board.length
+      ? safeProgress(board)
+      : { total: CELL_COUNT - settings.traps, revealed: 0 };
     return {
-      cluesFound: revealedClues(board),
-      flags: board.filter((tile) => tile.flagged && !tile.revealed).length,
-      revealed: board.filter((tile) => tile.revealed).length
+      flags,
+      safeRevealed: revealed,
+      safeTotal: total,
+      trapsLeft: Math.max(0, settings.traps - flags)
     };
-  }, [game?.board]);
+  }, [game?.board, settings.traps]);
 
   const start = (chosenDifficulty = difficulty) => {
     setDifficulty(chosenDifficulty);
@@ -227,22 +250,42 @@ export default function TheSweep() {
       const activeBoard = current.firstMove ? createBoard(current.difficulty, index) : current.board;
       const tile = activeBoard[index];
       if (tile.flagged) return current;
+
       if (tile.revealed) {
         if (tile.nearbyTraps <= 0) return current;
         const around = neighbors(index);
         const flagCount = around.filter((neighbor) => activeBoard[neighbor].flagged).length;
         if (flagCount !== tile.nearbyTraps) return current;
+        const trapHit = around.find(
+          (neighbor) => !activeBoard[neighbor].flagged && !activeBoard[neighbor].revealed && activeBoard[neighbor].trap
+        );
+        if (trapHit !== undefined) {
+          const board = activeBoard.map((value, i) => ({
+            ...value,
+            revealed: value.revealed || value.trap || i === trapHit
+          }));
+          return {
+            ...current,
+            board,
+            firstMove: false,
+            status: "lost",
+            lastRevealed: trapHit,
+            message: "Wrong flag — you hit a trap!"
+          };
+        }
         let board = activeBoard;
-        around.filter((neighbor) => !board[neighbor].flagged && !board[neighbor].revealed).forEach((neighbor) => {
-          board = revealFrom(board, neighbor);
-        });
-        const cluesFound = revealedClues(board);
-        const won = cluesFound >= DIFFICULTIES[current.difficulty].clues;
+        around
+          .filter((neighbor) => !board[neighbor].flagged && !board[neighbor].revealed)
+          .forEach((neighbor) => {
+            board = revealFrom(board, neighbor);
+          });
+        const progress = safeProgress(board);
+        const won = progress.revealed === progress.total;
         return {
           ...current,
           board: won ? board.map((value) => ({ ...value, revealed: value.revealed || value.trap })) : board,
           status: won ? "won" : "playing",
-          message: won ? "All genuine clues recovered. You win!" : "Cleared the unflagged neighbors."
+          message: won ? "You win! All safe tiles cleared." : "Cleared the unflagged neighbors."
         };
       }
 
@@ -257,13 +300,13 @@ export default function TheSweep() {
           firstMove: false,
           status: "lost",
           lastRevealed: index,
-          message: "Red herring hit. The sweep is blown."
+          message: "You hit a trap! The sweep is blown."
         };
       }
 
       const board = revealFrom(activeBoard, index);
-      const cluesFound = revealedClues(board);
-      const won = cluesFound >= DIFFICULTIES[current.difficulty].clues;
+      const progress = safeProgress(board);
+      const won = progress.revealed === progress.total;
 
       return {
         ...current,
@@ -271,7 +314,11 @@ export default function TheSweep() {
         board: won ? board.map((value) => ({ ...value, revealed: value.revealed || value.trap })) : board,
         status: won ? "won" : "playing",
         lastRevealed: index,
-        message: won ? "All genuine clues recovered. You win!" : tile.clue ? "Genuine clue found." : "Safe evidence sweep."
+        message: won
+          ? "You win! All safe tiles cleared."
+          : tile.clue
+            ? "Genuine clue found."
+            : "Safe sweep — keep going."
       };
     });
   };
@@ -348,28 +395,28 @@ export default function TheSweep() {
       </div>
 
       <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.45)", color: C.muted, fontWeight: 800, lineHeight: 1.45, marginBottom: 16 }}>
-        How to play: left-click any tile to start safely. A number shows how many traps touch that tile, including diagonals. Blank tiles have zero nearby traps and sweep open nearby safe spaces. Right-click to flag suspected traps. If a revealed number already touches the correct number of flags, click that number again to clear its other neighboring tiles.
+        How to play: left-click any tile to start safely. A number shows how many traps touch that tile, including diagonals. Blank (zero) tiles cascade outward and auto-reveal their neighbors — but the sweep stops at evidence clues, which only flip when you click them directly. Right-click to flag suspected traps. Clear every safe tile (including each clue) to win — touch a trap and the sweep is blown. If a revealed number already touches the correct number of flags, click it again to chord-clear its remaining neighbors.
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 16 }}>
         <div style={panelStyle()}>
-          <div style={labelStyle()}>CLUES</div>
-          <div style={countBoxStyle()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/the_sweep/clue+1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/the_sweep/clue-3.webp" alt="" aria-hidden="true" style={countIconStyle()} />
-            <span>{stats.cluesFound} / {settings.clues}</span>
-          </div>
-        </div>
-        <div style={panelStyle()}>
-          <div style={labelStyle()}>TRAPS</div>
+          <div style={labelStyle()}>TRAPS LEFT</div>
           <div style={countBoxStyle()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/the_sweep/trap_1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/the_sweep/trap2.webp" alt="" aria-hidden="true" style={countIconStyle()} />
-            <span>{settings.traps}</span>
+            <span>{stats.trapsLeft}</span>
+          </div>
+        </div>
+        <div style={panelStyle()}>
+          <div style={labelStyle()}>SAFE TILES</div>
+          <div style={countBoxStyle()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/the_sweep/clue+1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/the_sweep/clue-3.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <span>{stats.safeRevealed} / {stats.safeTotal}</span>
           </div>
         </div>
         <div style={panelStyle()}>

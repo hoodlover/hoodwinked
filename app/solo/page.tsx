@@ -1,68 +1,5 @@
 import Link from "next/link";
-import FinalOffer from "./FinalOffer";
-import HoodwinkOrDice from "./HoodwinkOrDice";
-import OwnTheHouse from "./OwnTheHouse";
-import SafesAndEvidence from "./SafesAndEvidence";
-import ShellGame from "./ShellGame";
-import TheSweep from "./TheSweep";
-
-const soloGames = [
-  {
-    name: "Alibis & Informants",
-    status: "Playable",
-    note: "Sweep rival police-station maps for hidden alibis and informants."
-  },
-  {
-    name: "Three Mark's Monte",
-    status: "Playable",
-    note: "Track the hidden prize through a fast red-cup shuffle."
-  },
-  {
-    name: "Hoodwink or Dice",
-    status: "Playable",
-    note: "Raise bids, call bluffs, and outlast the AI at liar's dice."
-  },
-  {
-    name: "The House Always Lies",
-    status: "Playable",
-    note: "Play the crooked blackjack table with bets, doubles, and dealer tells."
-  },
-  {
-    name: "Final Offer",
-    status: "Playable",
-    note: "Open briefcases, read the Banker, and decide when to take the deal."
-  },
-  {
-    name: "The Sweep",
-    status: "Playable",
-    note: "Reveal genuine clues on a 10x10 board without tripping red herrings."
-  },
-  {
-    name: "Cipher Sweep",
-    status: "Coming soon",
-    note: "Decode patterns against a timer."
-  },
-  {
-    name: "Alibi Grid",
-    status: "Coming soon",
-    note: "Spot contradictions in a lineup of suspect claims."
-  },
-  {
-    name: "Vault Runner",
-    status: "Coming soon",
-    note: "Pick the safest path through clues and decoys."
-  },
-  {
-    name: "Case File Blitz",
-    status: "Coming soon",
-    note: "Quick-fire mystery trivia for one player."
-  },
-  {
-    name: "The Lookout",
-    status: "Coming soon",
-    note: "Memory and observation challenges."
-  }
-];
+import { SOLO_GAMES } from "./games";
 
 export default function SoloGamesPage() {
   return (
@@ -72,87 +9,115 @@ export default function SoloGamesPage() {
         background:
           "radial-gradient(circle at 50% 0%, rgba(255,193,94,.14), transparent 34%), linear-gradient(180deg, #254426 0%, #132019 100%)",
         color: "#fbf3e4",
-        padding: "24px clamp(14px, 3vw, 34px) 48px",
+        padding: "20px clamp(12px, 3vw, 34px) 48px",
         fontFamily: "Inter, system-ui, sans-serif"
       }}
     >
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <header
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
-            gap: 16,
-            marginBottom: 28
+            alignItems: "flex-end",
+            gap: 12,
+            marginBottom: 22,
+            flexWrap: "wrap"
           }}
         >
-          <div>
-            <Link href="/" style={{ color: "#b9c7b1", textDecoration: "none", fontWeight: 800 }}>
-              Back to Hoodwinked
+          <div style={{ minWidth: 0, flex: "1 1 240px" }}>
+            <Link href="/" style={{ color: "#b9c7b1", textDecoration: "none", fontWeight: 800, fontSize: 13 }}>
+              ← Back to Hoodwinked
             </Link>
             <h1
               style={{
-                margin: "12px 0 4px",
+                margin: "10px 0 4px",
                 color: "#ffc15e",
-                fontSize: "clamp(40px, 8vw, 86px)",
-                lineHeight: 0.95,
+                fontSize: "clamp(30px, 7vw, 64px)",
+                lineHeight: 1,
                 letterSpacing: 1,
-                textShadow: "0 8px 18px rgba(0,0,0,.72), 0 14px 34px rgba(0,0,0,.58), 0 0 10px rgba(0,0,0,.68)"
+                overflowWrap: "anywhere",
+                textShadow: "0 8px 18px rgba(0,0,0,.6), 0 0 10px rgba(0,0,0,.5)"
               }}
             >
               Solo Cases
             </h1>
-            <p style={{ margin: 0, color: "#d9d2bd", fontWeight: 800, letterSpacing: 1.4 }}>
-              One-player games from the Hoodwinked evidence locker.
+            <p style={{ margin: "6px 0 0", color: "#d9d2bd", fontWeight: 800, letterSpacing: 1.2, fontSize: 13 }}>
+              Tap a case to open it on its own screen.
             </p>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/hwlogo.png"
             alt="Hoodwinked"
-            width={180}
-            height={180}
-            style={{ width: "min(180px, 28vw)", height: "auto", filter: "drop-shadow(0 14px 26px rgba(0,0,0,.45))" }}
+            width={140}
+            height={140}
+            style={{
+              width: "min(140px, 22vw)",
+              height: "auto",
+              flex: "0 0 auto",
+              filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))"
+            }}
           />
         </header>
 
         <section
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-            gap: 10,
-            marginBottom: 24
+            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+            gap: 10
           }}
         >
-          {soloGames.map((game) => (
-            <article
-              key={game.name}
-              style={{
-                border: "1px solid rgba(129,164,117,.55)",
-                background: game.status === "Playable" ? "rgba(255,193,94,.12)" : "rgba(10,19,14,.52)",
-                borderRadius: 8,
-                padding: 14,
-                boxShadow: "0 12px 28px rgba(0,0,0,.22)"
-              }}
-            >
-              <div style={{ color: game.status === "Playable" ? "#ffc15e" : "#9aaa91", fontSize: 11, fontWeight: 900, letterSpacing: 1.4 }}>
-                {game.status.toUpperCase()}
-              </div>
-              <div style={{ color: "#fbf3e4", fontSize: 18, fontWeight: 900, margin: "5px 0 6px" }}>
-                {game.name}
-              </div>
-              <p style={{ color: "#d9d2bd", fontSize: 12, lineHeight: 1.4, margin: 0 }}>{game.note}</p>
-            </article>
-          ))}
-        </section>
+          {SOLO_GAMES.map((game) => {
+            const playable = game.status === "playable";
+            const card = (
+              <article
+                style={{
+                  border: playable ? "1px solid rgba(255,193,94,.55)" : "1px solid rgba(129,164,117,.35)",
+                  background: playable ? "rgba(255,193,94,.10)" : "rgba(10,19,14,.55)",
+                  borderRadius: 10,
+                  padding: 14,
+                  boxShadow: "0 10px 22px rgba(0,0,0,.22)",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6
+                }}
+              >
+                <div
+                  style={{
+                    color: playable ? "#ffc15e" : "#9aaa91",
+                    fontSize: 11,
+                    fontWeight: 900,
+                    letterSpacing: 1.4
+                  }}
+                >
+                  {playable ? "PLAY" : "COMING SOON"}
+                </div>
+                <div style={{ color: "#fbf3e4", fontSize: 17, fontWeight: 900, lineHeight: 1.15 }}>
+                  {game.name}
+                </div>
+                <p style={{ color: "#d9d2bd", fontSize: 12, lineHeight: 1.4, margin: 0 }}>{game.note}</p>
+              </article>
+            );
 
-        <section style={{ display: "grid", gap: 36 }}>
-          <SafesAndEvidence />
-          <ShellGame />
-          <HoodwinkOrDice />
-          <OwnTheHouse />
-          <FinalOffer />
-          <TheSweep />
+            if (!playable) {
+              return (
+                <div key={game.slug} aria-disabled style={{ opacity: 0.7 }}>
+                  {card}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={game.slug}
+                href={`/solo/${game.slug}`}
+                style={{ textDecoration: "none", color: "inherit", display: "block" }}
+              >
+                {card}
+              </Link>
+            );
+          })}
         </section>
       </div>
     </main>

@@ -508,15 +508,16 @@ const FONT_CSS = `
 .parlor-root .waiting-pill{position:relative;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;border-radius:999px;padding:8px 20px;background:rgba(10,19,14,.42);border:1px solid rgba(255,193,94,.22);box-shadow:0 14px 32px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.05);}
 .parlor-root .waiting-pill::after{content:"";position:absolute;inset:-20% auto -20% -40%;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);animation:parlor-pill-shine 2.9s ease-in-out infinite;}
 .parlor-root .landing-suspect-pins{display:block;}
+@media (max-width: 760px) {
+  .parlor-root .board-header { flex-wrap: wrap; gap: 8px; row-gap: 10px; }
+  .parlor-root .board-header img { max-width: min(96px, 22vw) !important; height: auto !important; }
+}
 @media (max-width: 640px) {
   .parlor-root .phones-row { display: none !important; }
   .parlor-root .board-inner { padding: 8px 4px !important; }
   .parlor-root .board-wrap { padding: 12px !important; border-radius: 16px !important; }
   .parlor-root .suspect-pins { display: none !important; }
   .parlor-root .landing-suspect-pins { display: none !important; }
-}
-@media (max-width: 420px) {
-  .parlor-root .board-header { flex-wrap: wrap; gap: 6px; }
 }
 .parlor-root .bulb{animation:parlor-twinkle 2.4s ease-in-out infinite;}
 .parlor-root .popin{animation:parlor-popin .32s cubic-bezier(.34,1.56,.64,1) both;}
@@ -1377,7 +1378,7 @@ function Board({
           <div className="flex items-center" style={{ gap: 10 }}>
             <BrandLogo size={210} compact />
             <div>
-              <div className="disp" style={{ fontSize: 34, fontWeight: 800, color: C.gold, letterSpacing: 1, textShadow: HEAVY_TEXT_SHADOW }}>
+              <div className="disp" style={{ fontSize: "clamp(20px, 5.4vw, 34px)", fontWeight: 800, color: C.gold, letterSpacing: 1, textShadow: HEAVY_TEXT_SHADOW, overflowWrap: "anywhere" }}>
                 HOODWINKED
               </div>
               <div className="body" style={{ color: C.creamDim, fontSize: 12, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", textShadow: HEAVY_TEXT_SHADOW }}>
@@ -4335,7 +4336,7 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
         <div className="body" style={{ color: C.creamDim, fontSize: "clamp(13px, 1.4vw, 18px)", fontWeight: 900, letterSpacing: 3, marginBottom: 12, textShadow: HEAVY_TEXT_SHADOW }}>
           {PLAY_URL}
         </div>
-        <div className="disp" style={{ fontSize: "clamp(52px, 11vw, 112px)", fontWeight: 900, color: C.gold, letterSpacing: 5, lineHeight: 0.9, textShadow: HEAVY_TEXT_SHADOW }}>
+        <div className="disp" style={{ fontSize: "clamp(36px, 11vw, 112px)", fontWeight: 900, color: C.gold, letterSpacing: "clamp(1px, 0.6vw, 5px)", lineHeight: 0.9, textShadow: HEAVY_TEXT_SHADOW, overflowWrap: "anywhere" }}>
           HOODWINKED
         </div>
         <div
@@ -4344,10 +4345,11 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
             color: C.cream,
             marginTop: 16,
             marginBottom: 36,
-            fontSize: "clamp(24px, 4.8vw, 46px)",
+            fontSize: "clamp(18px, 4.8vw, 46px)",
             fontWeight: 900,
             lineHeight: 1.15,
-            textShadow: HEAVY_TEXT_SHADOW
+            textShadow: HEAVY_TEXT_SHADOW,
+            overflowWrap: "anywhere"
           }}
         >
           FOOL THE ROOM. WIN THE NIGHT.
