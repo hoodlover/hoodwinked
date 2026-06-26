@@ -222,10 +222,15 @@ export default function Stakeout() {
   const [hintTarget, setHintTarget] = useState(null);
   const [best, setBest] = useState(SCORE_FALLBACK);
   const [playerName, setPlayerName] = useState("");
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const tickRef = useRef(null);
   const feedbackTimerRef = useRef(null);
   const hintTimerRef = useRef(null);
   const endRef = useRef(0);
+  const sceneRef = useRef(null);
+  const pinchRef = useRef(null);
+  const dragRef = useRef(null);
 
   useEffect(() => {
     // SSR returns fallback; hydrate the real value on mount.
@@ -298,28 +303,57 @@ export default function Stakeout() {
     [difficulty, finishRound]
   );
 
-  const handleSceneTap = (event) => {
-    if (phase !== "play") return;
-    const target = event.currentTarget;
-    const rect = target.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width;
-    const y = (event.clientY - rect.top) / rect.height;
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const clampPan = (px, py, z, rect) => {
+    if (!rect) return { x: px, y: py };
+    return {
+      x: clamp(px, -rect.width * (z - 1), 0),
+      y: clamp(py, -rect.height * (z - 1), 0)
+    };
+  };
 
+  const resetZoom = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  // Reset zoom when the scene changes (e.g. after clearing all 10).
+  /* eslint-disable react-hooks/set-state-in-effect -- resets viewport when the underlying scene swaps */
+  useEffect(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, [scene.id]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Compute zoom toward a focal point (cursor / pinch midpoint) in container coords.
+  const zoomToward = (newZoom, focalX, focalY, rect) => {
+    const z = clamp(newZoom, 1, 4);
+    const imgX = (focalX - pan.x) / zoom;
+    const imgY = (focalY - pan.y) / zoom;
+    const newPan = clampPan(focalX - imgX * z, focalY - imgY * z, z, rect);
+    setZoom(z);
+    setPan(newPan);
+  };
+
+  const runHitTest = (xPct, yPct, rect) => {
+    if (phase !== "play") return;
+    if (!rect) return;
     // Find which (unfound) item we hit, if any
     const aspect = rect.width / rect.height;
     let hitItem = null;
     let hitDistSq = Infinity;
     for (const item of scene.items) {
       if (foundIds.includes(item.id)) continue;
-      // Convert to comparable space: radius is % of width; y distance scaled by aspect ratio
-      const dxPct = item.x - x;
-      const dyPct = (item.y - y) / aspect;
+      const dxPct = item.x - xPct;
+      const dyPct = (item.y - yPct) / aspect;
       const ds = dxPct * dxPct + dyPct * dyPct;
       if (ds < item.radius * item.radius && ds < hitDistSq) {
         hitItem = item;
         hitDistSq = ds;
       }
     }
+    const x = xPct;
+    const y = yPct;
 
     if (hitItem) {
       const nextFound = [...foundIds, hitItem.id];
@@ -367,6 +401,113 @@ export default function Stakeout() {
 
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     feedbackTimerRef.current = setTimeout(() => setFeedback(null), 900);
+  };
+
+  // Gesture handlers
+  const handleTouchStart = (e) => {
+    const rect = sceneRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    if (e.touches.length === 2) {
+      const [t1, t2] = e.touches;
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const midX = (t1.clientX + t2.clientX) / 2 - rect.left;
+      const midY = (t1.clientY + t2.clientY) / 2 - rect.top;
+      pinchRef.current = { startDist: dist, startZoom: zoom, midX, midY };
+      dragRef.current = null;
+    } else if (e.touches.length === 1) {
+      const t = e.touches[0];
+      dragRef.current = {
+        startX: t.clientX,
+        startY: t.clientY,
+        panX: pan.x,
+        panY: pan.y,
+        isDrag: false
+      };
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    const rect = sceneRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    if (e.touches.length === 2 && pinchRef.current) {
+      const [t1, t2] = e.touches;
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const target = pinchRef.current.startZoom * (dist / pinchRef.current.startDist);
+      zoomToward(target, pinchRef.current.midX, pinchRef.current.midY, rect);
+    } else if (e.touches.length === 1 && dragRef.current) {
+      const t = e.touches[0];
+      const dx = t.clientX - dragRef.current.startX;
+      const dy = t.clientY - dragRef.current.startY;
+      if (!dragRef.current.isDrag && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        dragRef.current.isDrag = true;
+      }
+      if (dragRef.current.isDrag && zoom > 1) {
+        setPan(clampPan(dragRef.current.panX + dx, dragRef.current.panY + dy, zoom, rect));
+      }
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    const rect = sceneRef.current?.getBoundingClientRect();
+    if (dragRef.current && !dragRef.current.isDrag && rect && e.changedTouches.length >= 1) {
+      const t = e.changedTouches[0];
+      const containerX = t.clientX - rect.left;
+      const containerY = t.clientY - rect.top;
+      const xPct = (containerX - pan.x) / (zoom * rect.width);
+      const yPct = (containerY - pan.y) / (zoom * rect.height);
+      runHitTest(xPct, yPct, rect);
+    }
+    pinchRef.current = null;
+    dragRef.current = null;
+  };
+
+  const handleWheel = (e) => {
+    if (phase !== "play") return;
+    const rect = sceneRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    e.preventDefault();
+    const focalX = e.clientX - rect.left;
+    const focalY = e.clientY - rect.top;
+    const delta = -e.deltaY * 0.003;
+    zoomToward(zoom * (1 + delta), focalX, focalY, rect);
+  };
+
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return;
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      panX: pan.x,
+      panY: pan.y,
+      isDrag: false
+    };
+  };
+
+  const handleMouseMove = (e) => {
+    if (!dragRef.current) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    if (!dragRef.current.isDrag && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+      dragRef.current.isDrag = true;
+    }
+    if (dragRef.current.isDrag && zoom > 1) {
+      const rect = sceneRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setPan(clampPan(dragRef.current.panX + dx, dragRef.current.panY + dy, zoom, rect));
+    }
+  };
+
+  const handleMouseUp = (e) => {
+    if (!dragRef.current) return;
+    const rect = sceneRef.current?.getBoundingClientRect();
+    if (rect && !dragRef.current.isDrag) {
+      const containerX = e.clientX - rect.left;
+      const containerY = e.clientY - rect.top;
+      const xPct = (containerX - pan.x) / (zoom * rect.width);
+      const yPct = (containerY - pan.y) / (zoom * rect.height);
+      runHitTest(xPct, yPct, rect);
+    }
+    dragRef.current = null;
   };
 
   const useHint = () => {
@@ -539,7 +680,16 @@ export default function Stakeout() {
         </div>
 
         <div
-          onClick={handleSceneTap}
+          ref={sceneRef}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={() => { pinchRef.current = null; dragRef.current = null; }}
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
           style={{
             position: "relative",
             width: "100%",
@@ -549,99 +699,143 @@ export default function Stakeout() {
             borderRadius: 14,
             border: `1px solid ${C.gold}`,
             overflow: "hidden",
-            cursor: "crosshair",
+            cursor: zoom > 1 ? "grab" : "crosshair",
+            touchAction: "none",
+            userSelect: "none",
+            WebkitUserSelect: "none",
             boxShadow: "0 12px 28px rgba(0,0,0,.32)"
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={scene.image}
-            alt={scene.name}
-            draggable={false}
+          {/* Transform layer — zoom + pan apply here, image and markers ride with it */}
+          <div
             style={{
-              display: "block",
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              userSelect: "none",
-              pointerEvents: "none"
+              position: "absolute",
+              inset: 0,
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transformOrigin: "0 0",
+              willChange: zoom !== 1 ? "transform" : "auto"
             }}
-          />
-          {/* Found markers */}
-          {scene.items.map((item) =>
-            foundIds.includes(item.id) ? (
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={scene.image}
+              alt={scene.name}
+              draggable={false}
+              style={{
+                display: "block",
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                userSelect: "none",
+                pointerEvents: "none"
+              }}
+            />
+            {/* Found markers (inverse-scaled to stay constant size on screen) */}
+            {scene.items.map((item) =>
+              foundIds.includes(item.id) ? (
+                <div
+                  key={`mark-${item.id}`}
+                  style={{
+                    position: "absolute",
+                    left: `${item.x * 100}%`,
+                    top: `${item.y * 100}%`,
+                    transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    border: `3px solid ${C.green}`,
+                    background: "rgba(111,176,113,.3)",
+                    pointerEvents: "none",
+                    boxShadow: "0 0 12px rgba(111,176,113,.6)"
+                  }}
+                />
+              ) : null
+            )}
+            {/* Hint pulse */}
+            {hintItem && (
               <div
-                key={`mark-${item.id}`}
+                key={`hint-${hintItem.id}`}
                 style={{
                   position: "absolute",
-                  left: `${item.x * 100}%`,
-                  top: `${item.y * 100}%`,
-                  transform: "translate(-50%, -50%)",
+                  left: `${hintItem.x * 100}%`,
+                  top: `${hintItem.y * 100}%`,
+                  width: 80,
+                  height: 80,
+                  borderRadius: "50%",
+                  border: `3px dashed ${C.blue}`,
+                  background: "rgba(111,182,216,.18)",
+                  pointerEvents: "none",
+                  animation: "so-hint-pulse 1400ms ease-in-out",
+                  transform: `translate(-50%, -50%) scale(${1 / zoom})`
+                }}
+              />
+            )}
+            {/* Tap feedback */}
+            {feedback && feedback.kind === "hit" && (
+              <div
+                key={`hit-${feedback.at}`}
+                style={{
+                  position: "absolute",
+                  left: `${feedback.x * 100}%`,
+                  top: `${feedback.y * 100}%`,
+                  width: 70,
+                  height: 70,
+                  borderRadius: "50%",
+                  border: `4px solid ${C.green}`,
+                  background: "rgba(111,176,113,.35)",
+                  pointerEvents: "none",
+                  animation: "so-pop 700ms ease-out"
+                }}
+              />
+            )}
+            {feedback && feedback.kind === "miss" && (
+              <div
+                key={`miss-${feedback.at}`}
+                style={{
+                  position: "absolute",
+                  left: `${feedback.x * 100}%`,
+                  top: `${feedback.y * 100}%`,
                   width: 36,
                   height: 36,
                   borderRadius: "50%",
-                  border: `3px solid ${C.green}`,
-                  background: "rgba(111,176,113,.3)",
+                  border: `2px solid ${C.hit}`,
+                  background: "rgba(207,79,69,.35)",
                   pointerEvents: "none",
-                  boxShadow: "0 0 12px rgba(111,176,113,.6)"
+                  animation: "so-miss 600ms ease-out"
                 }}
               />
-            ) : null
-          )}
-          {/* Hint pulse */}
-          {hintItem && (
-            <div
-              key={`hint-${hintItem.id}`}
+            )}
+          </div>
+
+          {/* Zoom indicator + reset button — outside the transform so they stay fixed */}
+          {zoom > 1.02 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); resetZoom(); }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
               style={{
                 position: "absolute",
-                left: `${hintItem.x * 100}%`,
-                top: `${hintItem.y * 100}%`,
-                width: 80,
-                height: 80,
-                borderRadius: "50%",
-                border: `3px dashed ${C.blue}`,
-                background: "rgba(111,182,216,.18)",
-                pointerEvents: "none",
-                animation: "so-hint-pulse 1400ms ease-in-out",
-                transform: "translate(-50%, -50%)"
+                top: 8,
+                right: 8,
+                padding: "6px 12px",
+                borderRadius: 999,
+                border: `1px solid ${C.gold}`,
+                background: "rgba(9,19,14,.85)",
+                color: C.gold,
+                fontWeight: 900,
+                fontSize: 11,
+                letterSpacing: 1.2,
+                cursor: "pointer",
+                zIndex: 10,
+                touchAction: "manipulation"
               }}
-            />
+            >
+              {Math.round(zoom * 100)}% · RESET
+            </button>
           )}
-          {/* Tap feedback */}
-          {feedback && feedback.kind === "hit" && (
-            <div
-              key={`hit-${feedback.at}`}
-              style={{
-                position: "absolute",
-                left: `${feedback.x * 100}%`,
-                top: `${feedback.y * 100}%`,
-                width: 70,
-                height: 70,
-                borderRadius: "50%",
-                border: `4px solid ${C.green}`,
-                background: "rgba(111,176,113,.35)",
-                pointerEvents: "none",
-                animation: "so-pop 700ms ease-out"
-              }}
-            />
-          )}
-          {feedback && feedback.kind === "miss" && (
-            <div
-              key={`miss-${feedback.at}`}
-              style={{
-                position: "absolute",
-                left: `${feedback.x * 100}%`,
-                top: `${feedback.y * 100}%`,
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                border: `2px solid ${C.hit}`,
-                background: "rgba(207,79,69,.35)",
-                pointerEvents: "none",
-                animation: "so-miss 600ms ease-out"
-              }}
-            />
-          )}
+
+          {/* SCENE CLEARED banner — outside the transform so it always centers on screen */}
           {feedback && feedback.kind === "clear" && (
             <div
               style={{
@@ -650,7 +844,8 @@ export default function Stakeout() {
                 display: "grid",
                 placeItems: "center",
                 pointerEvents: "none",
-                background: "rgba(9,19,14,.6)"
+                background: "rgba(9,19,14,.6)",
+                zIndex: 11
               }}
             >
               <div
@@ -692,10 +887,10 @@ export default function Stakeout() {
         <div
           style={{
             display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
             gap: 6,
-            overflowX: "auto",
-            padding: "8px 4px",
-            scrollbarWidth: "thin"
+            padding: "8px 4px"
           }}
         >
           {scene.items.map((item) => {
@@ -704,24 +899,19 @@ export default function Stakeout() {
               <div
                 key={item.id}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "6px 10px",
+                  padding: "5px 12px",
                   borderRadius: 999,
                   border: `1px solid ${found ? C.green : C.line}`,
                   background: found ? "rgba(111,176,113,.14)" : "rgba(10,19,14,.55)",
                   color: found ? C.green : C.cream,
-                  fontWeight: 800,
-                  fontSize: "clamp(11px, 2.6vw, 13px)",
-                  flex: "0 0 auto",
+                  fontWeight: 700,
+                  fontSize: "clamp(12px, 3vw, 14px)",
                   textDecoration: found ? "line-through" : "none",
-                  opacity: found ? 0.75 : 1
+                  opacity: found ? 0.7 : 1,
+                  whiteSpace: "nowrap"
                 }}
               >
-                <span style={{ fontSize: 16, lineHeight: 1 }}>{item.icon}</span>
-                <span>{item.name}</span>
-                {found && <span style={{ color: C.green, fontWeight: 900, marginLeft: 2 }}>✓</span>}
+                {item.name}{found ? " ✓" : ""}
               </div>
             );
           })}
