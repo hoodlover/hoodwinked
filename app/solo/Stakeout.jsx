@@ -139,6 +139,23 @@ const SCENES = [
       { id: "cigar", name: "Cigar", icon: "🚬", x: 0.14, y: 0.57, radius: 0.05 },
       { id: "revolver", name: "Revolver", icon: "🔫", x: 0.80, y: 0.82, radius: 0.06 }
     ]
+  },
+  {
+    id: "jazz-alley",
+    name: "Rain-Slick Jazz Alley",
+    image: "/stakeout/scenes/jazz-alley.webp",
+    aspectRatio: "1080 / 1440",
+    items: [
+      { id: "pocket-watch", name: "Pocket Watch", icon: "🕰️", x: 0.08, y: 0.83, radius: 0.06 },
+      { id: "magnifying-glass", name: "Magnifying Glass", icon: "🔍", x: 0.15, y: 0.91, radius: 0.07 },
+      { id: "folded-note", name: "Folded Note", icon: "✉️", x: 0.36, y: 0.72, radius: 0.06 },
+      { id: "wallet", name: "Wallet", icon: "👛", x: 0.10, y: 0.75, radius: 0.06 },
+      { id: "diamond", name: "Diamond", icon: "💎", x: 0.56, y: 0.74, radius: 0.04 },
+      { id: "wristwatch", name: "Wristwatch", icon: "⌚", x: 0.74, y: 0.74, radius: 0.06 },
+      { id: "gold-coin", name: "Gold Coin", icon: "🪙", x: 0.68, y: 0.77, radius: 0.04 },
+      { id: "lipstick", name: "Lipstick Tube", icon: "💄", x: 0.87, y: 0.80, radius: 0.05 },
+      { id: "cigar", name: "Cigar", icon: "🚬", x: 0.90, y: 0.83, radius: 0.05 }
+    ]
   }
 ];
 
