@@ -457,25 +457,29 @@ export default function VaultRunner() {
                 const isPicked = reveal?.index === idx;
                 const showType = isRevealed ? doorType : null;
                 let borderColor = C.line;
-                let bg = "linear-gradient(180deg, rgba(31,51,32,.92), rgba(10,19,14,.92))";
+                let tintBg = "transparent";
+                let imgFilter = "drop-shadow(0 8px 16px rgba(0,0,0,.45))";
                 if (isRevealed) {
                   if (doorType === "safe") {
                     borderColor = C.green;
-                    bg = "linear-gradient(180deg, rgba(111,176,113,.32), rgba(38,71,40,.5))";
+                    tintBg = "radial-gradient(circle at 50% 60%, rgba(111,176,113,.42), rgba(38,71,40,.0) 70%)";
+                    imgFilter = "drop-shadow(0 8px 16px rgba(0,0,0,.45)) brightness(1.05) saturate(1.2)";
                   } else if (doorType === "trap") {
                     borderColor = isPicked ? C.hit : "rgba(207,79,69,.55)";
-                    bg = isPicked
-                      ? "linear-gradient(180deg, rgba(207,79,69,.48), rgba(78,28,24,.65))"
-                      : "linear-gradient(180deg, rgba(207,79,69,.18), rgba(78,28,24,.35))";
+                    tintBg = isPicked
+                      ? "radial-gradient(circle at 50% 60%, rgba(207,79,69,.55), rgba(78,28,24,.0) 70%)"
+                      : "radial-gradient(circle at 50% 60%, rgba(207,79,69,.28), rgba(78,28,24,.0) 70%)";
+                    imgFilter = "drop-shadow(0 8px 16px rgba(0,0,0,.45)) sepia(.4) hue-rotate(-30deg)";
                   } else {
                     borderColor = isPicked ? C.amber : "rgba(230,161,75,.55)";
-                    bg = isPicked
-                      ? "linear-gradient(180deg, rgba(230,161,75,.36), rgba(110,68,18,.5))"
-                      : "linear-gradient(180deg, rgba(230,161,75,.14), rgba(110,68,18,.28))";
+                    tintBg = isPicked
+                      ? "radial-gradient(circle at 50% 60%, rgba(230,161,75,.42), rgba(110,68,18,.0) 70%)"
+                      : "radial-gradient(circle at 50% 60%, rgba(230,161,75,.22), rgba(110,68,18,.0) 70%)";
+                    imgFilter = "drop-shadow(0 8px 16px rgba(0,0,0,.45)) sepia(.3)";
                   }
                 }
                 const icon =
-                  showType === "safe" ? "💰" : showType === "trap" ? "⚠" : showType === "decoy" ? "⌛" : "?";
+                  showType === "safe" ? "💰" : showType === "trap" ? "⚠" : showType === "decoy" ? "⌛" : "";
                 const caption =
                   showType === "safe" ? "OPEN" : showType === "trap" ? "TRAP" : showType === "decoy" ? "DECOY" : "";
                 return (
@@ -486,52 +490,83 @@ export default function VaultRunner() {
                     disabled={isRevealed}
                     style={{
                       position: "relative",
-                      aspectRatio: "5 / 7",
-                      borderRadius: 12,
+                      aspectRatio: "112 / 146",
+                      borderRadius: 10,
                       border: `2px solid ${borderColor}`,
-                      background: bg,
+                      background: "transparent",
                       color: C.cream,
                       cursor: isRevealed ? "default" : "pointer",
                       padding: 0,
                       overflow: "hidden",
-                      transition: "transform 140ms ease, border-color 160ms ease, background 200ms ease",
+                      transition: "transform 140ms ease, border-color 160ms ease",
                       transform: isPicked && isRevealed ? "translateY(-3px)" : "translateY(0)",
                       minWidth: 0
                     }}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/door.png"
+                      alt=""
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        filter: imgFilter,
+                        transition: "filter 200ms ease"
+                      }}
+                    />
+                    {tintBg !== "transparent" && (
+                      <div
+                        aria-hidden="true"
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: tintBg,
+                          pointerEvents: "none",
+                          mixBlendMode: "screen"
+                        }}
+                      />
+                    )}
                     <div
                       style={{
                         position: "absolute",
-                        top: 6,
+                        top: 4,
                         left: 0,
                         right: 0,
                         textAlign: "center",
                         color: C.gold,
                         fontWeight: 900,
                         letterSpacing: 1.4,
-                        fontSize: "clamp(10px, 2.6vw, 12px)"
+                        fontSize: "clamp(10px, 2.6vw, 12px)",
+                        textShadow: "0 2px 6px rgba(0,0,0,.85)"
                       }}
                     >
                       {DOOR_LABELS[idx]}
                     </div>
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        display: "grid",
-                        placeItems: "center",
-                        fontSize: "clamp(34px, 11vw, 60px)",
-                        textShadow: "0 6px 18px rgba(0,0,0,.5)",
-                        animation: isRevealed ? "vr-pop 360ms ease-out" : "none"
-                      }}
-                    >
-                      {icon}
-                    </div>
+                    {icon && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "grid",
+                          placeItems: "center",
+                          fontSize: "clamp(34px, 11vw, 60px)",
+                          textShadow: "0 6px 18px rgba(0,0,0,.65)",
+                          animation: "vr-pop 360ms ease-out",
+                          pointerEvents: "none"
+                        }}
+                      >
+                        {icon}
+                      </div>
+                    )}
                     {caption && (
                       <div
                         style={{
                           position: "absolute",
-                          bottom: 6,
+                          bottom: 4,
                           left: 0,
                           right: 0,
                           textAlign: "center",
@@ -539,7 +574,8 @@ export default function VaultRunner() {
                             showType === "safe" ? C.green : showType === "trap" ? "#ffd2ce" : C.amber,
                           fontWeight: 900,
                           letterSpacing: 1.2,
-                          fontSize: "clamp(10px, 2.4vw, 12px)"
+                          fontSize: "clamp(10px, 2.4vw, 12px)",
+                          textShadow: "0 2px 6px rgba(0,0,0,.85)"
                         }}
                       >
                         {caption}

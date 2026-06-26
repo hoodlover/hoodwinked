@@ -19,7 +19,7 @@ export default function SoloGamesPage() {
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "flex-end",
+            alignItems: "stretch",
             gap: 12,
             marginBottom: 22,
             flexWrap: "wrap"
@@ -64,8 +64,12 @@ export default function SoloGamesPage() {
             width={140}
             height={140}
             style={{
-              width: "min(140px, 22vw)",
+              width: "auto",
               height: "auto",
+              maxHeight: "min(260px, 36vw)",
+              minHeight: 96,
+              alignSelf: "stretch",
+              objectFit: "contain",
               flex: "0 0 auto",
               filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))"
             }}
@@ -105,7 +109,7 @@ export default function SoloGamesPage() {
                 >
                   {playable ? "PLAY" : "COMING SOON"}
                 </div>
-                <div style={{ color: "#fbf3e4", fontSize: 17, fontWeight: 900, lineHeight: 1.15 }}>
+                <div style={{ color: "#fbf3e4", fontSize: 17, fontWeight: 900, lineHeight: 1.15, fontVariant: "small-caps" }}>
                   {game.name}
                 </div>
                 <p style={{ color: "#d9d2bd", fontSize: 12, lineHeight: 1.4, margin: 0 }}>{game.note}</p>

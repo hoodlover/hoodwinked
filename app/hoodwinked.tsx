@@ -4404,7 +4404,7 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
         >
           <section style={landingPanel}>
             <div className="body" style={eyebrowStyle}>HOST</div>
-            <div className="disp" style={{ color: C.cream, fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
+            <div className="disp" style={{ color: C.cream, fontSize: 20, fontWeight: 800, marginBottom: 8, fontVariant: "small-caps" }}>
               Start a room
             </div>
             <div className="body" style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, marginBottom: 16 }}>
@@ -4433,7 +4433,7 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
 
           <form onSubmit={join} style={landingPanel}>
             <div className="body" style={eyebrowStyle}>PLAYERS</div>
-            <div className="disp" style={{ color: C.cream, fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
+            <div className="disp" style={{ color: C.cream, fontSize: 20, fontWeight: 800, marginBottom: 8, fontVariant: "small-caps" }}>
               Join a game
             </div>
             <div className="body" style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, marginBottom: 12 }}>
@@ -4476,7 +4476,7 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
 
           <section style={landingPanel}>
             <div className="body" style={eyebrowStyle}>SOLO</div>
-            <div className="disp" style={{ color: C.cream, fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
+            <div className="disp" style={{ color: C.cream, fontSize: 20, fontWeight: 800, marginBottom: 8, fontVariant: "small-caps" }}>
               Solo games
             </div>
             <div className="body" style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, marginBottom: 16 }}>
