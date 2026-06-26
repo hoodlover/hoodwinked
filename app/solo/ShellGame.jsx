@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 
 const DIFFICULTY = {
-  easy: { label: "Easy", shuffles: 4, speed: 630 },
-  medium: { label: "Medium", shuffles: 6, speed: 450 },
-  hard: { label: "Hard", shuffles: 8, speed: 270 }
+  easy: { label: "Easy", shuffles: 4, speed: 536 },
+  medium: { label: "Medium", shuffles: 6, speed: 383 },
+  hard: { label: "Hard", shuffles: 8, speed: 230 }
 };
 
 const C = {

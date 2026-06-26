@@ -498,7 +498,7 @@ export default function FinalOffer() {
             type="button"
             onClick={() => canPickDifficulty && setFireMode((v) => !v)}
             disabled={!canPickDifficulty}
-            title={fireMode ? "Fire Mode on — Bankrupt case in play" : "Fire Mode off — no Bankrupt case"}
+            title={fireMode ? "Bankrupt case in play" : "No Bankrupt case"}
             className="fo-diff-btn"
             style={{
               border: `1px solid ${fireMode ? "#cf4f45" : C.line}`,
@@ -510,7 +510,7 @@ export default function FinalOffer() {
               cursor: canPickDifficulty ? "pointer" : "default"
             }}
           >
-            🔥 Fire {fireMode ? "ON" : "OFF"}
+            Bankruptcy? {fireMode ? "On" : "Off"}
           </button>
           <button
             type="button"
