@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
 
 const DIFFICULTIES = {
@@ -227,6 +228,7 @@ export default function CipherSweep() {
           <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
             A coded mob message hits the wire. Rotate the cipher dial, crack each word, beat the clock.
           </p>
+          <div style={{ marginTop: 6 }}><PlayerNameBadge /></div>
         </header>
 
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>

@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
 
 const DIFFICULTIES = {
-  easy: { label: "Easy", time: 75, hitBonusSec: 2, missPenaltySec: 2, multiplier: 1 },
-  medium: { label: "Medium", time: 60, hitBonusSec: 1, missPenaltySec: 3, multiplier: 2 },
-  hard: { label: "Hard", time: 45, hitBonusSec: 1, missPenaltySec: 5, multiplier: 3 }
+  easy: { label: "Easy", time: 75, hitBonusSec: 10, missPenaltySec: 2, multiplier: 1 },
+  medium: { label: "Medium", time: 60, hitBonusSec: 10, missPenaltySec: 3, multiplier: 2 },
+  hard: { label: "Hard", time: 45, hitBonusSec: 10, missPenaltySec: 5, multiplier: 3 }
 };
 
 const C = {
@@ -264,7 +265,8 @@ export default function AlibiGrid() {
         setPeakStreak((p) => (next > p ? next : p));
         return next;
       });
-      endRef.current = Math.min(Date.now() + settings.time * 1000, endRef.current + settings.hitBonusSec * 1000);
+      // No cap — keep banking time for streaks. Good play can run past the starting clock.
+      endRef.current = endRef.current + settings.hitBonusSec * 1000;
       setFeedback({ kind: "good", pickedIdx: idx, liarIdx: puzzle.liarIdx, note: `+${gain}`, at: Date.now() });
     } else {
       endRef.current = endRef.current - settings.missPenaltySec * 1000;
@@ -302,6 +304,7 @@ export default function AlibiGrid() {
           <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
             Four suspects, four stories, one lie. Read the statements, cross-check the witnesses, and tap the suspect whose alibi doesn&apos;t hold up.
           </p>
+          <div style={{ marginTop: 6 }}><PlayerNameBadge /></div>
         </header>
 
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
 
 const DIFFICULTIES = {
@@ -317,11 +318,19 @@ export default function Stakeout() {
     setPan({ x: 0, y: 0 });
   };
 
-  // Reset zoom when the scene changes (e.g. after clearing all 10).
-  /* eslint-disable react-hooks/set-state-in-effect -- resets viewport when the underlying scene swaps */
+  // Reset to a top-anchored 1.3x zoom whenever the scene changes — starting
+  // fully zoomed out lets fingers tap two items at once on small screens.
+  /* eslint-disable react-hooks/set-state-in-effect -- syncs viewport to the new scene */
   useEffect(() => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
+    const z = 1.3;
+    setZoom(z);
+    const rect = sceneRef.current?.getBoundingClientRect();
+    if (rect) {
+      // Center horizontally, anchor to top (y=0)
+      setPan({ x: -rect.width * (z - 1) / 2, y: 0 });
+    } else {
+      setPan({ x: 0, y: 0 });
+    }
   }, [scene.id]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -369,14 +378,16 @@ export default function Stakeout() {
       if (nextFound.length === scene.items.length) {
         const clearBonus = 500 * settings.multiplier;
         setScore((s) => s + clearBonus);
-        endRef.current = Math.min(Date.now() + settings.time * 1000, endRef.current + 5000);
         setScenesCleared((n) => n + 1);
-        setFeedback({ kind: "clear", x: 0.5, y: 0.5, note: `SCENE CLEARED · +${clearBonus} · +5s`, at: Date.now() });
+        setFeedback({ kind: "clear", x: 0.5, y: 0.5, note: `SCENE CLEARED · +${clearBonus} · CLOCK RESET`, at: Date.now() });
         if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
         feedbackTimerRef.current = setTimeout(() => {
           setScene(pickScene());
           setFoundIds([]);
           setFeedback(null);
+          // Full clock reset for the new scene — keep finding things, keep playing.
+          endRef.current = Date.now() + settings.time * 1000;
+          setTimeMs(settings.time * 1000);
         }, 1600);
         return;
       }
@@ -438,7 +449,7 @@ export default function Stakeout() {
       const t = e.touches[0];
       const dx = t.clientX - dragRef.current.startX;
       const dy = t.clientY - dragRef.current.startY;
-      if (!dragRef.current.isDrag && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+      if (!dragRef.current.isDrag && (Math.abs(dx) > 13 || Math.abs(dy) > 13)) {
         dragRef.current.isDrag = true;
       }
       if (dragRef.current.isDrag && zoom > 1) {
@@ -487,7 +498,7 @@ export default function Stakeout() {
     if (!dragRef.current) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
-    if (!dragRef.current.isDrag && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+    if (!dragRef.current.isDrag && (Math.abs(dx) > 13 || Math.abs(dy) > 13)) {
       dragRef.current.isDrag = true;
     }
     if (dragRef.current.isDrag && zoom > 1) {
@@ -538,6 +549,7 @@ export default function Stakeout() {
           <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
             Cased the joint. Now find every piece of evidence before the clock runs out.
           </p>
+          <div style={{ marginTop: 6 }}><PlayerNameBadge /></div>
         </header>
 
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>

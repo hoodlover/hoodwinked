@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
 
 const DIFFICULTIES = {
@@ -273,6 +274,7 @@ export default function VaultRunner() {
           <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
             Three doors a floor. One is safe, one is a decoy, one is a trap. The Lookout&apos;s tips might be straight — or a setup. How deep can you take the score before your luck runs out?
           </p>
+          <div style={{ marginTop: 6 }}><PlayerNameBadge /></div>
         </header>
 
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>

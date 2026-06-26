@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
 
 const DIFFICULTIES = {
@@ -290,6 +291,7 @@ export default function CaseFileBlitz() {
           <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
             Rapid-fire crime trivia. Read fast, tap faster. Every right answer banks score and time.
           </p>
+          <div style={{ marginTop: 6 }}><PlayerNameBadge /></div>
         </header>
 
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
