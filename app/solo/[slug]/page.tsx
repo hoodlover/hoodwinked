@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import CaseFileBlitz from "../CaseFileBlitz";
 import CipherSweep from "../CipherSweep";
 import FinalOffer from "../FinalOffer";
 import HoodwinkOrDice from "../HoodwinkOrDice";
@@ -19,7 +20,8 @@ const COMPONENTS: ComponentMap = {
   "the-house-always-lies": OwnTheHouse,
   "final-offer": FinalOffer,
   "the-sweep": TheSweep,
-  "cipher-sweep": CipherSweep
+  "cipher-sweep": CipherSweep,
+  "case-file-blitz": CaseFileBlitz
 };
 
 export function generateStaticParams() {

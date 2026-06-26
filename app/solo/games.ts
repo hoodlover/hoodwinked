@@ -65,7 +65,7 @@ export const SOLO_GAMES: SoloGameMeta[] = [
   {
     slug: "case-file-blitz",
     name: "Case File Blitz",
-    status: "coming-soon",
+    status: "playable",
     note: "Quick-fire mystery trivia for one player."
   },
   {
