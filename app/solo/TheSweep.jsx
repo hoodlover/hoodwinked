@@ -212,18 +212,16 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
       disabled={disabled}
       aria-label={`Tile ${row(tile.index) + 1}-${col(tile.index) + 1}${tile.flagged ? " flagged" : ""}`}
       style={{
-        width: "clamp(36px, 8.4vw, 52px)",
-        height: "clamp(36px, 8.4vw, 52px)",
+        width: "100%",
+        aspectRatio: "1 / 1",
         padding: 0,
         overflow: "hidden",
         borderRadius: 5,
         border: tile.revealed ? "1px solid rgba(9,19,14,.18)" : "1px solid rgba(255,255,255,.18)",
         background: tile.revealed
-          ? showTrap
-            ? "linear-gradient(180deg, #55201d, #220d0b)"
-            : showClue
-              ? "linear-gradient(180deg, #fff1b8, #ffc15e)"
-              : "linear-gradient(180deg, #d8e5cc, #b8c8ac)"
+          ? showTrap || showClue
+            ? "#000"
+            : "linear-gradient(180deg, #d8e5cc, #b8c8ac)"
           : UNREVEALED_TILE_BG,
         color: showTrap ? "#ffd2ce" : showClue ? C.dark : number ? NUMBER_COLORS[number] : C.dark,
         fontWeight: 900,
@@ -239,9 +237,9 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
       }}
     >
       {image ? (
-        <span style={{ position: "relative", display: "block", width: "100%", height: "100%" }}>
+        <span style={{ position: "relative", display: "block", width: "100%", height: "100%", background: "#000" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image} alt="" aria-hidden="true" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }} />
+          <img src={image} alt="" aria-hidden="true" style={{ display: "block", width: "100%", height: "100%", objectFit: "contain" }} />
           {showClue && number && (
             <span
               style={{
@@ -265,7 +263,7 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
         </span>
       ) : tile.flagged && !tile.revealed ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src="/the_sweep/marker_flag.webp" alt="Flagged" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }} />
+        <img src="/the_sweep/marker_flag.webp" alt="Flagged" style={{ display: "block", width: "100%", height: "100%", objectFit: "contain" }} />
       ) : number}
     </button>
   );
@@ -449,11 +447,13 @@ export default function TheSweep() {
           .sweep-root .sweep-label { font-size: 9px !important; letter-spacing: .8px !important; margin-bottom: 4px !important; text-align: center; }
           .sweep-root .sweep-count { font-size: 16px !important; gap: 3px !important; }
           .sweep-root .sweep-icons-row { gap: 3px !important; }
-          .sweep-root .sweep-count-icon { width: 100% !important; height: 38px !important; max-width: 44px !important; }
+          .sweep-root .sweep-count-icon { width: 36px !important; height: 36px !important; }
           .sweep-root .sweep-status-text { font-size: 10px !important; margin-top: 2px !important; line-height: 1.15 !important; }
           .sweep-root .sweep-footnote { font-size: 10px !important; }
           .sweep-root .sweep-foot-desktop { display: none; }
           .sweep-root .sweep-foot-mobile { display: inline; }
+          .sweep-root .sweep-board-frame { padding: 6px !important; }
+          .sweep-root .sweep-board-frame > div { gap: 2px !important; }
         }
       `}</style>
       <div className="sweep-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
@@ -551,8 +551,8 @@ export default function TheSweep() {
       </div>
 
       <div
+        className="sweep-board-frame"
         style={{
-          overflowX: "auto",
           border: `1px solid ${C.line}`,
           borderRadius: 8,
           padding: 12,
@@ -563,9 +563,10 @@ export default function TheSweep() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${SIZE}, clamp(36px, 8.4vw, 52px))`,
+            gridTemplateColumns: `repeat(${SIZE}, minmax(0, 1fr))`,
             gap: 4,
-            width: "fit-content",
+            width: "100%",
+            maxWidth: 540,
             margin: "0 auto"
           }}
         >
@@ -630,24 +631,20 @@ function countBoxStyle() {
 function countIconsRowStyle() {
   return {
     display: "flex",
-    alignItems: "stretch",
+    alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    width: "100%"
+    gap: 6
   };
 }
 
 function countIconStyle() {
   return {
-    width: 72,
-    height: 72,
-    objectFit: "fill",
+    width: 56,
+    height: 56,
+    objectFit: "contain",
     borderRadius: 6,
     border: "1px solid rgba(255,193,94,.42)",
-    background: "rgba(251,243,228,.08)",
-    flex: "1 1 0",
-    minWidth: 0,
-    maxWidth: 96
+    background: "rgba(251,243,228,.08)"
   };
 }
 
