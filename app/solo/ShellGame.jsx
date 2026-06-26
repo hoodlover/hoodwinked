@@ -54,16 +54,19 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
   const clickable = phase === "picking";
   const isPrize = cupId === prizeCup;
   const lifted = (phase === "hiding" && isPrize) || (reveal && (selected || isPrize));
-  const slotLeft = `calc(${slot * 33.333 + 16.666}% - 96px)`;
+  const slotLeft = `${slot * 33.333 + 16.666}%`;
+  const liftY = lifted ? "-30%" : clickable ? "-2.5%" : "0";
 
   return (
     <div
+      className="monte-cup"
       style={{
         position: "absolute",
         left: slotLeft,
         bottom: 20,
         width: 192,
         height: 264,
+        transform: "translateX(-50%)",
         transition: "left 450ms cubic-bezier(.2,.85,.2,1)",
         zIndex: lifted ? 3 : 2
       }}
@@ -71,6 +74,7 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
       {(phase === "hiding" || reveal) && isPrize && (
         <div
           aria-hidden="true"
+          className="monte-prize"
           style={{
             position: "absolute",
             left: "50%",
@@ -100,16 +104,17 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
         onClick={() => clickable && onPick(cupId)}
         disabled={!clickable}
         aria-label={`Pick cup ${slot + 1}`}
+        className="monte-cup-btn"
         style={{
           appearance: "none",
           border: "none",
           background: "transparent",
           padding: 0,
-          width: 192,
-          height: 236,
+          width: "100%",
+          height: "89%",
           cursor: clickable ? "pointer" : "default",
           filter: clickable ? "drop-shadow(0 16px 18px rgba(0,0,0,.38))" : "drop-shadow(0 12px 16px rgba(0,0,0,.3))",
-          transform: lifted ? "translateY(-72px) rotate(-4deg)" : clickable ? "translateY(-6px)" : "none",
+          transform: `translateY(${liftY})${lifted ? " rotate(-4deg)" : ""}`,
           transition: "transform 380ms ease, filter 180ms ease",
           position: "relative",
           zIndex: 2
@@ -120,7 +125,7 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
           src="/three_marks_monte/solocup.png"
           alt=""
           aria-hidden="true"
-          style={{ width: 192, height: 236, objectFit: "contain" }}
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
         />
       </button>
     </div>
@@ -212,6 +217,7 @@ export default function ShellGame() {
 
   return (
     <section
+      className="monte-root"
       style={{
         border: `1px solid ${C.line}`,
         borderRadius: 10,
@@ -221,26 +227,52 @@ export default function ShellGame() {
         marginTop: 24
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
-        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .monte-root { padding: 10px !important; margin-top: 12px !important; }
+          .monte-root .monte-header { gap: 8px !important; margin-bottom: 8px !important; flex-direction: column !important; align-items: stretch !important; }
+          .monte-root .monte-header-row { gap: 10px !important; }
+          .monte-root .monte-header-img { width: 52px !important; }
+          .monte-root .monte-title { font-size: 22px !important; margin: 2px 0 !important; }
+          .monte-root .monte-eyebrow { font-size: 10px !important; letter-spacing: 1.2px !important; }
+          .monte-root .monte-blurb { font-size: 12px !important; line-height: 1.35 !important; }
+          .monte-root .monte-scoreboard { min-width: 0 !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 4px !important; }
+          .monte-root .monte-scoreboard > div { padding: 5px 6px !important; }
+          .monte-root .monte-scoreboard > div > div:first-child { font-size: 9px !important; }
+          .monte-root .monte-scoreboard > div > div:last-child { font-size: 16px !important; }
+          .monte-root .monte-diff-row { gap: 6px !important; margin-bottom: 10px !important; }
+          .monte-root .monte-diff-row button { padding: 7px 10px !important; font-size: 12px !important; }
+          .monte-root .monte-info { grid-template-columns: 1fr 1fr !important; gap: 6px !important; margin-bottom: 10px !important; min-height: 0 !important; }
+          .monte-root .monte-info > div { padding: 6px !important; }
+          .monte-root .monte-info-label { font-size: 9px !important; }
+          .monte-root .monte-info-value { font-size: 12px !important; margin-top: 3px !important; line-height: 1.2 !important; }
+          .monte-root .monte-stage { height: 200px !important; }
+          .monte-root .monte-cup { width: 86px !important; height: 122px !important; bottom: 12px !important; }
+          .monte-root .monte-prize { width: 56px !important; height: 38px !important; }
+          .monte-root .monte-actions button { padding: 8px 10px !important; font-size: 13px !important; }
+        }
+      `}</style>
+      <div className="monte-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
+        <div className="monte-header-row" style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            className="monte-header-img"
             src="/three_marks_monte/three-marks-monte.png"
             alt=""
             aria-hidden="true"
             style={{ width: "clamp(64px, 10vw, 104px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
           />
           <div>
-          <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
-          <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
+          <div className="monte-eyebrow" style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
+          <h2 className="monte-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             Three Mark&apos;s Monte
           </h2>
-          <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
+          <p className="monte-blurb" style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             A street-corner misdirection test from the Hoodwinked evidence locker. Watch the yellow marker vanish under a cup, track the shuffle, and call the con before the marks start laughing.
           </p>
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(70px, 1fr))", gap: 8, minWidth: "min(100%, 380px)" }}>
+        <div className="monte-scoreboard" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(70px, 1fr))", gap: 8, minWidth: "min(100%, 380px)" }}>
           {[
             ["Wins", score.wins],
             ["Losses", score.losses],
@@ -256,7 +288,7 @@ export default function ShellGame() {
       </div>
 
       {game.phase === "setup" && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+        <div className="monte-diff-row" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
           {Object.entries(DIFFICULTY).map(([value, item]) => (
             <button
               key={value}
@@ -279,6 +311,7 @@ export default function ShellGame() {
       )}
 
       <div
+        className="monte-info"
         style={{
           minHeight: 96,
           display: "grid",
@@ -288,20 +321,21 @@ export default function ShellGame() {
         }}
       >
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
-          <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>STATUS</div>
-          <div style={{ color: game.result === "win" ? C.gold : game.result === "loss" ? C.redLight : C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>
+          <div className="monte-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>STATUS</div>
+          <div className="monte-info-value" style={{ color: game.result === "win" ? C.gold : game.result === "loss" ? C.redLight : C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>
             {statusText}
           </div>
         </div>
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
-          <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>DIFFICULTY</div>
-          <div style={{ color: C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>
+          <div className="monte-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>DIFFICULTY</div>
+          <div className="monte-info-value" style={{ color: C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>
             {settings ? `${settings.label}: ${settings.shuffles} shuffles at ${settings.speed}ms` : "Not selected"}
           </div>
         </div>
       </div>
 
       <div
+        className="monte-stage"
         style={{
           position: "relative",
           height: "clamp(260px, 29vw, 312px)",
@@ -339,7 +373,7 @@ export default function ShellGame() {
       </div>
 
       {game.phase === "revealed" && (
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
+        <div className="monte-actions" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
           <button
             type="button"
             onClick={replay}

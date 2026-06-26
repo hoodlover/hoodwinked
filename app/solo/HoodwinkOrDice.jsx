@@ -105,6 +105,7 @@ function shouldAiCall(currentBid, aiDice, difficulty, playerBidCount) {
 function Die({ value, hidden, owner }) {
   return (
     <span
+      className="hod-die"
       style={{
         width: 58,
         height: 58,
@@ -120,7 +121,8 @@ function Die({ value, hidden, owner }) {
         color: hidden ? C.muted : C.dark,
         fontSize: 22,
         fontWeight: 900,
-        boxShadow: "0 10px 20px rgba(0,0,0,.26)"
+        boxShadow: "0 10px 20px rgba(0,0,0,.26)",
+        flex: "0 0 auto"
       }}
     >
       {hidden ? "?" : (
@@ -266,6 +268,7 @@ export default function HoodwinkOrDice() {
 
   return (
     <section
+      className="hod-root"
       style={{
         border: `1px solid ${C.line}`,
         borderRadius: 10,
@@ -275,21 +278,48 @@ export default function HoodwinkOrDice() {
         marginTop: 24
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .hod-root { padding: 10px !important; margin-top: 12px !important; }
+          .hod-root .hod-header { gap: 8px !important; margin-bottom: 10px !important; }
+          .hod-root .hod-header-img { width: 52px !important; }
+          .hod-root .hod-title { font-size: 22px !important; margin: 2px 0 !important; }
+          .hod-root .hod-eyebrow { font-size: 10px !important; letter-spacing: 1.2px !important; }
+          .hod-root .hod-blurb { font-size: 12px !important; line-height: 1.35 !important; }
+          .hod-root .hod-diff-btn { padding: 6px 9px !important; font-size: 12px !important; }
+          .hod-root .hod-howto { padding: 8px !important; font-size: 11px !important; line-height: 1.35 !important; margin-bottom: 10px !important; }
+          .hod-root .hod-info { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; margin-bottom: 10px !important; }
+          .hod-root .hod-info > div { padding: 6px !important; }
+          .hod-root .hod-info-label { font-size: 9px !important; letter-spacing: .8px !important; }
+          .hod-root .hod-info-value { font-size: 13px !important; margin-top: 3px !important; line-height: 1.2 !important; }
+          .hod-root .hod-dice-grid { grid-template-columns: 1fr !important; gap: 8px !important; margin-bottom: 10px !important; }
+          .hod-root .hod-dice-grid > div { padding: 7px !important; }
+          .hod-root .hod-dice-row { gap: 5px !important; flex-wrap: nowrap !important; justify-content: space-between; }
+          .hod-root .hod-die { width: 46px !important; height: 46px !important; font-size: 16px !important; }
+          .hod-root .hod-action-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+          .hod-root .hod-action-grid > div { padding: 7px !important; }
+          .hod-root .hod-history-list { max-height: 110px !important; }
+          .hod-root .hod-history-item { font-size: 12px !important; padding: 5px 7px !important; }
+          .hod-root .hod-move-row button { padding: 7px 9px !important; font-size: 12px !important; }
+          .hod-root .hod-bid-readout { font-size: 12px !important; }
+        }
+      `}</style>
+      <div className="hod-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            className="hod-header-img"
             src="/hoodwin_or_dice/hoodwink-or-dice.png"
             alt=""
             aria-hidden="true"
             style={{ width: "clamp(64px, 10vw, 104px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
           />
           <div>
-          <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
-          <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
+          <div className="hod-eyebrow" style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
+          <h2 className="hod-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             Hoodwink or Dice
           </h2>
-          <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
+          <p className="hod-blurb" style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             Down in the jailhouse rec room, every suspect has a cup of dice and a story that does not quite hold. Bid how many matching dice you think are hidden across both hands, raise the pressure, or call the AI&apos;s bluff when the alibi sounds too clean.
           </p>
           </div>
@@ -310,6 +340,7 @@ export default function HoodwinkOrDice() {
                 fontWeight: 900,
                 cursor: !game || game.phase === "gameover" ? "pointer" : "default"
               }}
+              className="hod-diff-btn"
             >
               {item.label}
             </button>
@@ -317,6 +348,7 @@ export default function HoodwinkOrDice() {
           <button
             type="button"
             onClick={() => start(difficulty)}
+            className="hod-diff-btn"
             style={{
               border: `1px solid ${C.gold}`,
               background: `linear-gradient(180deg, ${C.gold}, #dca33d)`,
@@ -332,24 +364,24 @@ export default function HoodwinkOrDice() {
         </div>
       </div>
 
-      <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.45)", color: C.muted, fontWeight: 800, lineHeight: 1.45, marginBottom: 16 }}>
+      <div className="hod-howto" style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.45)", color: C.muted, fontWeight: 800, lineHeight: 1.45, marginBottom: 16 }}>
         How to play: both sides roll five hidden dice. A bid like 3 fives means there are at least three dice showing 5 across both hands. Each new bid must raise the count or keep the count and raise the value. Call Bluff to reveal; if the bid is true, the caller loses a life. If it is false, the bidder loses a life.
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10, marginBottom: 16 }}>
+      <div className="hod-info" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10, marginBottom: 16 }}>
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
-          <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>LIVES</div>
-          <div style={{ color: C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>
+          <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>LIVES</div>
+          <div className="hod-info-value" style={{ color: C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>
             You {game?.lives.you ?? 3} / AI {game?.lives.ai ?? 3}
           </div>
         </div>
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
-          <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>CURRENT BID</div>
-          <div style={{ color: C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>{bidText(currentBid)}</div>
+          <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>CURRENT BID</div>
+          <div className="hod-info-value" style={{ color: C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>{bidText(currentBid)}</div>
         </div>
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
-          <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>STATUS</div>
-          <div style={{ color: game?.phase === "gameover" ? C.gold : C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>
+          <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>STATUS</div>
+          <div className="hod-info-value" style={{ color: game?.phase === "gameover" ? C.gold : C.cream, fontWeight: 900, fontSize: 18, marginTop: 8 }}>
             {game?.message ?? "Pick a difficulty and start the match."}
           </div>
         </div>
@@ -357,18 +389,18 @@ export default function HoodwinkOrDice() {
 
       {game && (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, marginBottom: 16 }}>
+          <div className="hod-dice-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, marginBottom: 16 }}>
             <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
-              <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>YOUR DICE</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>YOUR DICE</div>
+              <div className="hod-dice-row" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {game.youDice.map((die, index) => (
                   <Die key={`${die}-${index}`} value={die} hidden={game.turn === "ai" && !reveal} owner="you" />
                 ))}
               </div>
             </div>
             <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
-              <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>AI DICE</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>AI DICE</div>
+              <div className="hod-dice-row" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {game.aiDice.map((die, index) => (
                   <Die key={`${die}-${index}`} value={die} hidden={!reveal} owner="ai" />
                 ))}
@@ -376,13 +408,14 @@ export default function HoodwinkOrDice() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, alignItems: "start" }}>
+          <div className="hod-action-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, alignItems: "start" }}>
             <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
-              <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>BID HISTORY</div>
-              <div style={{ display: "grid", gap: 6, maxHeight: 190, overflow: "auto" }}>
+              <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>BID HISTORY</div>
+              <div className="hod-history-list" style={{ display: "grid", gap: 6, maxHeight: 190, overflow: "auto" }}>
                 {game.bidHistory.length ? game.bidHistory.map((bid, index) => (
                   <div
                     key={`${bid.player}-${bid.count}-${bid.value}-${index}`}
+                    className="hod-history-item"
                     style={{
                       color: C.cream,
                       border: "1px solid rgba(129,164,117,.38)",
@@ -401,21 +434,21 @@ export default function HoodwinkOrDice() {
             </div>
 
             <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
-              <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>YOUR MOVE</div>
+              <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>YOUR MOVE</div>
               {game.phase === "playing" ? (
                 <>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 12 }}>
+                  <div className="hod-move-row" style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 12 }}>
                     <button type="button" onClick={() => setBid({ count: selectedBid.count + 1 })} disabled={game.turn !== "you"} style={controlButton(game.turn === "you")}>
                       +1 die
                     </button>
                     <button type="button" onClick={() => setBid({ value: selectedBid.value < 6 ? selectedBid.value + 1 : 1, count: selectedBid.value < 6 ? selectedBid.count : selectedBid.count + 1 })} disabled={game.turn !== "you"} style={controlButton(game.turn === "you")}>
                       +1 value
                     </button>
-                    <div style={{ color: C.cream, fontWeight: 900 }}>
+                    <div className="hod-bid-readout" style={{ color: C.cream, fontWeight: 900 }}>
                       I bid {selectedBid.count} {plural(selectedBid.value)}
                     </div>
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  <div className="hod-move-row" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     <button type="button" onClick={submitBid} disabled={game.turn !== "you"} style={primaryButton(game.turn === "you")}>
                       Bid Higher
                     </button>

@@ -95,6 +95,7 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
       onClick={onClick}
       disabled={!canOpen}
       aria-label={`Briefcase ${briefcase.id}${opened ? ` opened with ${money(briefcase.value)}` : ""}`}
+      className="fo-case-tile"
       style={{
         minHeight: 160,
         borderRadius: 8,
@@ -171,16 +172,17 @@ function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCoun
   const showOfferActions = phase === "offer";
 
   return (
-    <div style={panelStyle()}>
-      <div style={labelStyle()}>CASE AMOUNTS</div>
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 360px)", gap: 16, alignItems: "end" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))", gap: 8 }}>
+    <div className="fo-valueboard" style={panelStyle()}>
+      <div className="fo-label" style={labelStyle()}>CASE AMOUNTS</div>
+      <div className="fo-vb-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 360px)", gap: 16, alignItems: "end" }}>
+        <div className="fo-vb-amounts" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))", gap: 8 }}>
           {VALUES.map((value) => {
             const openedCaseId = openedByValue.get(value);
             const chosen = revealChosen && chosenCase?.value === value;
             return (
               <div
                 key={value}
+                className="fo-amount-tile"
                 style={{
                   border: `1px solid ${openedCaseId || chosen ? C.gold : "rgba(129,164,117,.5)"}`,
                   borderRadius: 8,
@@ -198,8 +200,8 @@ function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCoun
                   textDecoration: openedCaseId ? "line-through" : "none"
                 }}
               >
-                <span>{money(value)}</span>
-                <span style={{ color: openedCaseId ? C.muted : chosen ? C.cream : "#9aaa91", fontSize: 10, letterSpacing: 1.1, marginTop: 2, textDecoration: "none" }}>
+                <span className="fo-amount-value">{money(value)}</span>
+                <span className="fo-amount-state" style={{ color: openedCaseId ? C.muted : chosen ? C.cream : "#9aaa91", fontSize: 10, letterSpacing: 1.1, marginTop: 2, textDecoration: "none" }}>
                   {openedCaseId ? `CASE ${openedCaseId}` : chosen ? "YOUR CASE" : "IN PLAY"}
                 </span>
               </div>
@@ -207,6 +209,7 @@ function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCoun
           })}
         </div>
         <div
+          className="fo-vb-side"
           style={{
             display: "grid",
             gap: 10,
@@ -216,6 +219,7 @@ function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCoun
           }}
         >
           <div
+            className="fo-banker"
             style={{
               border: `1px solid ${C.line}`,
               borderRadius: 8,
@@ -223,8 +227,9 @@ function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCoun
               background: "rgba(9,19,14,.55)"
             }}
           >
-            <div style={labelStyle()}>BANKER OFFER</div>
+            <div className="fo-label" style={labelStyle()}>BANKER OFFER</div>
             <div
+              className="fo-offer-value"
               style={{
                 color: C.gold,
                 fontWeight: 900,
@@ -238,7 +243,7 @@ function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCoun
               {offerText}
             </div>
           </div>
-          <div style={{ color: phase === "done" ? C.gold : C.muted, fontWeight: 900, lineHeight: 1.3, fontSize: "clamp(13px, 1.35vw, 16px)" }}>
+          <div className="fo-vb-msg" style={{ color: phase === "done" ? C.gold : C.muted, fontWeight: 900, lineHeight: 1.3, fontSize: "clamp(13px, 1.35vw, 16px)" }}>
             {message}
             {phase === "done" && chosenCase && (
               <span style={{ display: "block", color: C.cream, marginTop: 4, fontSize: 14 }}>
@@ -247,7 +252,7 @@ function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCoun
             )}
           </div>
           {showOfferActions && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div className="fo-offer-actions" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <button type="button" onClick={onAcceptOffer} style={primaryButton(true)}>
                 Accept Offer
               </button>
@@ -391,6 +396,7 @@ export default function FinalOffer() {
 
   return (
     <section
+      className="fo-root"
       style={{
         border: `1px solid ${C.line}`,
         borderRadius: 10,
@@ -401,21 +407,57 @@ export default function FinalOffer() {
       }}
     >
       <style>{REVEAL_AMOUNT_ANIMATION}</style>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .fo-root { padding: 10px !important; margin-top: 12px !important; }
+          .fo-root .fo-header { gap: 8px !important; margin-bottom: 10px !important; }
+          .fo-root .fo-header-img { width: 52px !important; }
+          .fo-root .fo-title { font-size: 22px !important; margin: 2px 0 !important; }
+          .fo-root .fo-eyebrow { font-size: 10px !important; letter-spacing: 1.2px !important; }
+          .fo-root .fo-blurb { font-size: 12px !important; line-height: 1.35 !important; }
+          .fo-root .fo-diff-btn { padding: 6px 9px !important; font-size: 12px !important; }
+          .fo-root .fo-status-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; margin-bottom: 10px !important; }
+          .fo-root .fo-status-grid > div { padding: 6px !important; }
+          .fo-root .fo-status-grid .fo-label { font-size: 9px !important; letter-spacing: .8px !important; margin-bottom: 3px !important; }
+          .fo-root .fo-status-grid > div > div:last-child { font-size: 16px !important; }
+          .fo-root .fo-reveal-card { padding: 10px 12px !important; margin-bottom: 10px !important; }
+          .fo-root .fo-reveal-card > div:first-child { font-size: 10px !important; letter-spacing: 1.2px !important; }
+          .fo-root .fo-reveal-card > div:last-child { font-size: 30px !important; }
+          .fo-root .fo-valueboard { padding: 8px !important; }
+          .fo-root .fo-vb-grid { grid-template-columns: 1fr !important; gap: 10px !important; align-items: stretch !important; }
+          .fo-root .fo-vb-amounts { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
+          .fo-root .fo-amount-tile { padding: 4px 6px !important; min-height: 36px !important; }
+          .fo-root .fo-amount-value { font-size: 11px !important; }
+          .fo-root .fo-amount-state { font-size: 8px !important; letter-spacing: .6px !important; margin-top: 1px !important; }
+          .fo-root .fo-vb-side { min-height: 0 !important; padding: 0 !important; }
+          .fo-root .fo-banker { padding: 7px 9px !important; }
+          .fo-root .fo-banker .fo-label { font-size: 9px !important; letter-spacing: .8px !important; margin-bottom: 2px !important; }
+          .fo-root .fo-offer-value { font-size: 18px !important; }
+          .fo-root .fo-vb-msg { font-size: 11px !important; line-height: 1.3 !important; }
+          .fo-root .fo-offer-actions button { padding: 7px 9px !important; font-size: 12px !important; }
+          .fo-root .fo-case-frame { padding: 7px !important; overflow-x: hidden !important; }
+          .fo-root .fo-case-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; min-width: 0 !important; }
+          .fo-root .fo-case-tile { min-height: 92px !important; padding: 4px !important; }
+          .fo-root .fo-case-tile img { max-height: 74px !important; }
+          .fo-root .fo-case-tile span:last-child { font-size: 8px !important; letter-spacing: .6px !important; }
+        }
+      `}</style>
+      <div className="fo-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 860 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            className="fo-header-img"
             src="/final_offer/final-offer.png"
             alt=""
             aria-hidden="true"
             style={{ width: "clamp(64px, 10vw, 104px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
           />
           <div>
-          <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
-          <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
+          <div className="fo-eyebrow" style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
+          <h2 className="fo-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             Final Offer
           </h2>
-          <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
+          <p className="fo-blurb" style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             A crooked evidence auction is underway in the basement of the county lockup. Eighteen cases hold cash, leverage, and one Bankrupt bomb that can wipe out the whole play. Keep your case sealed, expose the decoys, and decide whether the Banker is buying your nerve too cheaply.
           </p>
           </div>
@@ -436,6 +478,7 @@ export default function FinalOffer() {
                 fontWeight: 900,
                 cursor: canPickDifficulty ? "pointer" : "default"
               }}
+              className="fo-diff-btn"
             >
               {item.label}
             </button>
@@ -443,6 +486,7 @@ export default function FinalOffer() {
           <button
             type="button"
             onClick={() => start(difficulty)}
+            className="fo-diff-btn"
             style={{
               border: `1px solid ${C.gold}`,
               background: `linear-gradient(180deg, ${C.gold}, #dca33d)`,
@@ -458,17 +502,17 @@ export default function FinalOffer() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10, marginBottom: 16 }}>
+      <div className="fo-status-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10, marginBottom: 16 }}>
         <div style={panelStyle()}>
-          <div style={labelStyle()}>CASES TO OPEN</div>
+          <div className="fo-label" style={labelStyle()}>CASES TO OPEN</div>
           <div style={{ color: C.cream, fontWeight: 900, fontSize: 24 }}>{game?.chosenCaseId ? casesToOpen : VALUES.length - 1}</div>
         </div>
         <div style={panelStyle()}>
-          <div style={labelStyle()}>SEALED TOTAL</div>
+          <div className="fo-label" style={labelStyle()}>SEALED TOTAL</div>
           <div style={{ color: C.cream, fontWeight: 900, fontSize: 24 }}>{sealedCases}</div>
         </div>
         <div style={panelStyle()}>
-          <div style={labelStyle()}>YOUR CASE</div>
+          <div className="fo-label" style={labelStyle()}>YOUR CASE</div>
           <div style={{ color: chosenCase ? C.gold : C.cream, fontWeight: 900, fontSize: 24 }}>
             {chosenCase ? `#${chosenCase.id}` : "None"}
           </div>
@@ -477,6 +521,7 @@ export default function FinalOffer() {
 
       {lastOpenedCase && (
         <div
+          className="fo-reveal-card"
           style={{
             border: `2px solid ${lastOpenedCase.value === 0 ? "#6d171d" : C.gold}`,
             borderRadius: 8,
@@ -526,6 +571,7 @@ export default function FinalOffer() {
       )}
 
       <div
+        className="fo-case-frame"
         style={{
           border: `1px solid ${C.line}`,
           borderRadius: 8,
@@ -536,7 +582,7 @@ export default function FinalOffer() {
           marginBottom: 16
         }}
       >
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(150px, 1fr))", gap: 14, minWidth: 960 }}>
+        <div className="fo-case-grid" style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(150px, 1fr))", gap: 14, minWidth: 960 }}>
           {(game?.cases ?? Array.from({ length: VALUES.length }, (_, index) => ({ id: index + 1, value: 0, opened: false }))).map((briefcase) => {
             const chosen = briefcase.id === game?.chosenCaseId;
             const canOpen = game?.phase === "choose" || (game?.phase === "opening" && !chosen && !briefcase.opened);

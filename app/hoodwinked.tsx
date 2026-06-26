@@ -518,7 +518,24 @@ const FONT_CSS = `
   .parlor-root .board-wrap { padding: 12px !important; border-radius: 16px !important; }
   .parlor-root .suspect-pins { display: none !important; }
   .parlor-root .landing-suspect-pins { display: none !important; }
+  .parlor-root .header-room-block { display: none !important; }
+  .parlor-root .header-mute-desktop { display: none !important; }
+  .parlor-root .header-mute-mobile { display: inline-flex !important; }
+  .parlor-root .header-title { font-size: clamp(18px, 5.4vw, 22px) !important; letter-spacing: .5px !important; }
+  .parlor-root .header-tagline { font-size: 9px !important; letter-spacing: 1.4px !important; line-height: 1.25 !important; }
+  .parlor-root .mode-chip-code { display: none !important; }
+  .parlor-root .mode-chip-meta { justify-content: center !important; font-size: 9px !important; padding: 5px 2px 1px !important; }
+  .parlor-root .lobby-entry-line { font-size: 12px !important; }
+  .parlor-root .lobby-room-code { font-size: clamp(44px, 14vw, 84px) !important; letter-spacing: clamp(3px, 1.2vw, 6px) !important; }
+  .parlor-root .lobby-mode-blurb { font-size: 13px !important; line-height: 1.3 !important; margin: 0 auto 12px !important; padding: 0 4px !important; }
+  .parlor-root .lobby-mode-grid { gap: 8px !important; margin: 0 auto 14px !important; }
+  .parlor-root .lobby-waiting-row { margin: 14px auto !important; }
+  .parlor-root .lobby-waiting-row .waiting-pill { font-size: 14px !important; padding: 6px 14px !important; }
+  .parlor-root .lobby-section { padding: 10px 0 4px !important; }
+  .parlor-root .demo-add-fake-row { display: flex !important; }
 }
+.parlor-root .header-mute-mobile { display: none; }
+.parlor-root .demo-add-fake-row { display: none; }
 .parlor-root .bulb{animation:parlor-twinkle 2.4s ease-in-out infinite;}
 .parlor-root .popin{animation:parlor-popin .32s cubic-bezier(.34,1.56,.64,1) both;}
 .parlor-root .fadeup{animation:parlor-fadeup .35s ease both;}
@@ -1378,13 +1395,33 @@ function Board({
           <div className="flex items-center" style={{ gap: 10 }}>
             <BrandLogo size={210} compact />
             <div>
-              <div className="disp" style={{ fontSize: "clamp(20px, 5.4vw, 34px)", fontWeight: 800, color: C.gold, letterSpacing: 1, textShadow: HEAVY_TEXT_SHADOW, overflowWrap: "anywhere" }}>
+              <div className="disp header-title" style={{ fontSize: "clamp(20px, 5.4vw, 34px)", fontWeight: 800, color: C.gold, letterSpacing: 1, textShadow: HEAVY_TEXT_SHADOW, overflowWrap: "anywhere" }}>
                 HOODWINKED
               </div>
-              <div className="body" style={{ color: C.creamDim, fontSize: 12, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", textShadow: HEAVY_TEXT_SHADOW }}>
+              <div className="body header-tagline" style={{ color: C.creamDim, fontSize: 12, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", textShadow: HEAVY_TEXT_SHADOW }}>
                 Fool the room. Win the night.
               </div>
             </div>
+            <button
+              onClick={onToggleMute}
+              aria-label={muted ? "Unmute sound" : "Mute sound"}
+              title={muted ? "Unmute" : "Mute"}
+              suppressHydrationWarning
+              className="header-mute-mobile"
+              style={{
+                background: "none",
+                border: "none",
+                color: muted ? C.creamDim : C.gold,
+                cursor: "pointer",
+                fontSize: 18,
+                padding: 4,
+                lineHeight: 1,
+                alignItems: "center",
+                marginLeft: 4
+              }}
+            >
+              <span suppressHydrationWarning>{muted ? "🔇" : "🔊"}</span>
+            </button>
           </div>
           {state.phase !== "lobby" && state.phase !== "gameover" && (
             <div
@@ -1420,12 +1457,13 @@ function Board({
               Round {state.round} / {state.totalRounds}
             </div>
           )}
-          <div className="flex items-center" style={{ gap: 10 }}>
+          <div className="flex items-center header-room-block" style={{ gap: 10 }}>
             <button
               onClick={onToggleMute}
               aria-label={muted ? "Unmute sound" : "Mute sound"}
               title={muted ? "Unmute" : "Mute"}
               suppressHydrationWarning
+              className="header-mute-desktop"
               style={{
                 background: "none",
                 border: "none",
@@ -1495,12 +1533,12 @@ function Board({
         )}
 
         {state.phase === "lobby" && (
-          <div className="popin" style={{ textAlign: "center", padding: "26px 0 18px" }}>
-            <div className="body" style={{ color: C.creamDim, fontSize: 16, fontWeight: 800, marginBottom: 8, textShadow: HEAVY_TEXT_SHADOW }}>
+          <div className="popin lobby-section" style={{ textAlign: "center", padding: "26px 0 18px" }}>
+            <div className="body lobby-entry-line" style={{ color: C.creamDim, fontSize: 16, fontWeight: 800, marginBottom: 8, textShadow: HEAVY_TEXT_SHADOW }}>
               Go to <span style={{ color: C.cream, fontWeight: 800 }}>{PLAY_URL}</span> and enter code
             </div>
             <div
-              className="disp"
+              className="disp lobby-room-code"
               style={{
                 fontSize: "clamp(56px, 16vw, 104px)",
                 fontWeight: 800,
@@ -1513,7 +1551,7 @@ function Board({
               {state.roomCode}
             </div>
             <div
-              className="flex flex-wrap justify-center"
+              className="flex flex-wrap justify-center lobby-waiting-row"
               style={{ gap: 10, margin: "24px auto", maxWidth: 760 }}
             >
               {players.length === 0 && (
@@ -1543,6 +1581,7 @@ function Board({
               ))}
             </div>
             <div
+              className="lobby-mode-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
@@ -1581,7 +1620,7 @@ function Board({
                       }}
                     />
                     <div
-                      className="body"
+                      className="body mode-chip-meta"
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -1595,7 +1634,7 @@ function Board({
                         padding: "8px 2px 2px"
                       }}
                     >
-                      <span>{info.code}</span>
+                      <span className="mode-chip-code">{info.code}</span>
                       <span>{info.min}+ players</span>
                     </div>
                   </button>
@@ -1603,7 +1642,7 @@ function Board({
               })}
             </div>
             <div
-              className="disp"
+              className="disp lobby-mode-blurb"
               style={{
                 color: C.cream,
                 fontSize: "clamp(20px, 2.2vw, 30px)",
@@ -4512,6 +4551,19 @@ function LocalParlor() {
   };
   const removePhone = (id: string) => setDevices((d) => d.filter((x) => x !== id));
 
+  const FAKE_NAMES = ["Scout", "Rook", "Vega", "Ash", "Nova", "Wren", "Sage", "Echo"];
+  const addFakePlayer = () => {
+    if (Object.keys(state.players).length >= 8) return;
+    idCounter.current += 1;
+    const id = `f${idCounter.current}`;
+    const takenNames = new Set(Object.values(state.players).map((p) => p.name));
+    const name = FAKE_NAMES.find((candidate) => !takenNames.has(candidate)) ?? `Bot ${idCounter.current}`;
+    const takenAvatars = new Set(Object.values(state.players).map((p) => p.avatar));
+    const avatar = AVATAR_OPTIONS.find((option) => !takenAvatars.has(option.id))?.id ?? AVATAR_OPTIONS[0]?.id;
+    setDevices((d) => (d.length >= 8 ? d : [...d, id]));
+    dispatch({ type: "JOIN", id, name, avatar });
+  };
+
   const fillAnswers = () => {
     if (state.mode === "quiplash") {
       let i = 0;
@@ -4626,6 +4678,33 @@ function LocalParlor() {
       <style>{FONT_CSS}</style>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <Board state={state} dispatch={dispatch} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
+
+        {state.phase === "lobby" && (
+          <div
+            className="demo-add-fake-row"
+            style={{ gap: 8, flexWrap: "wrap", margin: "12px 4px 0", justifyContent: "center" }}
+          >
+            <button
+              onClick={addFakePlayer}
+              disabled={Object.keys(state.players).length >= 8}
+              className="body"
+              style={{
+                ...devBtn,
+                background: `linear-gradient(180deg, ${C.gold}, #dca33d)`,
+                color: C.bgDeep,
+                fontWeight: 900,
+                padding: "8px 14px"
+              }}
+            >
+              + Add fake player
+            </button>
+            {Object.keys(state.players).length > 0 && (
+              <button onClick={() => dispatch({ type: "RESET" })} className="body" style={devBtn}>
+                ↺ Reset
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center justify-between phones-row" style={{ margin: "26px 2px 12px" }}>
           <div

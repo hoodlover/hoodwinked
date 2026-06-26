@@ -235,11 +235,14 @@ function SafesGrid({
 }) {
   const mapImage = owner === "player" ? "/a_and_I/jailmap.png" : "/a_and_I/citymap_1.webp";
   const left = remainingPieces(pieces);
+  const showShatter = owner === "player" && status === "lost";
+  const showWin = owner === "player" && status === "won";
   return (
-    <section>
-      <h3 style={{ margin: "0 0 10px", color: C.cream, fontSize: 18, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+    <section className="ai-board-section" style={{ position: "relative" }}>
+      <h3 className="ai-board-title" style={{ margin: "0 0 10px", color: C.cream, fontSize: 18, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <span>{title}</span>
         <span
+          className="ai-board-badge"
           style={{
             color: C.gold,
             border: `1px solid ${C.line}`,
@@ -255,19 +258,54 @@ function SafesGrid({
         </span>
       </h3>
       <div
+        className={`ai-board-grid${showShatter ? " ai-board-shatter" : ""}`}
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${SIZE}, minmax(34px, 54px))`,
+          gridTemplateColumns: `repeat(${SIZE}, minmax(0, 1fr))`,
           gap: 3,
           padding: 8,
           borderRadius: 8,
           background: `linear-gradient(rgba(9,19,14,.28), rgba(9,19,14,.28)), url(${mapImage}) center/cover`,
           border: `1px solid ${C.line}`,
-          width: "fit-content",
+          width: "100%",
           maxWidth: "100%",
-          boxShadow: "inset 0 0 0 999px rgba(9,19,14,.08)"
+          boxSizing: "border-box",
+          boxShadow: "inset 0 0 0 999px rgba(9,19,14,.08)",
+          position: "relative"
         }}
       >
+        {showWin && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
+              zIndex: 5,
+              pointerEvents: "none",
+              animation: "solo-board-winpop 520ms cubic-bezier(.22,1.18,.36,1) both"
+            }}
+          >
+            <div
+              style={{
+                color: C.gold,
+                fontSize: "clamp(38px, 11vw, 76px)",
+                fontWeight: 900,
+                letterSpacing: 2,
+                lineHeight: 1,
+                padding: "12px 22px",
+                background: "rgba(9,19,14,.72)",
+                border: `2px solid ${C.gold}`,
+                borderRadius: 14,
+                boxShadow: "0 0 0 4px rgba(255,193,94,.18), 0 18px 36px rgba(0,0,0,.6)",
+                textShadow: "0 4px 18px rgba(0,0,0,.85)"
+              }}
+            >
+              YOU WIN
+            </div>
+          </div>
+        )}
         {grid.map((cell, index) => {
           const revealPiece = owner === "player" || cell.shot === "hit" || status !== "playing";
           const clickable = owner === "ai" && status === "playing" && !cell.shot;
@@ -275,15 +313,27 @@ function SafesGrid({
           const background = cell.shot === "hit" ? "rgba(255,193,94,.2)" : cell.shot === "miss" ? "rgba(217,210,189,.42)" : base;
           const showFace = revealPiece && cell.pieceType && cell.shot !== "miss";
           const showHitMark = owner === "player" && cell.shot === "hit";
+          const dx = ((index * 17) % 240) - 120;
+          const rot = ((index * 31) % 720) - 360;
+          const delay = (index % 20) * 25;
+          const shatterStyle: React.CSSProperties = showShatter
+            ? ({
+                animation: `solo-board-fall 1.4s cubic-bezier(.4,.05,.6,1) ${delay}ms forwards`,
+                transformOrigin: "center",
+                ["--shatter-dx" as string]: `${dx}px`,
+                ["--shatter-rot" as string]: `${rot}deg`
+              } as React.CSSProperties)
+            : {};
           return (
             <button
               key={index}
               onClick={() => clickable && onTarget?.(index)}
               disabled={!clickable}
               aria-label={`${title} cell ${row(index) + 1}-${col(index) + 1}`}
+              className="ai-board-cell"
               style={{
-                width: "clamp(34px, 8vw, 54px)",
-                height: "clamp(34px, 8vw, 54px)",
+                width: "100%",
+                aspectRatio: "1 / 1",
                 border: `1px solid ${cell.shot === "hit" ? C.gold : "rgba(251,243,228,.22)"}`,
                 borderRadius: 5,
                 background,
@@ -296,7 +346,8 @@ function SafesGrid({
                 overflow: "hidden",
                 boxShadow: cell.shot === "hit" ? "inset 0 0 0 2px rgba(0,0,0,.26)" : "none",
                 animation: cell.shot === "hit" ? "solo-board-hit 320ms ease" : cell.shot === "miss" ? "solo-board-miss 420ms ease" : "none",
-                fontSize: cell.shot === "miss" ? 9 : 14
+                fontSize: cell.shot === "miss" ? 9 : 14,
+                ...shatterStyle
               }}
             >
               {showFace ? (
@@ -429,6 +480,7 @@ export default function SafesAndEvidence() {
 
   return (
     <section
+      className="ai-root"
       style={{
         border: `1px solid ${C.line}`,
         borderRadius: 10,
@@ -449,22 +501,53 @@ export default function SafesAndEvidence() {
           45% { opacity: 1; transform: scale(1.08); filter: blur(0); }
           100% { opacity: 1; transform: scale(1); }
         }
+        @keyframes solo-board-fall {
+          0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+          15% { transform: translate(calc(var(--shatter-dx, 0px) * .1), -8px) rotate(calc(var(--shatter-rot, 0deg) * .05)); opacity: 1; }
+          100% { transform: translate(var(--shatter-dx, 0px), 60vh) rotate(var(--shatter-rot, 360deg)); opacity: 0; }
+        }
+        @keyframes solo-board-winpop {
+          0% { transform: scale(.4); opacity: 0; }
+          55% { transform: scale(1.18); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .ai-board-shatter { overflow: visible !important; perspective: 800px; }
+        @media (max-width: 640px) {
+          .ai-root { padding: 10px !important; margin-top: 0 !important; }
+          .ai-root .ai-header { gap: 8px !important; margin-bottom: 10px !important; }
+          .ai-root .ai-header-img { width: 52px !important; }
+          .ai-root .ai-title { font-size: 22px !important; margin: 2px 0 !important; }
+          .ai-root .ai-eyebrow { font-size: 10px !important; letter-spacing: 1.2px !important; }
+          .ai-root .ai-blurb { font-size: 12px !important; line-height: 1.35 !important; }
+          .ai-root .ai-diff-btn { padding: 6px 9px !important; font-size: 12px !important; }
+          .ai-root .ai-legend { gap: 6px !important; margin-bottom: 8px !important; }
+          .ai-root .ai-legend span { font-size: 10px !important; }
+          .ai-root .ai-status { padding: 6px !important; margin-bottom: 10px !important; }
+          .ai-root .ai-status > div:first-child { font-size: 9px !important; }
+          .ai-root .ai-status > div:nth-child(2) { font-size: 13px !important; margin-top: 3px !important; }
+          .ai-root .ai-status > p { font-size: 11px !important; margin-top: 3px !important; }
+          .ai-root .ai-boards { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .ai-root .ai-board-title { font-size: 13px !important; gap: 6px !important; margin-bottom: 6px !important; }
+          .ai-root .ai-board-badge { font-size: 10px !important; padding: 2px 6px !important; }
+          .ai-root .ai-board-grid { padding: 4px !important; gap: 2px !important; }
+        }
       `}</style>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
+      <div className="ai-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            className="ai-header-img"
             src="/a_and_I/alibis-informants.png"
             alt=""
             aria-hidden="true"
             style={{ width: "clamp(64px, 10vw, 104px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
           />
           <div>
-          <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
-          <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
+          <div className="ai-eyebrow" style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
+          <h2 className="ai-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             Alibis & Informants
           </h2>
-          <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
+          <p className="ai-blurb" style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             The station is crawling with jailhouse whispers, planted files, and suspects who swear they were nowhere near the scene. Your crew has hidden groups of alibis and informants through the precinct map; sweep the rival station first, expose their story, and keep your own witnesses from getting rolled up.
           </p>
           </div>
@@ -485,12 +568,14 @@ export default function SafesAndEvidence() {
                 cursor: status === "setup" ? "pointer" : "default",
                 textTransform: "capitalize"
               }}
+              className="ai-diff-btn"
             >
               {value}
             </button>
           ))}
           <button
             onClick={start}
+            className="ai-diff-btn"
             style={{
               border: `1px solid ${C.gold}`,
               background: `linear-gradient(180deg, ${C.gold}, #dca33d)`,
@@ -506,7 +591,7 @@ export default function SafesAndEvidence() {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+      <div className="ai-legend" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
         {legend.map((item) => (
           <span key={item.label} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: C.muted, fontSize: 12, fontWeight: 800 }}>
             <span style={{ width: 14, height: 14, borderRadius: 4, background: item.color, border: "1px solid rgba(255,255,255,.22)" }} />
@@ -522,7 +607,7 @@ export default function SafesAndEvidence() {
       ) : (
         <>
           <div style={{ marginBottom: 16 }}>
-            <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, background: "rgba(9,19,14,.55)", minWidth: 0 }}>
+            <div className="ai-status" style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, background: "rgba(9,19,14,.55)", minWidth: 0 }}>
               <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12 }}>STATUS</div>
               <div style={{ color: game.status === "won" ? C.gold : game.status === "lost" ? C.hit : C.cream, fontWeight: 900, fontSize: 16, marginTop: 6 }}>
                 {game.status === "won" ? "You win" : game.status === "lost" ? "AI wins" : "Your turn"}
@@ -532,6 +617,7 @@ export default function SafesAndEvidence() {
           </div>
 
           <div
+            className="ai-boards"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))",

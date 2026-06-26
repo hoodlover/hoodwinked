@@ -174,6 +174,7 @@ function Card({ card, hidden }) {
   const red = card && ["♥", "♦"].includes(card.suit);
   return (
     <div
+      className="bj-card"
       style={{
         width: 70,
         height: 98,
@@ -188,7 +189,8 @@ function Card({ card, hidden }) {
         fontWeight: 900,
         fontSize: hidden ? 24 : 22,
         boxShadow: "0 12px 24px rgba(0,0,0,.28)",
-        position: "relative"
+        position: "relative",
+        flex: "0 0 auto"
       }}
     >
       {hidden ? "?" : `${card.rank}${card.suit}`}
@@ -200,10 +202,10 @@ function Hand({ title, cards, total, hideHole }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 10 }}>
-        <h3 style={{ color: C.cream, margin: 0, fontSize: 18 }}>{title}</h3>
-        <div style={{ color: C.gold, fontWeight: 900 }}>Total: {total}</div>
+        <h3 className="bj-hand-title" style={{ color: C.cream, margin: 0, fontSize: 18 }}>{title}</h3>
+        <div className="bj-hand-total" style={{ color: C.gold, fontWeight: 900 }}>Total: {total}</div>
       </div>
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", minHeight: 104 }}>
+      <div className="bj-hand-row" style={{ display: "flex", gap: 10, flexWrap: "wrap", minHeight: 104 }}>
         {cards.map((card, index) => (
           <Card key={`${card.id}-${index}`} card={card} hidden={hideHole && index === 1} />
         ))}
@@ -263,7 +265,7 @@ export default function OwnTheHouse() {
           revealDealer: true
         };
       }
-      return { ...current, deck: next.deck, playerHand, message: "Hit, stand, or double down." };
+      return { ...current, deck: next.deck, playerHand, message: "Hit or stand." };
     });
   };
 
@@ -313,6 +315,7 @@ export default function OwnTheHouse() {
 
   return (
     <section
+      className="bj-root"
       style={{
         border: `1px solid ${C.line}`,
         borderRadius: 10,
@@ -322,21 +325,47 @@ export default function OwnTheHouse() {
         marginTop: 24
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .bj-root { padding: 10px !important; margin-top: 12px !important; }
+          .bj-root .bj-header { gap: 10px !important; margin-bottom: 10px !important; }
+          .bj-root .bj-header-img { width: 52px !important; }
+          .bj-root .bj-title { font-size: 22px !important; margin: 2px 0 !important; }
+          .bj-root .bj-eyebrow { font-size: 10px !important; letter-spacing: 1.2px !important; }
+          .bj-root .bj-blurb { font-size: 12px !important; line-height: 1.35 !important; }
+          .bj-root .bj-diff-btn { padding: 6px 9px !important; font-size: 12px !important; }
+          .bj-root .bj-howto { padding: 8px !important; font-size: 11px !important; line-height: 1.35 !important; margin-bottom: 10px !important; }
+          .bj-root .bj-info-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; margin-bottom: 10px !important; }
+          .bj-root .bj-info-grid > div { padding: 6px !important; }
+          .bj-root .bj-info-grid .bj-label { font-size: 9px !important; letter-spacing: .8px !important; margin-bottom: 3px !important; }
+          .bj-root .bj-balance { font-size: 16px !important; }
+          .bj-root .bj-bet-input { font-size: 13px !important; padding: 5px 7px !important; }
+          .bj-root .bj-status { font-size: 12px !important; margin-top: 2px !important; line-height: 1.2 !important; }
+          .bj-root .bj-table { padding: 8px !important; }
+          .bj-root .bj-table-inner { gap: 14px !important; }
+          .bj-root .bj-hand-title { font-size: 14px !important; }
+          .bj-root .bj-hand-total { font-size: 12px !important; }
+          .bj-root .bj-hand-row { gap: 5px !important; min-height: 68px !important; flex-wrap: nowrap !important; overflow: visible !important; }
+          .bj-root .bj-card { width: 46px !important; height: 65px !important; font-size: 13px !important; border-radius: 6px !important; }
+          .bj-root .bj-actions button { padding: 8px 10px !important; font-size: 13px !important; }
+        }
+      `}</style>
+      <div className="bj-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            className="bj-header-img"
             src="/the_house_always_lies/the-house-always-lies.png"
             alt=""
             aria-hidden="true"
             style={{ width: "clamp(64px, 10vw, 104px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
           />
           <div>
-          <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
-          <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
+          <div className="bj-eyebrow" style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
+          <h2 className="bj-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             The House Always Lies
           </h2>
-          <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
+          <p className="bj-blurb" style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             An undercover blackjack table in the back room of a crooked club. Beat the dealer without crossing 21, double your stake when the read is strong, and remember: the house smiles most when it is setting a trap.
           </p>
           </div>
@@ -357,6 +386,7 @@ export default function OwnTheHouse() {
                 fontWeight: 900,
                 cursor: canAct ? "default" : "pointer"
               }}
+              className="bj-diff-btn"
             >
               {item.label}
             </button>
@@ -364,17 +394,17 @@ export default function OwnTheHouse() {
         </div>
       </div>
 
-      <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.45)", color: C.muted, fontWeight: 800, lineHeight: 1.45, marginBottom: 16 }}>
+      <div className="bj-howto" style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.45)", color: C.muted, fontWeight: 800, lineHeight: 1.45, marginBottom: 16 }}>
         How to play: Hit draws another card. Stand keeps your total and lets the dealer play. Double Down doubles your bet, gives you exactly one more card, then forces you to stand. Beginner tip: stand on 17 or more, usually hit 11 or less, and consider doubling when your first two cards total 10 or 11 and the dealer is showing a weak card.
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginBottom: 16 }}>
+      <div className="bj-info-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginBottom: 16 }}>
         <div style={panelStyle()}>
-          <div style={labelStyle()}>BALANCE</div>
-          <div style={{ color: C.cream, fontWeight: 900, fontSize: 24 }}>${activeBalance}</div>
+          <div className="bj-label" style={labelStyle()}>BALANCE</div>
+          <div className="bj-balance" style={{ color: C.cream, fontWeight: 900, fontSize: 24 }}>${activeBalance}</div>
         </div>
         <div style={panelStyle()}>
-          <div style={labelStyle()}>BET</div>
+          <div className="bj-label" style={labelStyle()}>BET</div>
           <input
             type="number"
             min="1"
@@ -382,6 +412,7 @@ export default function OwnTheHouse() {
             value={betInput}
             onChange={(event) => setBetInput(event.target.value)}
             disabled={canAct}
+            className="bj-bet-input"
             style={{
               width: "100%",
               border: `1px solid ${C.line}`,
@@ -395,14 +426,15 @@ export default function OwnTheHouse() {
           />
         </div>
         <div style={panelStyle()}>
-          <div style={labelStyle()}>STATUS</div>
-          <div style={{ color: statusColor, fontWeight: 900, fontSize: 18, marginTop: 6 }}>
+          <div className="bj-label" style={labelStyle()}>STATUS</div>
+          <div className="bj-status" style={{ color: statusColor, fontWeight: 900, fontSize: 18, marginTop: 6 }}>
             {game?.message ?? "Set your bet and deal."}
           </div>
         </div>
       </div>
 
       <div
+        className="bj-table"
         style={{
           border: `1px solid ${C.line}`,
           borderRadius: 8,
@@ -411,7 +443,7 @@ export default function OwnTheHouse() {
         }}
       >
         {game ? (
-          <div style={{ display: "grid", gap: 28 }}>
+          <div className="bj-table-inner" style={{ display: "grid", gap: 28 }}>
             <Hand title="Dealer" cards={game.dealerHand} total={dealerTotal} hideHole={!game.revealDealer} />
             <div style={{ height: 1, background: "rgba(129,164,117,.42)" }} />
             <Hand title="Player" cards={game.playerHand} total={playerTotal} hideHole={false} />
@@ -423,7 +455,7 @@ export default function OwnTheHouse() {
         )}
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 16 }}>
+      <div className="bj-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 16 }}>
         {!canAct && (
           <button type="button" onClick={deal} disabled={activeBalance <= 0} style={primaryButton(activeBalance > 0)}>
             Deal

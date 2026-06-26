@@ -340,6 +340,7 @@ export default function TheSweep() {
 
   return (
     <section
+      className="sweep-root"
       style={{
         border: `1px solid ${C.line}`,
         borderRadius: 10,
@@ -349,21 +350,41 @@ export default function TheSweep() {
         marginTop: 24
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .sweep-root { padding: 10px !important; margin-top: 12px !important; }
+          .sweep-root .sweep-header { gap: 10px !important; margin-bottom: 10px !important; }
+          .sweep-root .sweep-header-img { width: 52px !important; }
+          .sweep-root .sweep-title { font-size: 22px !important; margin: 2px 0 !important; }
+          .sweep-root .sweep-eyebrow { font-size: 10px !important; letter-spacing: 1.2px !important; }
+          .sweep-root .sweep-blurb { font-size: 12px !important; line-height: 1.35 !important; }
+          .sweep-root .sweep-diff-btn { padding: 6px 9px !important; font-size: 12px !important; }
+          .sweep-root .sweep-howto { padding: 8px !important; font-size: 11px !important; line-height: 1.35 !important; margin-bottom: 10px !important; }
+          .sweep-root .sweep-stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 6px !important; margin-bottom: 10px !important; }
+          .sweep-root .sweep-panel { padding: 6px !important; }
+          .sweep-root .sweep-label { font-size: 9px !important; letter-spacing: .8px !important; margin-bottom: 4px !important; }
+          .sweep-root .sweep-count { font-size: 18px !important; gap: 4px !important; }
+          .sweep-root .sweep-count-icon { width: 22px !important; height: 22px !important; }
+          .sweep-root .sweep-status-text { font-size: 12px !important; margin-top: 2px !important; line-height: 1.2 !important; }
+          .sweep-root .sweep-footnote { font-size: 10px !important; }
+        }
+      `}</style>
+      <div className="sweep-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", maxWidth: 900 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            className="sweep-header-img"
             src="/the_sweep/the-sweep.png"
             alt=""
             aria-hidden="true"
             style={{ width: "clamp(64px, 10vw, 104px)", height: "auto", borderRadius: 8, filter: "drop-shadow(0 12px 22px rgba(0,0,0,.42))", flex: "0 0 auto" }}
           />
           <div>
-          <div style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
-          <h2 style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
+          <div className="sweep-eyebrow" style={{ color: C.gold, fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>PLAYABLE SOLO CASE</div>
+          <h2 className="sweep-title" style={{ margin: "6px 0", color: C.cream, fontSize: "clamp(28px, 5vw, 52px)", lineHeight: 1 }}>
             The Sweep
           </h2>
-          <p style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
+          <p className="sweep-blurb" style={{ color: C.muted, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
             The precinct evidence room has been salted with red herrings. Your first sweep is safe; after that, use the numbers to deduce which neighboring tiles hide traps and which ones can be cleared.
           </p>
           </div>
@@ -384,52 +405,53 @@ export default function TheSweep() {
                 fontWeight: 900,
                 cursor: canPickDifficulty ? "pointer" : "default"
               }}
+              className="sweep-diff-btn"
             >
               {item.label}
             </button>
           ))}
-          <button type="button" onClick={() => start(difficulty)} style={primaryButton(true)}>
+          <button type="button" onClick={() => start(difficulty)} style={primaryButton(true)} className="sweep-diff-btn">
             {game ? "Replay" : "Start sweep"}
           </button>
         </div>
       </div>
 
-      <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.45)", color: C.muted, fontWeight: 800, lineHeight: 1.45, marginBottom: 16 }}>
+      <div className="sweep-howto" style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.45)", color: C.muted, fontWeight: 800, lineHeight: 1.45, marginBottom: 16 }}>
         How to play: left-click any tile to start safely. A number shows how many traps touch that tile, including diagonals. Blank (zero) tiles cascade outward and auto-reveal their neighbors — but the sweep stops at evidence clues, which only flip when you click them directly. Right-click to flag suspected traps. Clear every safe tile (including each clue) to win — touch a trap and the sweep is blown. If a revealed number already touches the correct number of flags, click it again to chord-clear its remaining neighbors.
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 16 }}>
-        <div style={panelStyle()}>
-          <div style={labelStyle()}>TRAPS LEFT</div>
-          <div style={countBoxStyle()}>
+      <div className="sweep-stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 16 }}>
+        <div className="sweep-panel" style={panelStyle()}>
+          <div className="sweep-label" style={labelStyle()}>TRAPS LEFT</div>
+          <div className="sweep-count" style={countBoxStyle()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/the_sweep/trap_1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <img className="sweep-count-icon" src="/the_sweep/trap_1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/the_sweep/trap2.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <img className="sweep-count-icon" src="/the_sweep/trap2.webp" alt="" aria-hidden="true" style={countIconStyle()} />
             <span>{stats.trapsLeft}</span>
           </div>
         </div>
-        <div style={panelStyle()}>
-          <div style={labelStyle()}>SAFE TILES</div>
-          <div style={countBoxStyle()}>
+        <div className="sweep-panel" style={panelStyle()}>
+          <div className="sweep-label" style={labelStyle()}>SAFE TILES</div>
+          <div className="sweep-count" style={countBoxStyle()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/the_sweep/clue+1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <img className="sweep-count-icon" src="/the_sweep/clue+1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/the_sweep/clue-3.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <img className="sweep-count-icon" src="/the_sweep/clue-3.webp" alt="" aria-hidden="true" style={countIconStyle()} />
             <span>{stats.safeRevealed} / {stats.safeTotal}</span>
           </div>
         </div>
-        <div style={panelStyle()}>
-          <div style={labelStyle()}>FLAGS</div>
-          <div style={countBoxStyle()}>
+        <div className="sweep-panel" style={panelStyle()}>
+          <div className="sweep-label" style={labelStyle()}>FLAGS</div>
+          <div className="sweep-count" style={countBoxStyle()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/the_sweep/marker_flag.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <img className="sweep-count-icon" src="/the_sweep/marker_flag.webp" alt="" aria-hidden="true" style={countIconStyle()} />
             <span>{stats.flags}</span>
           </div>
         </div>
-        <div style={panelStyle()}>
-          <div style={labelStyle()}>STATUS</div>
-          <div style={{ color: game?.status === "won" ? C.gold : game?.status === "lost" ? C.trap : C.cream, fontWeight: 900, fontSize: 18, marginTop: 4 }}>
+        <div className="sweep-panel" style={panelStyle()}>
+          <div className="sweep-label" style={labelStyle()}>STATUS</div>
+          <div className="sweep-status-text" style={{ color: game?.status === "won" ? C.gold : game?.status === "lost" ? C.trap : C.cream, fontWeight: 900, fontSize: 18, marginTop: 4 }}>
             {game?.message ?? "Pick a difficulty and start the sweep."}
           </div>
         </div>
@@ -473,7 +495,7 @@ export default function TheSweep() {
         </div>
       </div>
 
-      <div style={{ color: C.muted, fontSize: 12, fontWeight: 800, marginTop: 10 }}>
+      <div className="sweep-footnote" style={{ color: C.muted, fontSize: 12, fontWeight: 800, marginTop: 10 }}>
         Right-click a tile to flag a suspected red herring.
       </div>
     </section>
@@ -501,7 +523,7 @@ function labelStyle() {
 
 function countBoxStyle() {
   return {
-    color: C.cream,
+    color: C.gold,
     fontWeight: 900,
     fontSize: 30,
     display: "flex",
