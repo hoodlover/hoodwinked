@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { readScore, writeScore } from "./scoreStore";
+
+const SCORE_SLUG = "three-marks-monte";
+const SCORE_FALLBACK = { wins: 0, losses: 0, streak: 0, bestStreak: 0 };
 
 const DIFFICULTY = {
   easy: { label: "Easy", shuffles: 4, speed: 536 },
@@ -137,7 +141,13 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick, arcing, shuffleSt
 
 export default function ShellGame() {
   const [game, setGame] = useState(initialGame);
-  const [score, setScore] = useState({ wins: 0, losses: 0, streak: 0, bestStreak: 0 });
+  const [score, setScore] = useState(SCORE_FALLBACK);
+
+  useEffect(() => {
+    // SSR returns fallback; hydrate the real value on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setScore(readScore(SCORE_SLUG, SCORE_FALLBACK));
+  }, []);
 
   const settings = game.difficulty ? DIFFICULTY[game.difficulty] : null;
   const statusText = useMemo(() => {
@@ -201,12 +211,14 @@ export default function ShellGame() {
     const won = cupId === game.prizeCup;
     setScore((currentScore) => {
       const streak = won ? currentScore.streak + 1 : 0;
-      return {
+      const next = {
         wins: currentScore.wins + (won ? 1 : 0),
         losses: currentScore.losses + (won ? 0 : 1),
         streak,
         bestStreak: Math.max(currentScore.bestStreak, streak)
       };
+      writeScore(SCORE_SLUG, next);
+      return next;
     });
     setGame((current) => ({ ...current, phase: "revealed", selectedCup: cupId, result: won ? "win" : "loss" }));
   };

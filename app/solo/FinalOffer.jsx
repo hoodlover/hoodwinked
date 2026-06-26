@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { readScore, writeScore } from "./scoreStore";
+
+const SCORE_SLUG = "final-offer";
+const SCORE_FALLBACK = { easy: 0, medium: 0, hard: 0, biggest: 0 };
 
 const VALUES = [0, 100, 500, 1000, 2500, 5000, 10000, 25000, 50000, 75000, 100000, 150000, 250000, 400000, 500000, 750000, 1000000, 2000000];
 
@@ -280,6 +284,37 @@ export default function FinalOffer() {
   const [fireMode, setFireMode] = useState(true);
   const [game, setGame] = useState(null);
   const [offerText, setOfferText] = useState("Waiting");
+  const [, setCareer] = useState(SCORE_FALLBACK);
+  const recordedRef = useRef(null);
+
+  useEffect(() => {
+    // SSR returns fallback; hydrate the real value on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCareer(readScore(SCORE_SLUG, SCORE_FALLBACK));
+  }, []);
+
+  useEffect(() => {
+    if (!game || game.phase !== "done") {
+      recordedRef.current = null;
+      return;
+    }
+    const chosen = game.cases.find((briefcase) => briefcase.id === game.chosenCaseId);
+    const payout = game.acceptedOffer != null ? game.acceptedOffer : chosen?.value ?? 0;
+    const key = `${game.difficulty}:${payout}`;
+    if (recordedRef.current === key) return;
+    recordedRef.current = key;
+    setCareer((prev) => {
+      const prior = prev[game.difficulty] || 0;
+      if (payout <= prior && payout <= prev.biggest) return prev;
+      const next = {
+        ...prev,
+        [game.difficulty]: Math.max(prior, payout),
+        biggest: Math.max(prev.biggest, payout)
+      };
+      writeScore(SCORE_SLUG, next);
+      return next;
+    });
+  }, [game]);
   const activeFireMode = game?.fireMode ?? fireMode;
   const activeValues = activeFireMode ? VALUES : VALUES.filter((value) => value !== 0);
 

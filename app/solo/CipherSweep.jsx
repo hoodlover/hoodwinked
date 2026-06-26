@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { readScore, writeScore } from "./scoreStore";
 
 const DIFFICULTIES = {
   easy: { label: "Easy", time: 60, minLen: 3, maxLen: 4, maxShift: 6, hitBonus: 2, missPenalty: 2, multiplier: 1 },
@@ -54,7 +55,8 @@ const SHAKE_KEYS = `
   }
 `;
 
-const HIGH_SCORE_KEY = "hoodwinked.cipher-sweep.best";
+const SCORE_SLUG = "cipher-sweep";
+const SCORE_FALLBACK = { easy: 0, medium: 0, hard: 0 };
 
 function shiftLetter(ch, shift) {
   const code = ch.charCodeAt(0);
@@ -87,29 +89,6 @@ function makePuzzle(difficulty) {
   };
 }
 
-function readBest() {
-  if (typeof window === "undefined") return { easy: 0, medium: 0, hard: 0 };
-  try {
-    const raw = window.localStorage.getItem(HIGH_SCORE_KEY);
-    if (!raw) return { easy: 0, medium: 0, hard: 0 };
-    const parsed = JSON.parse(raw);
-    return {
-      easy: Number(parsed?.easy) || 0,
-      medium: Number(parsed?.medium) || 0,
-      hard: Number(parsed?.hard) || 0
-    };
-  } catch {
-    return { easy: 0, medium: 0, hard: 0 };
-  }
-}
-
-function writeBest(next) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(HIGH_SCORE_KEY, JSON.stringify(next));
-  } catch {}
-}
-
 export default function CipherSweep() {
   const [phase, setPhase] = useState("setup");
   const [difficulty, setDifficulty] = useState("medium");
@@ -124,7 +103,9 @@ export default function CipherSweep() {
   const endRef = useRef(0);
 
   useEffect(() => {
-    setBest(readBest());
+    // SSR returns fallback; hydrate the real value on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setBest(readScore(SCORE_SLUG, SCORE_FALLBACK));
   }, []);
 
   useEffect(() => () => {
@@ -144,7 +125,7 @@ export default function CipherSweep() {
           const prior = prev[difficulty] || 0;
           if (finalScore > prior) {
             const next = { ...prev, [difficulty]: finalScore };
-            writeBest(next);
+            writeScore(SCORE_SLUG, next);
             return next;
           }
           return prev;

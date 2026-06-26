@@ -1,6 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { readScore, writeScore } from "./scoreStore";
+
+const SCORE_SLUG = "alibis-informants";
+const SCORE_FALLBACK = { wins: 0, losses: 0, currentStreak: 0, bestStreak: 0 };
 
 type Difficulty = "easy" | "medium" | "hard";
 type Owner = "player" | "ai";
@@ -400,7 +404,37 @@ function SafesGrid({
 export default function SafesAndEvidence() {
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [game, setGame] = useState<GameState | null>(null);
+  const [, setCareer] = useState(SCORE_FALLBACK);
+  const recordedRef = useRef<string | null>(null);
   const status = game?.status ?? "setup";
+
+  useEffect(() => {
+    // SSR returns fallback; hydrate the real value on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCareer(readScore(SCORE_SLUG, SCORE_FALLBACK));
+  }, []);
+
+  useEffect(() => {
+    if (!game || (game.status !== "won" && game.status !== "lost")) {
+      recordedRef.current = null;
+      return;
+    }
+    const key = `${game.status}:${game.playerShots.size}-${game.aiShots.size}`;
+    if (recordedRef.current === key) return;
+    recordedRef.current = key;
+    const youWon = game.status === "won";
+    setCareer((prev) => {
+      const streak = youWon ? prev.currentStreak + 1 : 0;
+      const next = {
+        wins: prev.wins + (youWon ? 1 : 0),
+        losses: prev.losses + (youWon ? 0 : 1),
+        currentStreak: streak,
+        bestStreak: Math.max(prev.bestStreak, streak)
+      };
+      writeScore(SCORE_SLUG, next);
+      return next;
+    });
+  }, [game]);
 
   const legend = useMemo(
     () => [

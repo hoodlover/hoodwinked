@@ -1,6 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { readScore, writeScore } from "./scoreStore";
+
+const SCORE_SLUG = "the-sweep";
+const SCORE_FALLBACK = {
+  easy: { wins: 0, losses: 0, bestStreak: 0 },
+  medium: { wins: 0, losses: 0, bestStreak: 0 },
+  hard: { wins: 0, losses: 0, bestStreak: 0 },
+  currentStreak: 0
+};
 
 const UNREVEALED_TILE_BG = `
   linear-gradient(132deg, transparent 47.5%, rgba(0,0,0,.34) 49.4%, transparent 51.4%) 28% 38%/64% 64% no-repeat,
@@ -265,6 +274,38 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
 export default function TheSweep() {
   const [difficulty, setDifficulty] = useState("medium");
   const [game, setGame] = useState(null);
+  const [, setCareer] = useState(SCORE_FALLBACK);
+  const recordedRef = useRef(null);
+
+  useEffect(() => {
+    // SSR returns fallback; hydrate the real value on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCareer(readScore(SCORE_SLUG, SCORE_FALLBACK));
+  }, []);
+
+  useEffect(() => {
+    if (!game || (game.status !== "won" && game.status !== "lost")) {
+      recordedRef.current = null;
+      return;
+    }
+    const key = `${game.difficulty}:${game.status}:${game.lastRevealed ?? -1}`;
+    if (recordedRef.current === key) return;
+    recordedRef.current = key;
+    const youWon = game.status === "won";
+    const diff = game.difficulty;
+    setCareer((prev) => {
+      const bucket = prev[diff] || { wins: 0, losses: 0, bestStreak: 0 };
+      const streak = youWon ? prev.currentStreak + 1 : 0;
+      const nextBucket = {
+        wins: bucket.wins + (youWon ? 1 : 0),
+        losses: bucket.losses + (youWon ? 0 : 1),
+        bestStreak: Math.max(bucket.bestStreak, streak)
+      };
+      const next = { ...prev, [diff]: nextBucket, currentStreak: streak };
+      writeScore(SCORE_SLUG, next);
+      return next;
+    });
+  }, [game]);
 
   const settings = DIFFICULTIES[difficulty];
   const stats = useMemo(() => {

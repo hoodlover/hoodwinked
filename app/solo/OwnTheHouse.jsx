@@ -1,6 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { readScore, writeScore } from "./scoreStore";
+
+const SCORE_SLUG = "the-house-always-lies";
+const SCORE_FALLBACK = { balance: 1000, peakBalance: 1000, handsWon: 0, handsLost: 0 };
 
 const DIFFICULTIES = {
   easy: { label: "Easy", soft17: false, loose16: true },
@@ -216,9 +220,31 @@ function Hand({ title, cards, total, hideHole }) {
 
 export default function OwnTheHouse() {
   const [difficulty, setDifficulty] = useState("medium");
-  const [balance, setBalance] = useState(1000);
+  const [balance, setBalance] = useState(SCORE_FALLBACK.balance);
   const [betInput, setBetInput] = useState(50);
   const [game, setGame] = useState(null);
+  const [, setCareer] = useState(SCORE_FALLBACK);
+
+  useEffect(() => {
+    const saved = readScore(SCORE_SLUG, SCORE_FALLBACK);
+    // SSR returns fallback; hydrate the real value on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCareer(saved);
+    setBalance(saved.balance);
+  }, []);
+
+  const persistAfterHand = (nextBalance, result) => {
+    setCareer((prev) => {
+      const next = {
+        balance: nextBalance,
+        peakBalance: Math.max(prev.peakBalance, nextBalance),
+        handsWon: prev.handsWon + (result === "win" || result === "blackjack" ? 1 : 0),
+        handsLost: prev.handsLost + (result === "loss" ? 1 : 0)
+      };
+      writeScore(SCORE_SLUG, next);
+      return next;
+    });
+  };
 
   const activeBalance = game?.balance ?? balance;
   const bet = Math.max(1, Math.min(Number(betInput) || 1, activeBalance));
@@ -238,6 +264,7 @@ export default function OwnTheHouse() {
     const next = newHand(activeBalance, bet, difficulty);
     setGame(next);
     setBalance(next.balance);
+    if (next.phase === "settled") persistAfterHand(next.balance, next.result);
   };
 
   const hit = () => {
@@ -254,6 +281,7 @@ export default function OwnTheHouse() {
           balance: current.balance
         });
         setBalance(settlement.balance);
+        persistAfterHand(settlement.balance, settlement.result);
         return {
           ...current,
           deck: next.deck,
@@ -274,6 +302,7 @@ export default function OwnTheHouse() {
       if (!current || current.phase !== "player") return current;
       const next = runDealerTurn({ ...current, phase: "dealer", revealDealer: true });
       setBalance(next.balance);
+      persistAfterHand(next.balance, next.result);
       return next;
     });
   };
@@ -292,6 +321,7 @@ export default function OwnTheHouse() {
           balance: current.balance
         });
         setBalance(settlement.balance);
+        persistAfterHand(settlement.balance, settlement.result);
         return {
           ...doubled,
           balance: settlement.balance,
@@ -303,6 +333,7 @@ export default function OwnTheHouse() {
       }
       const finished = runDealerTurn({ ...doubled, phase: "dealer", revealDealer: true });
       setBalance(finished.balance);
+      persistAfterHand(finished.balance, finished.result);
       return finished;
     });
   };
@@ -311,6 +342,11 @@ export default function OwnTheHouse() {
     setBalance(1000);
     setBetInput(50);
     setGame(null);
+    setCareer((prev) => {
+      const next = { ...prev, balance: 1000 };
+      writeScore(SCORE_SLUG, next);
+      return next;
+    });
   };
 
   return (

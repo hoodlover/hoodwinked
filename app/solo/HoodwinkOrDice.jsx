@@ -1,6 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { readScore, writeScore } from "./scoreStore";
+
+const SCORE_SLUG = "hoodwink-or-dice";
+const SCORE_FALLBACK = { matchWins: 0, matchLosses: 0, currentStreak: 0, bestStreak: 0 };
 
 const DIFFICULTIES = {
   easy: {
@@ -158,6 +162,36 @@ function createRound(lives, difficulty, starter = "you") {
 export default function HoodwinkOrDice() {
   const [difficulty, setDifficulty] = useState("medium");
   const [game, setGame] = useState(null);
+  const [, setCareer] = useState(SCORE_FALLBACK);
+  const recordedRef = useRef(null);
+
+  useEffect(() => {
+    // SSR returns fallback; hydrate the real value on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCareer(readScore(SCORE_SLUG, SCORE_FALLBACK));
+  }, []);
+
+  useEffect(() => {
+    if (!game || game.phase !== "gameover") {
+      recordedRef.current = null;
+      return;
+    }
+    const youWon = game.lives.ai <= 0;
+    const key = `${youWon ? "w" : "l"}:${game.lives.you}-${game.lives.ai}`;
+    if (recordedRef.current === key) return;
+    recordedRef.current = key;
+    setCareer((prev) => {
+      const streak = youWon ? prev.currentStreak + 1 : 0;
+      const next = {
+        matchWins: prev.matchWins + (youWon ? 1 : 0),
+        matchLosses: prev.matchLosses + (youWon ? 0 : 1),
+        currentStreak: streak,
+        bestStreak: Math.max(prev.bestStreak, streak)
+      };
+      writeScore(SCORE_SLUG, next);
+      return next;
+    });
+  }, [game]);
   const currentBid = game?.currentBid ?? null;
   const minBid = useMemo(() => nextMinimumBid(currentBid), [currentBid]);
   const selectedBid = game?.selectedBid ?? minBid;
