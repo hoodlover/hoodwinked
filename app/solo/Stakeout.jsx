@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
+import { ITEM_LIBRARY, SIZE_HIT_RADIUS, SIZE_RENDER_PCT } from "./stakeout-items";
 
 const DIFFICULTIES = {
   easy: { label: "Easy", time: 90, hitBonusSec: 3, missPenaltySec: 0, hintCount: 3, hintCostSec: 5, multiplier: 1 },
@@ -175,6 +176,20 @@ const SCENES = [
       { id: "wristwatch", name: "Wristwatch", icon: "⌚", x: 0.65, y: 0.82, radius: 0.06 },
       { id: "lipstick", name: "Lipstick Tube", icon: "💄", x: 0.78, y: 0.81, radius: 0.05 }
     ]
+  },
+  // Composite scene — items are picked from the item library and placed at
+  // random positions every round, so two plays of the same scene never share
+  // the same item subset or layout. Background is a noir placeholder until a
+  // real empty-scene image lands.
+  {
+    id: "noir-desk",
+    name: "The Surveillance Desk",
+    type: "composite",
+    aspectRatio: "1080 / 1440",
+    itemCount: 10,
+    placementZones: [
+      { x: 0.06, y: 0.08, width: 0.88, height: 0.84 }
+    ]
   }
 ];
 
@@ -210,10 +225,63 @@ function pickScene() {
   return SCENES[Math.floor(Math.random() * SCENES.length)];
 }
 
+// Composite-mode placement. Picks a random subset from the item library and
+// drops them into the scene's placement zones with simple no-overlap retry.
+// Returned items match the baked-in item schema (id, name, icon, x, y, radius)
+// so the engine's existing hit-test / found-marker code works unchanged.
+function shuffleArr(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function placeCompositeItems(scene) {
+  const target = scene.itemCount || 10;
+  const zones = scene.placementZones || [{ x: 0.05, y: 0.05, width: 0.9, height: 0.9 }];
+  const pool = shuffleArr(ITEM_LIBRARY).slice(0, Math.min(target + 4, ITEM_LIBRARY.length));
+  const placed = [];
+
+  for (const item of pool) {
+    if (placed.length >= target) break;
+    const renderPct = SIZE_RENDER_PCT[item.sizeCategory];
+    const hitRadius = SIZE_HIT_RADIUS[item.sizeCategory];
+    let found = false;
+    for (let attempt = 0; attempt < 32 && !found; attempt += 1) {
+      const zone = zones[Math.floor(Math.random() * zones.length)];
+      const margin = renderPct;
+      const x = zone.x + margin / 2 + Math.random() * Math.max(0.001, zone.width - margin);
+      const y = zone.y + margin / 2 + Math.random() * Math.max(0.001, zone.height - margin);
+      const overlap = placed.some((p) => {
+        const minSep = hitRadius + SIZE_HIT_RADIUS[p.sizeCategory] + 0.015;
+        return Math.hypot(p.x - x, p.y - y) < minSep;
+      });
+      if (!overlap) {
+        placed.push({
+          id: item.id,
+          name: item.name,
+          icon: item.icon,
+          image: item.image,
+          sizeCategory: item.sizeCategory,
+          x,
+          y,
+          radius: hitRadius,
+          renderPct
+        });
+        found = true;
+      }
+    }
+  }
+  return placed;
+}
+
 export default function Stakeout() {
   const [phase, setPhase] = useState("setup");
   const [difficulty, setDifficulty] = useState("medium");
   const [scene, setScene] = useState(SCENES[0]);
+  const [sceneRound, setSceneRound] = useState(0);
   const [foundIds, setFoundIds] = useState([]);
   const [timeMs, setTimeMs] = useState(0);
   const [score, setScore] = useState(0);
@@ -225,6 +293,17 @@ export default function Stakeout() {
   const [playerName, setPlayerName] = useState("");
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+
+  // Resolved items for the current scene:
+  // - baked-in scenes: scene.items as defined in SCENES
+  // - composite scenes: items picked from the library and placed at random
+  //   each round (sceneRound bumps to force re-placement on scene swap)
+  const activeItems = useMemo(() => {
+    if (scene.type === "composite") return placeCompositeItems(scene);
+    return scene.items || [];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene.id, sceneRound]);
+
   const tickRef = useRef(null);
   const feedbackTimerRef = useRef(null);
   const hintTimerRef = useRef(null);
@@ -351,7 +430,7 @@ export default function Stakeout() {
     const aspect = rect.width / rect.height;
     let hitItem = null;
     let hitDistSq = Infinity;
-    for (const item of scene.items) {
+    for (const item of activeItems) {
       if (foundIds.includes(item.id)) continue;
       const dxPct = item.x - xPct;
       const dyPct = (item.y - yPct) / aspect;
@@ -375,7 +454,7 @@ export default function Stakeout() {
       if (hintTarget === hitItem.id) setHintTarget(null);
 
       // All found?
-      if (nextFound.length === scene.items.length) {
+      if (nextFound.length === activeItems.length) {
         const clearBonus = 500 * settings.multiplier;
         setScore((s) => s + clearBonus);
         setScenesCleared((n) => n + 1);
@@ -383,6 +462,7 @@ export default function Stakeout() {
         if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
         feedbackTimerRef.current = setTimeout(() => {
           setScene(pickScene());
+          setSceneRound((r) => r + 1);
           setFoundIds([]);
           setFeedback(null);
           // Full clock reset for the new scene — keep finding things, keep playing.
@@ -523,7 +603,7 @@ export default function Stakeout() {
 
   const useHint = () => {
     if (phase !== "play" || hintsLeft <= 0 || hintTarget) return;
-    const unfound = scene.items.filter((it) => !foundIds.includes(it.id));
+    const unfound = activeItems.filter((it) => !foundIds.includes(it.id));
     if (unfound.length === 0) return;
     const pick = unfound[Math.floor(Math.random() * unfound.length)];
     setHintTarget(pick.id);
@@ -537,8 +617,11 @@ export default function Stakeout() {
   };
 
   const itemsFoundCount = foundIds.length;
-  const totalItems = scene.items.length;
-  const hintItem = useMemo(() => scene.items.find((it) => it.id === hintTarget), [scene.items, hintTarget]);
+  const totalItems = activeItems.length;
+  const hintItem = useMemo(
+    () => activeItems.find((it) => it.id === hintTarget),
+    [activeItems, hintTarget]
+  );
 
   if (phase === "setup") {
     return (
@@ -728,22 +811,100 @@ export default function Stakeout() {
               willChange: zoom !== 1 ? "transform" : "auto"
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={scene.image}
-              alt={scene.name}
-              draggable={false}
-              style={{
-                display: "block",
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                userSelect: "none",
-                pointerEvents: "none"
-              }}
-            />
+            {scene.type === "composite" ? (
+              // Composite scenes render a CSS noir background until a real
+              // empty-scene image is dropped at scene.image. Items overlay below.
+              <div
+                aria-hidden="true"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  background: scene.image
+                    ? `url(${scene.image}) center/cover`
+                    : `
+                      radial-gradient(ellipse at 50% 28%, rgba(255,193,94,.10), transparent 55%),
+                      radial-gradient(ellipse at 18% 78%, rgba(150,90,40,.18), transparent 60%),
+                      linear-gradient(180deg, #2a1f12 0%, #170d05 100%)
+                    `,
+                  userSelect: "none",
+                  pointerEvents: "none"
+                }}
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={scene.image}
+                alt={scene.name}
+                draggable={false}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  userSelect: "none",
+                  pointerEvents: "none"
+                }}
+              />
+            )}
+
+            {/* Composite items — emoji or PNG overlays positioned by the placer.
+                Stays inside the transform so items zoom + pan with the background.
+                No inverse-scale here: items belong to the scene and should scale. */}
+            {scene.type === "composite" && activeItems.map((item) => {
+              if (foundIds.includes(item.id)) return null;
+              const widthPct = (item.renderPct || SIZE_RENDER_PCT[item.sizeCategory] || 0.07) * 100;
+              const EMOJI_FONT = {
+                tiny: "clamp(14px, 4vw, 32px)",
+                small: "clamp(20px, 6vw, 48px)",
+                medium: "clamp(26px, 8vw, 64px)",
+                large: "clamp(34px, 11vw, 86px)"
+              };
+              return (
+                <div
+                  key={`composite-${item.id}`}
+                  style={{
+                    position: "absolute",
+                    left: `${item.x * 100}%`,
+                    top: `${item.y * 100}%`,
+                    transform: "translate(-50%, -50%)",
+                    width: item.image ? `${widthPct}%` : "auto",
+                    aspectRatio: item.image ? "1 / 1" : undefined,
+                    display: "grid",
+                    placeItems: "center",
+                    pointerEvents: "none",
+                    userSelect: "none"
+                  }}
+                >
+                  {item.image ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={item.image}
+                      alt=""
+                      draggable={false}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        filter: "drop-shadow(0 4px 10px rgba(0,0,0,.55))"
+                      }}
+                    />
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: EMOJI_FONT[item.sizeCategory] || EMOJI_FONT.small,
+                        lineHeight: 1,
+                        filter: "drop-shadow(0 4px 10px rgba(0,0,0,.7))"
+                      }}
+                    >
+                      {item.icon}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+
             {/* Found markers (inverse-scaled to stay constant size on screen) */}
-            {scene.items.map((item) =>
+            {activeItems.map((item) =>
               foundIds.includes(item.id) ? (
                 <div
                   key={`mark-${item.id}`}
@@ -905,7 +1066,7 @@ export default function Stakeout() {
             padding: "8px 4px"
           }}
         >
-          {scene.items.map((item) => {
+          {activeItems.map((item) => {
             const found = foundIds.includes(item.id);
             return (
               <div
