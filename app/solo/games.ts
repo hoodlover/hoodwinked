@@ -71,7 +71,7 @@ export const SOLO_GAMES: SoloGameMeta[] = [
   {
     slug: "the-lookout",
     name: "The Lookout",
-    status: "coming-soon",
+    status: "playable",
     note: "Memory and observation challenges."
   }
 ];

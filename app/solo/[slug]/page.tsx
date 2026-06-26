@@ -8,6 +8,7 @@ import HoodwinkOrDice from "../HoodwinkOrDice";
 import OwnTheHouse from "../OwnTheHouse";
 import SafesAndEvidence from "../SafesAndEvidence";
 import ShellGame from "../ShellGame";
+import TheLookout from "../TheLookout";
 import TheSweep from "../TheSweep";
 import VaultRunner from "../VaultRunner";
 import { findSoloGame, SOLO_GAMES } from "../games";
@@ -23,7 +24,8 @@ const COMPONENTS: ComponentMap = {
   "the-sweep": TheSweep,
   "cipher-sweep": CipherSweep,
   "case-file-blitz": CaseFileBlitz,
-  "vault-runner": VaultRunner
+  "vault-runner": VaultRunner,
+  "the-lookout": TheLookout
 };
 
 export function generateStaticParams() {
