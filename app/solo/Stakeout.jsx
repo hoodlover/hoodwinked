@@ -22,25 +22,50 @@ const C = {
   blue: "#6fb6d8"
 };
 
-// Coordinates are 0..1 percentages of the displayed scene rect.
-// radius is the tap tolerance, also as a percentage of scene width.
-// Hand-calibrated against vault-office.webp (1024x1150 crop of the source image).
+// Scene schema:
+//   id, name, image, aspectRatio ("w / h" string), items
+// Item schema:
+//   id, name, icon (emoji), x, y (0..1 of rect), radius (0..1 of rect width)
+// Radius conventions (per item size):
+//   tiny  (diamond, ring, coin)         -> 0.04-0.05
+//   small (key, paper clip, lighter)    -> 0.05-0.06
+//   med   (wallet, notebook, revolver)  -> 0.06
+//   large (money bag, hat, lantern)     -> 0.07
 const SCENES = [
   {
     id: "vault-office",
     name: "The Bank Manager's Office",
     image: "/stakeout/scenes/vault-office.webp",
+    aspectRatio: "1024 / 1150",
     items: [
-      { id: "diamond", name: "Diamond", icon: "💎", x: 0.24, y: 0.85, radius: 0.07 },
-      { id: "golden-key", name: "Golden Key", icon: "🔑", x: 0.50, y: 0.46, radius: 0.07 },
-      { id: "paper-clip", name: "Paper Clip", icon: "📎", x: 0.70, y: 0.92, radius: 0.06 },
-      { id: "gold-coin", name: "Gold Coin", icon: "🪙", x: 0.89, y: 0.93, radius: 0.06 },
-      { id: "sticky-note", name: "Sticky Note", icon: "📒", x: 0.13, y: 0.83, radius: 0.07 },
+      { id: "diamond", name: "Diamond", icon: "💎", x: 0.24, y: 0.85, radius: 0.05 },
+      { id: "golden-key", name: "Golden Key", icon: "🔑", x: 0.50, y: 0.46, radius: 0.06 },
+      { id: "paper-clip", name: "Paper Clip", icon: "📎", x: 0.70, y: 0.92, radius: 0.05 },
+      { id: "gold-coin", name: "Gold Coin", icon: "🪙", x: 0.89, y: 0.93, radius: 0.05 },
+      { id: "sticky-note", name: "Sticky Note", icon: "📒", x: 0.13, y: 0.83, radius: 0.06 },
       { id: "old-photograph", name: "Old Photo", icon: "🖼️", x: 0.75, y: 0.80, radius: 0.07 },
-      { id: "evidence-tag", name: "Evidence Tag", icon: "🏷️", x: 0.63, y: 0.70, radius: 0.07 },
-      { id: "bull-statue", name: "Bull Statue", icon: "🐂", x: 0.87, y: 0.80, radius: 0.07 },
+      { id: "evidence-tag", name: "Evidence Tag", icon: "🏷️", x: 0.63, y: 0.70, radius: 0.06 },
+      { id: "bull-statue", name: "Bull Statue", icon: "🐂", x: 0.87, y: 0.80, radius: 0.06 },
       { id: "lock-notebook", name: "Lock Notebook", icon: "🔒", x: 0.37, y: 0.80, radius: 0.07 },
-      { id: "money-bag", name: "Money Bag", icon: "💰", x: 0.55, y: 0.32, radius: 0.08 }
+      { id: "money-bag", name: "Money Bag", icon: "💰", x: 0.55, y: 0.32, radius: 0.07 }
+    ]
+  },
+  {
+    id: "detectives-study",
+    name: "Detective's Study",
+    image: "/stakeout/scenes/detectives-study.webp",
+    aspectRatio: "1 / 1",
+    items: [
+      { id: "diamond", name: "Diamond", icon: "💎", x: 0.78, y: 0.86, radius: 0.04 },
+      { id: "golden-key", name: "Golden Key", icon: "🔑", x: 0.54, y: 0.60, radius: 0.06 },
+      { id: "paper-clip", name: "Paper Clip", icon: "📎", x: 0.60, y: 0.90, radius: 0.05 },
+      { id: "gold-coin", name: "Gold Coin", icon: "🪙", x: 0.81, y: 0.88, radius: 0.05 },
+      { id: "sticky-note", name: "Sticky Note (CALL ME)", icon: "📒", x: 0.10, y: 0.93, radius: 0.07 },
+      { id: "old-photograph", name: "Old Photograph", icon: "🖼️", x: 0.08, y: 0.68, radius: 0.07 },
+      { id: "evidence-tag", name: "Evidence Tag (07)", icon: "🏷️", x: 0.30, y: 0.72, radius: 0.05 },
+      { id: "bull-statue", name: "Bull Statue", icon: "🐂", x: 0.83, y: 0.26, radius: 0.06 },
+      { id: "lock-notebook", name: "Combination Notebook", icon: "🔒", x: 0.32, y: 0.84, radius: 0.07 },
+      { id: "money-bag", name: "Money Bag", icon: "💰", x: 0.96, y: 0.93, radius: 0.07 }
     ]
   }
 ];
@@ -412,7 +437,7 @@ export default function Stakeout() {
             position: "relative",
             width: "100%",
             maxWidth: 720,
-            aspectRatio: "1024 / 1150",
+            aspectRatio: scene.aspectRatio || "1 / 1",
             margin: "0 auto",
             borderRadius: 14,
             border: `1px solid ${C.gold}`,
