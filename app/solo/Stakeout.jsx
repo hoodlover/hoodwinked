@@ -103,6 +103,24 @@ const SCENES = [
       { id: "wallet", name: "Wallet", icon: "👛", x: 0.606, y: 0.549, radius: 0.06 },
       { id: "lipstick", name: "Lipstick Tube", icon: "💄", x: 0.693, y: 0.552, radius: 0.05 }
     ]
+  },
+  {
+    id: "speakeasy-backroom",
+    name: "Speakeasy Backroom",
+    image: "/stakeout/scenes/speakeasy-backroom.webp",
+    aspectRatio: "1080 / 1440",
+    items: [
+      { id: "magnifying-glass", name: "Magnifying Glass", icon: "🔍", x: 0.20, y: 0.72, radius: 0.07 },
+      { id: "wallet", name: "Wallet", icon: "👛", x: 0.25, y: 0.83, radius: 0.06 },
+      { id: "gold-coin", name: "Gold Coin", icon: "🪙", x: 0.28, y: 0.93, radius: 0.04 },
+      { id: "diamond", name: "Diamond", icon: "💎", x: 0.49, y: 0.91, radius: 0.04 },
+      { id: "pocket-watch", name: "Pocket Watch", icon: "🕰️", x: 0.53, y: 0.77, radius: 0.06 },
+      { id: "wristwatch", name: "Wristwatch", icon: "⌚", x: 0.69, y: 0.76, radius: 0.06 },
+      { id: "brass-key", name: "Brass Key", icon: "🔑", x: 0.68, y: 0.88, radius: 0.05 },
+      { id: "lipstick", name: "Lipstick Tube", icon: "💄", x: 0.79, y: 0.85, radius: 0.05 },
+      { id: "fountain-pen", name: "Fountain Pen", icon: "🖋️", x: 0.86, y: 0.75, radius: 0.05 },
+      { id: "folded-note", name: "Folded Note", icon: "✉️", x: 0.90, y: 0.88, radius: 0.06 }
+    ]
   }
 ];
 
