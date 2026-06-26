@@ -9,6 +9,7 @@ import HoodwinkOrDice from "../HoodwinkOrDice";
 import OwnTheHouse from "../OwnTheHouse";
 import SafesAndEvidence from "../SafesAndEvidence";
 import ShellGame from "../ShellGame";
+import Stakeout from "../Stakeout";
 import TheLookout from "../TheLookout";
 import TheSweep from "../TheSweep";
 import VaultRunner from "../VaultRunner";
@@ -27,7 +28,8 @@ const COMPONENTS: ComponentMap = {
   "case-file-blitz": CaseFileBlitz,
   "vault-runner": VaultRunner,
   "the-lookout": TheLookout,
-  "alibi-grid": AlibiGrid
+  "alibi-grid": AlibiGrid,
+  "stakeout": Stakeout
 };
 
 export function generateStaticParams() {

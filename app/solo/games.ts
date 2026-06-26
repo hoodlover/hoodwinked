@@ -73,6 +73,12 @@ export const SOLO_GAMES: SoloGameMeta[] = [
     name: "The Lookout",
     status: "playable",
     note: "Memory and observation challenges."
+  },
+  {
+    slug: "stakeout",
+    name: "The Stakeout",
+    status: "playable",
+    note: "Find every piece of evidence in the scene before the clock runs out."
   }
 ];
 
