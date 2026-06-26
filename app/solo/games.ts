@@ -59,7 +59,7 @@ export const SOLO_GAMES: SoloGameMeta[] = [
   {
     slug: "vault-runner",
     name: "Vault Runner",
-    status: "coming-soon",
+    status: "playable",
     note: "Pick the safest path through clues and decoys."
   },
   {

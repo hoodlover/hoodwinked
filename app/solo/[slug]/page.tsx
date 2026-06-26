@@ -9,6 +9,7 @@ import OwnTheHouse from "../OwnTheHouse";
 import SafesAndEvidence from "../SafesAndEvidence";
 import ShellGame from "../ShellGame";
 import TheSweep from "../TheSweep";
+import VaultRunner from "../VaultRunner";
 import { findSoloGame, SOLO_GAMES } from "../games";
 
 type ComponentMap = Record<string, React.ComponentType>;
@@ -21,7 +22,8 @@ const COMPONENTS: ComponentMap = {
   "final-offer": FinalOffer,
   "the-sweep": TheSweep,
   "cipher-sweep": CipherSweep,
-  "case-file-blitz": CaseFileBlitz
+  "case-file-blitz": CaseFileBlitz,
+  "vault-runner": VaultRunner
 };
 
 export function generateStaticParams() {
