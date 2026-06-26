@@ -28,6 +28,11 @@ const REVEAL_AMOUNT_ANIMATION = `
     62% { opacity: 1; transform: translate(-50%, -50%) scale(1.14); }
     100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
+  @keyframes fo-bankrupt-pop {
+    0% { opacity: 0; transform: scale(.4); }
+    55% { opacity: 1; transform: scale(1.12); }
+    100% { opacity: 1; transform: scale(1); }
+  }
 `;
 
 function money(value) {
@@ -44,8 +49,9 @@ function shuffle(values) {
   return copy;
 }
 
-function createCases() {
-  const values = shuffle(VALUES);
+function createCases(fireMode = true) {
+  const sourceValues = fireMode ? VALUES : VALUES.filter((value) => value !== 0);
+  const values = shuffle(sourceValues);
   return values.map((value, index) => ({
     id: index + 1,
     value,
@@ -68,10 +74,11 @@ function calculateOffer(cases, chosenCaseId, difficulty) {
   return Math.max(1, Math.round((average * multiplier * pressure * riskTilt) / 100) * 100);
 }
 
-function createGame(difficulty) {
+function createGame(difficulty, fireMode = true) {
   return {
     difficulty,
-    cases: createCases(),
+    fireMode,
+    cases: createCases(fireMode),
     chosenCaseId: null,
     phase: "choose",
     offer: null,
@@ -165,18 +172,19 @@ function CaseTile({ briefcase, chosen, canOpen, justOpened, onClick }) {
   );
 }
 
-function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCount, acceptedOffer, onAcceptOffer, onRejectOffer }) {
+function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCount, acceptedOffer, onAcceptOffer, onRejectOffer, values }) {
   const openedByValue = new Map(cases.filter((briefcase) => briefcase.opened).map((briefcase) => [briefcase.value, briefcase.id]));
   const chosenCase = cases.find((briefcase) => briefcase.id === chosenCaseId);
   const revealChosen = phase === "done";
   const showOfferActions = phase === "offer";
+  const displayValues = values ?? VALUES;
 
   return (
     <div className="fo-valueboard" style={panelStyle()}>
       <div className="fo-label" style={labelStyle()}>CASE AMOUNTS</div>
       <div className="fo-vb-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 360px)", gap: 16, alignItems: "end" }}>
         <div className="fo-vb-amounts" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))", gap: 8 }}>
-          {VALUES.map((value) => {
+          {displayValues.map((value) => {
             const openedCaseId = openedByValue.get(value);
             const chosen = revealChosen && chosenCase?.value === value;
             return (
@@ -269,15 +277,18 @@ function ValueBoard({ cases, chosenCaseId, phase, offerText, message, openedCoun
 
 export default function FinalOffer() {
   const [difficulty, setDifficulty] = useState("medium");
+  const [fireMode, setFireMode] = useState(true);
   const [game, setGame] = useState(null);
   const [offerText, setOfferText] = useState("Waiting");
+  const activeFireMode = game?.fireMode ?? fireMode;
+  const activeValues = activeFireMode ? VALUES : VALUES.filter((value) => value !== 0);
 
   const sealedCases = useMemo(
-    () => game?.cases.filter((briefcase) => !briefcase.opened).length ?? VALUES.length,
-    [game?.cases]
+    () => game?.cases.filter((briefcase) => !briefcase.opened).length ?? activeValues.length,
+    [game?.cases, activeValues.length]
   );
   const chosenCase = game?.cases.find((briefcase) => briefcase.id === game.chosenCaseId);
-  const casesToOpen = game?.cases.filter((briefcase) => !briefcase.opened && briefcase.id !== game.chosenCaseId).length ?? VALUES.length - 1;
+  const casesToOpen = game?.cases.filter((briefcase) => !briefcase.opened && briefcase.id !== game.chosenCaseId).length ?? activeValues.length - 1;
   const openedCount = game?.cases.filter((briefcase) => briefcase.opened).length ?? 0;
   const lastOpenedCase = game?.cases.find((briefcase) => briefcase.id === game.lastOpenedId);
 
@@ -299,7 +310,7 @@ export default function FinalOffer() {
 
   const start = (chosenDifficulty = difficulty) => {
     setDifficulty(chosenDifficulty);
-    setGame(createGame(chosenDifficulty));
+    setGame(createGame(chosenDifficulty, fireMode));
   };
 
   const chooseCase = (caseId) => {
@@ -485,6 +496,24 @@ export default function FinalOffer() {
           ))}
           <button
             type="button"
+            onClick={() => canPickDifficulty && setFireMode((v) => !v)}
+            disabled={!canPickDifficulty}
+            title={fireMode ? "Fire Mode on — Bankrupt case in play" : "Fire Mode off — no Bankrupt case"}
+            className="fo-diff-btn"
+            style={{
+              border: `1px solid ${fireMode ? "#cf4f45" : C.line}`,
+              background: fireMode ? "linear-gradient(180deg, rgba(207,79,69,.34), rgba(109,23,29,.46))" : "rgba(9,19,14,.5)",
+              color: fireMode ? "#ffd5cf" : C.cream,
+              borderRadius: 8,
+              padding: "10px 12px",
+              fontWeight: 900,
+              cursor: canPickDifficulty ? "pointer" : "default"
+            }}
+          >
+            🔥 Fire {fireMode ? "ON" : "OFF"}
+          </button>
+          <button
+            type="button"
             onClick={() => start(difficulty)}
             className="fo-diff-btn"
             style={{
@@ -519,34 +548,26 @@ export default function FinalOffer() {
         </div>
       </div>
 
-      {lastOpenedCase && (
+      {lastOpenedCase && lastOpenedCase.value !== 0 && (
         <div
           className="fo-reveal-card"
           style={{
-            border: `2px solid ${lastOpenedCase.value === 0 ? "#6d171d" : C.gold}`,
+            border: `2px solid ${C.gold}`,
             borderRadius: 8,
             padding: "16px 18px",
             marginBottom: 16,
-            background: lastOpenedCase.value === 0
-              ? "linear-gradient(180deg, rgba(54,16,21,.96), rgba(26,8,12,.96))"
-              : "rgba(255,193,94,.13)",
+            background: "rgba(255,193,94,.13)",
             textAlign: "center",
-            boxShadow: lastOpenedCase.value === 0
-              ? "0 22px 50px rgba(0,0,0,.72), inset 0 0 0 1px rgba(109,23,29,.72), inset 0 0 34px rgba(109,23,29,.42)"
-              : "0 18px 36px rgba(0,0,0,.28)"
+            boxShadow: "0 18px 36px rgba(0,0,0,.28)"
           }}
         >
           <div style={{ color: C.muted, fontSize: 12, fontWeight: 900, letterSpacing: 1.8 }}>REVEALED CASE {lastOpenedCase.id}</div>
           <div
             style={{
-              color: lastOpenedCase.value === 0 ? "#7b1c22" : C.gold,
+              color: C.gold,
               fontSize: "clamp(34px, 8vw, 72px)",
               fontWeight: 900,
-              lineHeight: 1,
-              textShadow: lastOpenedCase.value === 0
-                ? "0 5px 0 rgba(0,0,0,.95), 0 14px 26px rgba(0,0,0,.98), 0 0 18px rgba(0,0,0,.92)"
-                : "none",
-              WebkitTextStroke: lastOpenedCase.value === 0 ? "2px #4b1015" : "0"
+              lineHeight: 1
             }}
           >
             {money(lastOpenedCase.value)}
@@ -566,6 +587,7 @@ export default function FinalOffer() {
             acceptedOffer={game.acceptedOffer}
             onAcceptOffer={acceptOffer}
             onRejectOffer={rejectOffer}
+            values={activeValues}
           />
         </div>
       )}
@@ -579,11 +601,12 @@ export default function FinalOffer() {
           overflowX: "auto",
           background:
             "radial-gradient(circle at 50% 25%, rgba(255,193,94,.12), transparent 34%), linear-gradient(180deg, rgba(47,86,50,.72), rgba(9,19,14,.82))",
-          marginBottom: 16
+          marginBottom: 16,
+          position: "relative"
         }}
       >
         <div className="fo-case-grid" style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(150px, 1fr))", gap: 14, minWidth: 960 }}>
-          {(game?.cases ?? Array.from({ length: VALUES.length }, (_, index) => ({ id: index + 1, value: 0, opened: false }))).map((briefcase) => {
+          {(game?.cases ?? Array.from({ length: activeValues.length }, (_, index) => ({ id: index + 1, value: 0, opened: false }))).map((briefcase) => {
             const chosen = briefcase.id === game?.chosenCaseId;
             const canOpen = game?.phase === "choose" || (game?.phase === "opening" && !chosen && !briefcase.opened);
             const onClick = game?.phase === "choose" ? () => chooseCase(briefcase.id) : () => openCase(briefcase.id);
@@ -599,6 +622,42 @@ export default function FinalOffer() {
             );
           })}
         </div>
+        {lastOpenedCase && lastOpenedCase.value === 0 && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
+              pointerEvents: "none",
+              zIndex: 10,
+              overflow: "hidden",
+              animation: "fo-bankrupt-pop 720ms cubic-bezier(.22,1.18,.36,1) both"
+            }}
+          >
+            <div
+              style={{
+                transform: "rotate(-20deg)",
+                color: "#ffd5cf",
+                fontSize: "clamp(64px, 14vw, 168px)",
+                fontWeight: 900,
+                lineHeight: 1,
+                letterSpacing: "clamp(4px, 1.2vw, 14px)",
+                whiteSpace: "nowrap",
+                padding: "10px 28px",
+                background: "linear-gradient(180deg, rgba(123,28,34,.92), rgba(54,16,21,.92))",
+                border: "3px solid #ffd5cf",
+                borderRadius: 14,
+                boxShadow: "0 0 0 4px rgba(123,28,34,.32), 0 28px 60px rgba(0,0,0,.78), 0 0 40px rgba(207,79,69,.4)",
+                textShadow: "0 5px 0 rgba(0,0,0,.85), 0 12px 22px rgba(0,0,0,.95)",
+                WebkitTextStroke: "2px #4b1015"
+              }}
+            >
+              BANKRUPT
+            </div>
+          </div>
+        )}
       </div>
 
       {!game && (

@@ -67,32 +67,25 @@ export default async function SoloGamePage({
             flexWrap: "wrap"
           }}
         >
-          <Link
-            href="/solo"
-            style={{
-              color: "#ffc15e",
-              textDecoration: "none",
-              fontWeight: 900,
-              fontSize: 14,
-              letterSpacing: 1,
-              border: "1px solid rgba(255,193,94,.45)",
-              borderRadius: 999,
-              padding: "8px 14px",
-              background: "rgba(9,19,14,.45)"
-            }}
-          >
-            ← Solo cases
+          <Link href="/solo" aria-label="Back to solo cases" style={{ display: "inline-flex", filter: "drop-shadow(0 4px 10px rgba(0,0,0,.42))" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/backtosolo.png"
+              alt="Back to solo cases"
+              width={311}
+              height={46}
+              style={{ height: "clamp(36px, 8vw, 46px)", width: "auto", display: "block" }}
+            />
           </Link>
-          <Link
-            href="/"
-            style={{
-              color: "#b9c7b1",
-              textDecoration: "none",
-              fontWeight: 800,
-              fontSize: 13
-            }}
-          >
-            Hoodwinked
+          <Link href="/" aria-label="Back to Hoodwinked" style={{ display: "inline-flex", filter: "drop-shadow(0 4px 10px rgba(0,0,0,.42))" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/backtomain.png"
+              alt="Back to Hoodwinked"
+              width={1228}
+              height={186}
+              style={{ height: "clamp(36px, 8vw, 46px)", width: "auto", display: "block" }}
+            />
           </Link>
         </nav>
         <Game />

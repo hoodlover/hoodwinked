@@ -1,6 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+
+const UNREVEALED_TILE_BG = `
+  linear-gradient(132deg, transparent 47.5%, rgba(0,0,0,.34) 49.4%, transparent 51.4%) 28% 38%/64% 64% no-repeat,
+  linear-gradient(62deg, transparent 47.5%, rgba(0,0,0,.26) 49.6%, transparent 51.4%) 78% 70%/55% 55% no-repeat,
+  linear-gradient(98deg, transparent 47.5%, rgba(0,0,0,.18) 49.5%, transparent 51.4%) 18% 78%/42% 42% no-repeat,
+  radial-gradient(circle at 24% 28%, rgba(255,255,255,.1), transparent 26%),
+  radial-gradient(circle at 76% 76%, rgba(0,0,0,.28), transparent 30%),
+  linear-gradient(180deg, #9ba49a, #5d665b)
+`;
 
 const SIZE = 10;
 const CELL_COUNT = SIZE * SIZE;
@@ -29,7 +38,7 @@ const C = {
 const NUMBER_COLORS = {
   1: "#6fb6d8",
   2: "#6fb071",
-  3: "#ffc15e",
+  3: "#000000",
   4: "#cf4f45",
   5: "#f07a70",
   6: "#d69af2",
@@ -156,12 +165,41 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
   const showTrap = tile.revealed && tile.trap;
   const showClue = tile.revealed && tile.clue && !tile.trap;
   const image = showTrap ? TRAP_ICONS[tile.index % TRAP_ICONS.length] : showClue ? CLUE_ICONS[tile.index % CLUE_ICONS.length] : null;
+  const longPressTimer = useRef(null);
+  const longPressedRef = useRef(false);
+
+  const clearLongPress = () => {
+    if (longPressTimer.current) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+  const handleTouchStart = (event) => {
+    if (disabled || tile.revealed) return;
+    longPressedRef.current = false;
+    clearLongPress();
+    longPressTimer.current = window.setTimeout(() => {
+      longPressedRef.current = true;
+      onFlag(event);
+    }, 420);
+  };
+  const handleTouchEnd = (event) => {
+    clearLongPress();
+    if (longPressedRef.current) {
+      event.preventDefault();
+      longPressedRef.current = false;
+    }
+  };
 
   return (
     <button
       type="button"
       onClick={onReveal}
       onContextMenu={onFlag}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={clearLongPress}
+      onTouchCancel={clearLongPress}
       disabled={disabled}
       aria-label={`Tile ${row(tile.index) + 1}-${col(tile.index) + 1}${tile.flagged ? " flagged" : ""}`}
       style={{
@@ -177,14 +215,18 @@ function Tile({ tile, disabled, onReveal, onFlag }) {
             : showClue
               ? "linear-gradient(180deg, #fff1b8, #ffc15e)"
               : "linear-gradient(180deg, #d8e5cc, #b8c8ac)"
-          : "linear-gradient(180deg, #9ba49a, #5d665b)",
+          : UNREVEALED_TILE_BG,
         color: showTrap ? "#ffd2ce" : showClue ? C.dark : number ? NUMBER_COLORS[number] : C.dark,
         fontWeight: 900,
         fontSize: showTrap ? 18 : 16,
         cursor: disabled || tile.revealed ? "default" : "pointer",
         boxShadow: tile.revealed ? "inset 0 2px 8px rgba(0,0,0,.18)" : "0 5px 0 #3f473e, 0 10px 18px rgba(0,0,0,.24)",
         transform: tile.revealed ? "translateY(3px)" : "translateY(0)",
-        transition: "transform 120ms ease, box-shadow 120ms ease, background 160ms ease"
+        transition: "transform 120ms ease, box-shadow 120ms ease, background 160ms ease",
+        touchAction: "manipulation",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        WebkitTouchCallout: "none"
       }}
     >
       {image ? (
@@ -351,6 +393,7 @@ export default function TheSweep() {
       }}
     >
       <style>{`
+        .sweep-root .sweep-foot-mobile { display: none; }
         @media (max-width: 640px) {
           .sweep-root { padding: 10px !important; margin-top: 12px !important; }
           .sweep-root .sweep-header { gap: 10px !important; margin-bottom: 10px !important; }
@@ -361,12 +404,15 @@ export default function TheSweep() {
           .sweep-root .sweep-diff-btn { padding: 6px 9px !important; font-size: 12px !important; }
           .sweep-root .sweep-howto { padding: 8px !important; font-size: 11px !important; line-height: 1.35 !important; margin-bottom: 10px !important; }
           .sweep-root .sweep-stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 6px !important; margin-bottom: 10px !important; }
-          .sweep-root .sweep-panel { padding: 6px !important; }
-          .sweep-root .sweep-label { font-size: 9px !important; letter-spacing: .8px !important; margin-bottom: 4px !important; }
-          .sweep-root .sweep-count { font-size: 18px !important; gap: 4px !important; }
-          .sweep-root .sweep-count-icon { width: 22px !important; height: 22px !important; }
-          .sweep-root .sweep-status-text { font-size: 12px !important; margin-top: 2px !important; line-height: 1.2 !important; }
+          .sweep-root .sweep-panel { padding: 5px !important; }
+          .sweep-root .sweep-label { font-size: 9px !important; letter-spacing: .8px !important; margin-bottom: 4px !important; text-align: center; }
+          .sweep-root .sweep-count { font-size: 16px !important; gap: 3px !important; }
+          .sweep-root .sweep-icons-row { gap: 3px !important; }
+          .sweep-root .sweep-count-icon { width: 100% !important; height: 38px !important; max-width: 44px !important; }
+          .sweep-root .sweep-status-text { font-size: 10px !important; margin-top: 2px !important; line-height: 1.15 !important; }
           .sweep-root .sweep-footnote { font-size: 10px !important; }
+          .sweep-root .sweep-foot-desktop { display: none; }
+          .sweep-root .sweep-foot-mobile { display: inline; }
         }
       `}</style>
       <div className="sweep-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
@@ -424,34 +470,40 @@ export default function TheSweep() {
         <div className="sweep-panel" style={panelStyle()}>
           <div className="sweep-label" style={labelStyle()}>TRAPS LEFT</div>
           <div className="sweep-count" style={countBoxStyle()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="sweep-count-icon" src="/the_sweep/trap_1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="sweep-count-icon" src="/the_sweep/trap2.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <div className="sweep-icons-row" style={countIconsRowStyle()}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="sweep-count-icon" src="/the_sweep/trap_1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="sweep-count-icon" src="/the_sweep/trap2.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            </div>
             <span>{stats.trapsLeft}</span>
           </div>
         </div>
         <div className="sweep-panel" style={panelStyle()}>
           <div className="sweep-label" style={labelStyle()}>SAFE TILES</div>
           <div className="sweep-count" style={countBoxStyle()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="sweep-count-icon" src="/the_sweep/clue+1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="sweep-count-icon" src="/the_sweep/clue-3.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <div className="sweep-icons-row" style={countIconsRowStyle()}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="sweep-count-icon" src="/the_sweep/clue+1.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="sweep-count-icon" src="/the_sweep/clue-3.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            </div>
             <span>{stats.safeRevealed} / {stats.safeTotal}</span>
           </div>
         </div>
         <div className="sweep-panel" style={panelStyle()}>
           <div className="sweep-label" style={labelStyle()}>FLAGS</div>
           <div className="sweep-count" style={countBoxStyle()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="sweep-count-icon" src="/the_sweep/marker_flag.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            <div className="sweep-icons-row" style={countIconsRowStyle()}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="sweep-count-icon" src="/the_sweep/marker_flag.webp" alt="" aria-hidden="true" style={countIconStyle()} />
+            </div>
             <span>{stats.flags}</span>
           </div>
         </div>
         <div className="sweep-panel" style={panelStyle()}>
           <div className="sweep-label" style={labelStyle()}>STATUS</div>
-          <div className="sweep-status-text" style={{ color: game?.status === "won" ? C.gold : game?.status === "lost" ? C.trap : C.cream, fontWeight: 900, fontSize: 18, marginTop: 4 }}>
+          <div className="sweep-status-text" style={{ color: game?.status === "won" ? C.gold : game?.status === "lost" ? C.trap : C.cream, fontWeight: 900, fontSize: 13, marginTop: 4, lineHeight: 1.25 }}>
             {game?.message ?? "Pick a difficulty and start the sweep."}
           </div>
         </div>
@@ -496,7 +548,8 @@ export default function TheSweep() {
       </div>
 
       <div className="sweep-footnote" style={{ color: C.muted, fontSize: 12, fontWeight: 800, marginTop: 10 }}>
-        Right-click a tile to flag a suspected red herring.
+        <span className="sweep-foot-desktop">Right-click a tile to flag a suspected red herring.</span>
+        <span className="sweep-foot-mobile">Press and hold a tile to flag a suspected red herring.</span>
       </div>
     </section>
   );
@@ -525,21 +578,35 @@ function countBoxStyle() {
   return {
     color: C.gold,
     fontWeight: 900,
-    fontSize: 30,
+    fontSize: 28,
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
-    gap: 10
+    gap: 6
+  };
+}
+
+function countIconsRowStyle() {
+  return {
+    display: "flex",
+    alignItems: "stretch",
+    justifyContent: "center",
+    gap: 6,
+    width: "100%"
   };
 }
 
 function countIconStyle() {
   return {
-    width: 50,
-    height: 50,
-    objectFit: "cover",
+    width: 72,
+    height: 72,
+    objectFit: "fill",
     borderRadius: 6,
     border: "1px solid rgba(255,193,94,.42)",
-    background: "rgba(251,243,228,.08)"
+    background: "rgba(251,243,228,.08)",
+    flex: "1 1 0",
+    minWidth: 0,
+    maxWidth: 96
   };
 }
 

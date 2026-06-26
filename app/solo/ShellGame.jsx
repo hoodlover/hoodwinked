@@ -45,17 +45,19 @@ function initialGame() {
     prizeCup: null,
     selectedCup: null,
     shuffleStep: 0,
+    arcCupId: null,
     result: null
   };
 }
 
-function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
+function Cup({ cupId, slot, phase, selected, prizeCup, onPick, arcing, shuffleStep }) {
   const reveal = phase === "revealed";
   const clickable = phase === "picking";
   const isPrize = cupId === prizeCup;
   const lifted = (phase === "hiding" && isPrize) || (reveal && (selected || isPrize));
   const slotLeft = `${slot * 33.333 + 16.666}%`;
   const liftY = lifted ? "-30%" : clickable ? "-2.5%" : "0";
+  const arcName = arcing ? (shuffleStep % 2 === 0 ? "monte-arc-a" : "monte-arc-b") : "none";
 
   return (
     <div
@@ -68,7 +70,8 @@ function Cup({ cupId, slot, phase, selected, prizeCup, onPick }) {
         height: 264,
         transform: "translateX(-50%)",
         transition: "left 450ms cubic-bezier(.2,.85,.2,1)",
-        zIndex: lifted ? 3 : 2
+        zIndex: lifted ? 5 : arcing ? 4 : 2,
+        animation: arcing ? `${arcName} 450ms ease-in-out both` : "none"
       }}
     >
       {(phase === "hiding" || reveal) && isPrize && (
@@ -171,8 +174,9 @@ export default function ShellGame() {
         if (current.phase !== "shuffling") return current;
         const [a, b] = nextSwap();
         const order = [...current.order];
+        const arcCupId = Math.random() < 0.5 ? order[a] : order[b];
         [order[a], order[b]] = [order[b], order[a]];
-        return { ...current, order, shuffleStep: current.shuffleStep + 1 };
+        return { ...current, order, shuffleStep: current.shuffleStep + 1, arcCupId };
       });
     }, settings.speed);
 
@@ -187,6 +191,7 @@ export default function ShellGame() {
       prizeCup: randomCup(),
       selectedCup: null,
       shuffleStep: 0,
+      arcCupId: null,
       result: null
     });
   };
@@ -228,6 +233,16 @@ export default function ShellGame() {
       }}
     >
       <style>{`
+        @keyframes monte-arc-a {
+          0% { transform: translate(-50%, 0); }
+          50% { transform: translate(-50%, -28px); }
+          100% { transform: translate(-50%, 0); }
+        }
+        @keyframes monte-arc-b {
+          0% { transform: translate(-50%, 0); }
+          50% { transform: translate(-50%, -28px); }
+          100% { transform: translate(-50%, 0); }
+        }
         @media (max-width: 640px) {
           .monte-root { padding: 10px !important; margin-top: 12px !important; }
           .monte-root .monte-header { gap: 8px !important; margin-bottom: 8px !important; flex-direction: column !important; align-items: stretch !important; }
@@ -368,6 +383,8 @@ export default function ShellGame() {
             selected={game.selectedCup === cupId}
             prizeCup={game.prizeCup}
             onPick={pickCup}
+            arcing={game.arcCupId === cupId && game.phase === "shuffling"}
+            shuffleStep={game.shuffleStep}
           />
         ))}
       </div>

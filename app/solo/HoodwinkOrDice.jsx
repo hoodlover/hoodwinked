@@ -279,6 +279,11 @@ export default function HoodwinkOrDice() {
       }}
     >
       <style>{`
+        @keyframes hod-result-pop {
+          0% { opacity: 0; transform: scale(.55); }
+          55% { opacity: 1; transform: scale(1.16); }
+          100% { opacity: 1; transform: scale(1); }
+        }
         @media (max-width: 640px) {
           .hod-root { padding: 10px !important; margin-top: 12px !important; }
           .hod-root .hod-header { gap: 8px !important; margin-bottom: 10px !important; }
@@ -390,13 +395,45 @@ export default function HoodwinkOrDice() {
       {game && (
         <>
           <div className="hod-dice-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, marginBottom: 16 }}>
-            <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
+            <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)", position: "relative" }}>
               <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>YOUR DICE</div>
               <div className="hod-dice-row" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {game.youDice.map((die, index) => (
                   <Die key={`${die}-${index}`} value={die} hidden={game.turn === "ai" && !reveal} owner="you" />
                 ))}
               </div>
+              {game.phase === "gameover" && (
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "grid",
+                    placeItems: "center",
+                    pointerEvents: "none",
+                    animation: "hod-result-pop 520ms cubic-bezier(.22,1.18,.36,1) both",
+                    zIndex: 5
+                  }}
+                >
+                  <div
+                    style={{
+                      color: game.lives.you > 0 ? C.gold : C.hit,
+                      fontSize: "clamp(34px, 9vw, 64px)",
+                      fontWeight: 900,
+                      letterSpacing: 2,
+                      lineHeight: 1,
+                      padding: "10px 22px",
+                      background: "rgba(9,19,14,.78)",
+                      border: `2px solid ${game.lives.you > 0 ? C.gold : C.hit}`,
+                      borderRadius: 14,
+                      boxShadow: `0 0 0 4px ${game.lives.you > 0 ? "rgba(255,193,94,.18)" : "rgba(207,79,69,.22)"}, 0 18px 36px rgba(0,0,0,.6)`,
+                      textShadow: "0 4px 18px rgba(0,0,0,.85)"
+                    }}
+                  >
+                    {game.lives.you > 0 ? "YOU WON" : "YOU LOSE"}
+                  </div>
+                </div>
+              )}
             </div>
             <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: "rgba(9,19,14,.55)" }}>
               <div className="hod-info-label" style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.3, fontSize: 12, marginBottom: 10 }}>AI DICE</div>
@@ -438,7 +475,7 @@ export default function HoodwinkOrDice() {
               {game.phase === "playing" ? (
                 <>
                   <div className="hod-move-row" style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 12 }}>
-                    <button type="button" onClick={() => setBid({ count: selectedBid.count + 1 })} disabled={game.turn !== "you"} style={controlButton(game.turn === "you")}>
+                    <button type="button" onClick={() => setBid({ count: selectedBid.count >= 10 ? 1 : selectedBid.count + 1 })} disabled={game.turn !== "you"} style={controlButton(game.turn === "you")}>
                       +1 die
                     </button>
                     <button type="button" onClick={() => setBid({ value: selectedBid.value < 6 ? selectedBid.value + 1 : 1, count: selectedBid.value < 6 ? selectedBid.count : selectedBid.count + 1 })} disabled={game.turn !== "you"} style={controlButton(game.turn === "you")}>

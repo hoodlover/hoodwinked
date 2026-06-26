@@ -235,8 +235,8 @@ function SafesGrid({
 }) {
   const mapImage = owner === "player" ? "/a_and_I/jailmap.png" : "/a_and_I/citymap_1.webp";
   const left = remainingPieces(pieces);
-  const showShatter = owner === "player" && status === "lost";
-  const showWin = owner === "player" && status === "won";
+  const showShatter = owner === "ai" && status === "lost";
+  const showWin = owner === "ai" && status === "won";
   return (
     <section className="ai-board-section" style={{ position: "relative" }}>
       <h3 className="ai-board-title" style={{ margin: "0 0 10px", color: C.cream, fontSize: 18, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>

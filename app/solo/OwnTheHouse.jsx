@@ -326,6 +326,12 @@ export default function OwnTheHouse() {
       }}
     >
       <style>{`
+        @keyframes bj-status-flash {
+          0%, 100% { background: rgba(9,19,14,.55); box-shadow: none; }
+          25% { background: rgba(255,193,94,.55); box-shadow: 0 0 0 2px #ffc15e, 0 0 22px rgba(255,193,94,.55); }
+          50% { background: rgba(9,19,14,.55); box-shadow: none; }
+          75% { background: rgba(255,193,94,.55); box-shadow: 0 0 0 2px #ffc15e, 0 0 22px rgba(255,193,94,.55); }
+        }
         @media (max-width: 640px) {
           .bj-root { padding: 10px !important; margin-top: 12px !important; }
           .bj-root .bj-header { gap: 10px !important; margin-bottom: 10px !important; }
@@ -425,7 +431,12 @@ export default function OwnTheHouse() {
             }}
           />
         </div>
-        <div style={panelStyle()}>
+        <div
+          style={{
+            ...panelStyle(),
+            animation: game?.result === "win" || game?.result === "blackjack" ? "bj-status-flash 900ms ease-in-out 1 both" : "none"
+          }}
+        >
           <div className="bj-label" style={labelStyle()}>STATUS</div>
           <div className="bj-status" style={{ color: statusColor, fontWeight: 900, fontSize: 18, marginTop: 6 }}>
             {game?.message ?? "Set your bet and deal."}
