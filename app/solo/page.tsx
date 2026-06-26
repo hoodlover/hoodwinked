@@ -22,10 +22,10 @@ export default function SoloGamesPage() {
             alignItems: "stretch",
             gap: 12,
             marginBottom: 22,
-            flexWrap: "wrap"
+            flexWrap: "nowrap"
           }}
         >
-          <div style={{ minWidth: 0, flex: "1 1 240px" }}>
+          <div style={{ minWidth: 0, flex: "1 1 0" }}>
             <Link href="/" aria-label="Back to Hoodwinked" style={{ display: "inline-flex", filter: "drop-shadow(0 2px 6px rgba(0,0,0,.42))" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -66,8 +66,8 @@ export default function SoloGamesPage() {
             style={{
               width: "auto",
               height: "auto",
-              maxHeight: "min(260px, 36vw)",
-              minHeight: 96,
+              maxWidth: "min(220px, 28vw)",
+              maxHeight: "min(260px, 32vw)",
               alignSelf: "stretch",
               objectFit: "contain",
               flex: "0 0 auto",

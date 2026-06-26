@@ -24,6 +24,7 @@ const C = {
 };
 
 const DOOR_LABELS = ["LEFT", "CENTER", "RIGHT"];
+const DOOR_IMAGES = ["/grassdoor.png", "/metaldoor.png", "/wooddoor.png"];
 const FLOORS_PER_VAULT = 5;
 
 const TIP_TEXTS = {
@@ -92,6 +93,7 @@ function pickRandom(arr) {
 
 function makeFloor(tipHonesty) {
   const doors = shuffle(["safe", "decoy", "trap"]);
+  const doorImages = [0, 1, 2].map(() => pickRandom(DOOR_IMAGES));
   const subject = Math.floor(Math.random() * 3);
   const actualType = doors[subject];
   const honest = Math.random() < tipHonesty;
@@ -102,6 +104,7 @@ function makeFloor(tipHonesty) {
   const text = template.replace("{door}", DOOR_LABELS[subject]);
   return {
     doors,
+    doorImages,
     tip: { subject, claimedType, honest, text }
   };
 }
@@ -493,7 +496,7 @@ export default function VaultRunner() {
                     disabled={isRevealed}
                     style={{
                       position: "relative",
-                      aspectRatio: "112 / 146",
+                      aspectRatio: "2 / 3",
                       borderRadius: 10,
                       border: `2px solid ${borderColor}`,
                       background: "transparent",
@@ -508,7 +511,7 @@ export default function VaultRunner() {
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/door.png"
+                      src={floor.doorImages[idx]}
                       alt=""
                       aria-hidden="true"
                       style={{
@@ -536,15 +539,15 @@ export default function VaultRunner() {
                     <div
                       style={{
                         position: "absolute",
-                        top: 4,
+                        top: 6,
                         left: 0,
                         right: 0,
                         textAlign: "center",
                         color: C.gold,
                         fontWeight: 900,
-                        letterSpacing: 1.4,
-                        fontSize: "clamp(10px, 2.6vw, 12px)",
-                        textShadow: "0 2px 6px rgba(0,0,0,.85)"
+                        letterSpacing: 1.8,
+                        fontSize: "clamp(13px, 3.6vw, 17px)",
+                        textShadow: "0 2px 6px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.8)"
                       }}
                     >
                       {DOOR_LABELS[idx]}
