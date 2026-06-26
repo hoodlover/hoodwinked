@@ -25,8 +25,15 @@ export default function SoloGamesPage() {
           }}
         >
           <div style={{ minWidth: 0, flex: "1 1 240px" }}>
-            <Link href="/" style={{ color: "#b9c7b1", textDecoration: "none", fontWeight: 800, fontSize: 13 }}>
-              ← Back to Hoodwinked
+            <Link href="/" aria-label="Back to Hoodwinked" style={{ display: "inline-flex", filter: "drop-shadow(0 2px 6px rgba(0,0,0,.42))" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/backtomain.png?v=2"
+                alt="Back to Hoodwinked"
+                width={386}
+                height={54}
+                style={{ height: "clamp(20px, 4vw, 26px)", width: "auto", display: "block" }}
+              />
             </Link>
             <h1
               style={{
@@ -42,7 +49,7 @@ export default function SoloGamesPage() {
               Solo Cases
             </h1>
             <p style={{ margin: "6px 0 0", color: "#d9d2bd", fontWeight: 800, letterSpacing: 1.2, fontSize: 13 }}>
-              Tap a case to open it on its own screen.
+              Grab a case and get ready!
             </p>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}

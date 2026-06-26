@@ -70,7 +70,7 @@ export default async function SoloGamePage({
           <Link href="/solo" aria-label="Back to solo cases" style={{ display: "inline-flex", filter: "drop-shadow(0 2px 6px rgba(0,0,0,.42))" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/backtosolo.png"
+              src="/backtosolo.png?v=2"
               alt="Back to solo cases"
               width={404}
               height={51}
@@ -80,7 +80,7 @@ export default async function SoloGamePage({
           <Link href="/" aria-label="Back to Hoodwinked" style={{ display: "inline-flex", filter: "drop-shadow(0 2px 6px rgba(0,0,0,.42))" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/backtomain.png"
+              src="/backtomain.png?v=2"
               alt="Back to Hoodwinked"
               width={386}
               height={54}
