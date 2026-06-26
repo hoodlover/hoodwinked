@@ -67,6 +67,24 @@ const SCENES = [
       { id: "lock-notebook", name: "Combination Notebook", icon: "🔒", x: 0.32, y: 0.84, radius: 0.07 },
       { id: "money-bag", name: "Money Bag", icon: "💰", x: 0.96, y: 0.93, radius: 0.07 }
     ]
+  },
+  {
+    id: "midnight-prowler",
+    name: "Midnight Window Prowler",
+    image: "/stakeout/scenes/midnight-prowler.webp",
+    aspectRatio: "1080 / 1440",
+    items: [
+      { id: "brass-key", name: "Brass Key", icon: "🔑", x: 0.566, y: 0.711, radius: 0.05 },
+      { id: "pocket-watch", name: "Pocket Watch", icon: "🕰️", x: 0.602, y: 0.806, radius: 0.06 },
+      { id: "diamond", name: "Diamond", icon: "💎", x: 0.720, y: 0.634, radius: 0.04 },
+      { id: "revolver", name: "Revolver", icon: "🔫", x: 0.900, y: 0.922, radius: 0.06 },
+      { id: "folded-note", name: "Folded Note", icon: "✉️", x: 0.231, y: 0.896, radius: 0.05 },
+      { id: "cigar", name: "Cigar", icon: "🚬", x: 0.465, y: 0.718, radius: 0.05 },
+      { id: "gold-coin", name: "Gold Coin", icon: "🪙", x: 0.676, y: 0.818, radius: 0.04 },
+      { id: "wristwatch", name: "Wristwatch", icon: "⌚", x: 0.861, y: 0.662, radius: 0.06 },
+      { id: "wallet", name: "Wallet", icon: "👛", x: 0.268, y: 0.938, radius: 0.06 },
+      { id: "lipstick", name: "Lipstick Tube", icon: "💄", x: 0.485, y: 0.949, radius: 0.05 }
+    ]
   }
 ];
 
