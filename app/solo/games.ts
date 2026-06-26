@@ -47,7 +47,7 @@ export const SOLO_GAMES: SoloGameMeta[] = [
   {
     slug: "cipher-sweep",
     name: "Cipher Sweep",
-    status: "coming-soon",
+    status: "playable",
     note: "Decode patterns against a timer."
   },
   {

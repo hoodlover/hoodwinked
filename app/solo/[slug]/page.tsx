@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import CipherSweep from "../CipherSweep";
 import FinalOffer from "../FinalOffer";
 import HoodwinkOrDice from "../HoodwinkOrDice";
 import OwnTheHouse from "../OwnTheHouse";
@@ -17,7 +18,8 @@ const COMPONENTS: ComponentMap = {
   "hoodwink-or-dice": HoodwinkOrDice,
   "the-house-always-lies": OwnTheHouse,
   "final-offer": FinalOffer,
-  "the-sweep": TheSweep
+  "the-sweep": TheSweep,
+  "cipher-sweep": CipherSweep
 };
 
 export function generateStaticParams() {
