@@ -85,6 +85,24 @@ const SCENES = [
       { id: "wallet", name: "Wallet", icon: "👛", x: 0.268, y: 0.938, radius: 0.06 },
       { id: "lipstick", name: "Lipstick Tube", icon: "💄", x: 0.485, y: 0.949, radius: 0.05 }
     ]
+  },
+  {
+    id: "vault-entrance",
+    name: "Vault Entrance",
+    image: "/stakeout/scenes/vault-entrance.webp",
+    aspectRatio: "1080 / 1440",
+    items: [
+      { id: "brass-key", name: "Brass Key", icon: "🔑", x: 0.665, y: 0.551, radius: 0.05 },
+      { id: "pocket-watch", name: "Pocket Watch", icon: "🕰️", x: 0.575, y: 0.548, radius: 0.06 },
+      { id: "diamond", name: "Diamond", icon: "💎", x: 0.705, y: 0.433, radius: 0.04 },
+      { id: "revolver", name: "Revolver", icon: "🔫", x: 0.358, y: 0.578, radius: 0.06 },
+      { id: "folded-note", name: "Folded Note", icon: "✉️", x: 0.544, y: 0.558, radius: 0.05 },
+      { id: "cigar", name: "Cigar", icon: "🚬", x: 0.318, y: 0.431, radius: 0.05 },
+      { id: "gold-coin", name: "Gold Coin", icon: "🪙", x: 0.745, y: 0.423, radius: 0.04 },
+      { id: "wristwatch", name: "Wristwatch", icon: "⌚", x: 0.633, y: 0.547, radius: 0.05 },
+      { id: "wallet", name: "Wallet", icon: "👛", x: 0.606, y: 0.549, radius: 0.06 },
+      { id: "lipstick", name: "Lipstick Tube", icon: "💄", x: 0.693, y: 0.552, radius: 0.05 }
+    ]
   }
 ];
 
