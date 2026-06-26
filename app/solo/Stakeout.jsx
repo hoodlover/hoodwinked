@@ -121,6 +121,24 @@ const SCENES = [
       { id: "fountain-pen", name: "Fountain Pen", icon: "🖋️", x: 0.86, y: 0.75, radius: 0.05 },
       { id: "folded-note", name: "Folded Note", icon: "✉️", x: 0.90, y: 0.88, radius: 0.06 }
     ]
+  },
+  {
+    id: "fireplace-crime-scene",
+    name: "Fireplace Crime Scene",
+    image: "/stakeout/scenes/fireplace-crime-scene.webp",
+    aspectRatio: "1080 / 1440",
+    items: [
+      { id: "pocket-watch", name: "Pocket Watch", icon: "🕰️", x: 0.27, y: 0.67, radius: 0.06 },
+      { id: "diamond", name: "Diamond", icon: "💎", x: 0.35, y: 0.66, radius: 0.04 },
+      { id: "folded-note", name: "Folded Note", icon: "✉️", x: 0.34, y: 0.76, radius: 0.06 },
+      { id: "gold-coin", name: "Gold Coin", icon: "🪙", x: 0.07, y: 0.72, radius: 0.04 },
+      { id: "wristwatch", name: "Wristwatch", icon: "⌚", x: 0.34, y: 0.90, radius: 0.06 },
+      { id: "wallet", name: "Wallet", icon: "👛", x: 0.17, y: 0.86, radius: 0.06 },
+      { id: "lipstick", name: "Lipstick Tube", icon: "💄", x: 0.06, y: 0.82, radius: 0.05 },
+      { id: "brass-key", name: "Brass Key", icon: "🔑", x: 0.44, y: 0.90, radius: 0.05 },
+      { id: "cigar", name: "Cigar", icon: "🚬", x: 0.14, y: 0.57, radius: 0.05 },
+      { id: "revolver", name: "Revolver", icon: "🔫", x: 0.80, y: 0.82, radius: 0.06 }
+    ]
   }
 ];
 
