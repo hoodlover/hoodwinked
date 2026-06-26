@@ -156,6 +156,24 @@ const SCENES = [
       { id: "lipstick", name: "Lipstick Tube", icon: "💄", x: 0.87, y: 0.80, radius: 0.05 },
       { id: "cigar", name: "Cigar", icon: "🚬", x: 0.90, y: 0.83, radius: 0.05 }
     ]
+  },
+  {
+    id: "pawn-shop",
+    name: "Pawn Shop After Hours",
+    image: "/stakeout/scenes/pawn-shop.webp",
+    aspectRatio: "1080 / 1440",
+    items: [
+      { id: "diamond", name: "Diamond", icon: "💎", x: 0.14, y: 0.19, radius: 0.04 },
+      { id: "wallet", name: "Wallet", icon: "👛", x: 0.32, y: 0.56, radius: 0.06 },
+      { id: "cigar", name: "Cigar", icon: "🚬", x: 0.44, y: 0.54, radius: 0.05 },
+      { id: "folded-note", name: "Folded Note", icon: "✉️", x: 0.55, y: 0.56, radius: 0.06 },
+      { id: "magnifying-glass", name: "Magnifying Glass", icon: "🔍", x: 0.43, y: 0.62, radius: 0.07 },
+      { id: "pocket-watch", name: "Pocket Watch", icon: "🕰️", x: 0.19, y: 0.78, radius: 0.06 },
+      { id: "gold-coin", name: "Gold Coin", icon: "🪙", x: 0.47, y: 0.82, radius: 0.04 },
+      { id: "brass-key", name: "Brass Key", icon: "🔑", x: 0.56, y: 0.76, radius: 0.05 },
+      { id: "wristwatch", name: "Wristwatch", icon: "⌚", x: 0.65, y: 0.82, radius: 0.06 },
+      { id: "lipstick", name: "Lipstick Tube", icon: "💄", x: 0.78, y: 0.81, radius: 0.05 }
+    ]
   }
 ];
 
