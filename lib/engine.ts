@@ -28,7 +28,7 @@ export const WHEEL_SOLVE_BONUS = 200;
 export const WHEEL_LETTER_BUDGET = 3; // letters each player may reveal per round
 
 // Family Feud
-export const FEUD_GUESS_SECONDS = 50;
+export const FEUD_GUESS_SECONDS = 75;
 
 export const PROMPTS = [
   "The worst possible name for a new cargo ship",

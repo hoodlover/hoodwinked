@@ -1537,18 +1537,21 @@ function Board({
   }, [state.phase, state.round]);
   const introVisible = state.phase === "writing" && introRound === state.round;
 
+  const dispatchRef = useRef(dispatch);
+  useEffect(() => { dispatchRef.current = dispatch; }, [dispatch]);
+  const feudQ = state.mode === "feud" ? state.feud.questions[state.round - 1] : null;
+  const feudQKey = feudQ ? `${state.roomCode}-${state.round}-${feudQ.id}` : null;
+  const feudPrompt = feudQ?.prompt;
   useEffect(() => {
     if (state.phase !== "writing" || state.mode !== "feud" || state.phaseDeadline) return;
-    const q = state.feud.questions[state.round - 1];
-    if (!q) return;
-    const key = `${state.roomCode}-${state.round}-${q.id}`;
-    if (feudIntroKey.current === key) return;
-    feudIntroKey.current = key;
-    speakFeudAnswer(`Okay... 100 people surveyed... ${q.prompt}`, () => {
-      dispatch({ type: "START_FEUD_COUNTDOWN" });
+    if (!feudQKey || !feudPrompt) return;
+    if (feudIntroKey.current === feudQKey) return;
+    feudIntroKey.current = feudQKey;
+    speakFeudAnswer(`Okay... 100 people surveyed... ${feudPrompt}`, () => {
+      dispatchRef.current({ type: "START_FEUD_COUNTDOWN" });
     });
     return () => stopFeudVoice();
-  }, [state.phase, state.mode, state.phaseDeadline, state.feud.questions, state.round, state.roomCode, dispatch]);
+  }, [state.phase, state.mode, state.phaseDeadline, feudQKey, feudPrompt]);
 
   return (
     <div
@@ -3958,20 +3961,12 @@ function Phone({
     setAvatarDeal(dealAvatars(avatarRef.current));
   }, []);
 
+  // Keep the ref aligned with React state so handlers always see the latest pick.
   useEffect(() => {
-    if (!player || !connected || state.phase === "gameover") return;
-    const selectedAvatar = normalizeAvatarId(avatarRef.current);
-    const roomAvatar = normalizeAvatarId(player.avatar);
-    if (roomAvatar === selectedAvatar) return;
-    if (selectedAvatar === AVATAR_OPTIONS[0].id && roomAvatar !== AVATAR_OPTIONS[0].id) {
-      avatarRef.current = roomAvatar;
-      setAvatar(roomAvatar);
-      saveAvatar(deviceId, roomAvatar);
-      return;
-    }
-    saveAvatar(deviceId, selectedAvatar);
-    dispatch({ type: "JOIN", id: deviceId, name: player.name, avatar: selectedAvatar });
-  }, [connected, deviceId, dispatch, player, state.phase]);
+    avatarRef.current = avatar;
+  }, [avatar]);
+
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const joinWithName = (raw: string) => {
     const trimmed = raw.trim();
@@ -3980,6 +3975,15 @@ function Phone({
     saveName(deviceId, trimmed);
     saveAvatar(deviceId, selectedAvatar);
     dispatch({ type: "JOIN", id: deviceId, name: trimmed, avatar: selectedAvatar });
+  };
+
+  const pickAvatar = (id: string) => {
+    setAvatar(id);
+    avatarRef.current = id;
+    saveAvatar(deviceId, id);
+    if (player && connected) {
+      dispatch({ type: "JOIN", id: deviceId, name: player.name, avatar: id });
+    }
   };
 
   const lastTypingAt = useRef(0);
@@ -4135,10 +4139,7 @@ function Phone({
                 <button
                   key={option.id}
                   type="button"
-                  onClick={() => {
-                    setAvatar(option.id);
-                    avatarRef.current = option.id;
-                  }}
+                  onClick={() => pickAvatar(option.id)}
                   aria-label={`Choose ${option.label} avatar`}
                   title={option.label}
                   style={{
@@ -4183,7 +4184,15 @@ function Phone({
       {player && (
         <div>
           <div className="flex items-center" style={{ gap: 7, marginBottom: 10 }}>
-            <AvatarBadge avatar={player.avatar} color={player.color} size={52} />
+            <button
+              type="button"
+              onClick={() => setPickerOpen((v) => !v)}
+              aria-label={pickerOpen ? "Close avatar picker" : "Change avatar"}
+              title="Change avatar"
+              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
+            >
+              <AvatarBadge avatar={player.avatar} color={player.color} size={52} />
+            </button>
             <span className="body" style={{ color: C.cream, fontWeight: 700, fontSize: 14 }}>
               {player.name}
             </span>
@@ -4192,7 +4201,59 @@ function Phone({
             </span>
           </div>
 
-          {state.phase === "lobby" && (
+          {pickerOpen && state.phase === "lobby" && (
+            <div style={{ marginBottom: 12 }}>
+              <div className="flex items-center justify-between" style={{ margin: "4px 0 8px", gap: 10 }}>
+                <div className="body" style={{ color: C.creamDim, fontSize: 11, fontWeight: 800, letterSpacing: 1.2 }}>
+                  CHANGE AVATAR
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAvatarDeal(dealAvatars(player.avatar))}
+                  className="body"
+                  style={{
+                    border: `1px solid ${C.line}`,
+                    borderRadius: 999,
+                    background: "rgba(255,255,255,.04)",
+                    color: C.creamDim,
+                    cursor: "pointer",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    padding: "4px 8px"
+                  }}
+                >
+                  Shuffle
+                </button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                {avatarDeal.map((option) => {
+                  const selected = player.avatar === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        pickAvatar(option.id);
+                        setPickerOpen(false);
+                      }}
+                      aria-label={`Choose ${option.label} avatar`}
+                      title={option.label}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        padding: 0,
+                        cursor: "pointer"
+                      }}
+                    >
+                      <AvatarBadge avatar={option.id} color={selected ? C.goldDim : C.line} size={72} selected={selected} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {state.phase === "lobby" && !pickerOpen && (
             <div className="body" style={phoneNote}>
               You&apos;re in. Watch the big screen ☝️
             </div>
