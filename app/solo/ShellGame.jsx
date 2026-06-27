@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { readScore, writeScore } from "./scoreStore";
+import { hapticLose, hapticWin } from "./haptics";
 
 const SCORE_SLUG = "three-marks-monte";
 const SCORE_FALLBACK = { wins: 0, losses: 0, streak: 0, bestStreak: 0 };
@@ -210,6 +211,8 @@ export default function ShellGame() {
   const pickCup = (cupId) => {
     if (game.phase !== "picking") return;
     const won = cupId === game.prizeCup;
+    if (won) hapticWin();
+    else hapticLose();
     setScore((currentScore) => {
       const streak = won ? currentScore.streak + 1 : 0;
       const next = {

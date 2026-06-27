@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { readScore, writeScore } from "./scoreStore";
+import { hapticLose, hapticWin } from "./haptics";
 
 const SCORE_SLUG = "hoodwink-or-dice";
 const SCORE_FALLBACK = { matchWins: 0, matchLosses: 0, currentStreak: 0, bestStreak: 0 };
@@ -193,6 +194,8 @@ export default function HoodwinkOrDice() {
     const key = `${youWon ? "w" : "l"}:${game.lives.you}-${game.lives.ai}`;
     if (recordedRef.current === key) return;
     recordedRef.current = key;
+    if (youWon) hapticWin();
+    else hapticLose();
     setCareer((prev) => {
       const streak = youWon ? prev.currentStreak + 1 : 0;
       const next = {

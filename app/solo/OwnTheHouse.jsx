@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { readScore, writeScore } from "./scoreStore";
+import { hapticLose, hapticReveal, hapticWin } from "./haptics";
 
 const SCORE_SLUG = "the-house-always-lies";
 const SCORE_FALLBACK = { balance: 1000, peakBalance: 1000, handsWon: 0, handsLost: 0 };
@@ -235,6 +236,9 @@ export default function OwnTheHouse() {
   }, []);
 
   const persistAfterHand = (nextBalance, result) => {
+    if (result === "win" || result === "blackjack") hapticWin();
+    else if (result === "loss") hapticLose();
+    else hapticReveal();
     setCareer((prev) => {
       const next = {
         balance: nextBalance,

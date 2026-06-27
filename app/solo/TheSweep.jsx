@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { readScore, writeScore } from "./scoreStore";
+import { hapticLose, hapticWin } from "./haptics";
 
 const SCORE_SLUG = "the-sweep";
 const SCORE_FALLBACK = {
@@ -290,6 +291,8 @@ export default function TheSweep() {
     if (recordedRef.current === key) return;
     recordedRef.current = key;
     const youWon = game.status === "won";
+    if (youWon) hapticWin();
+    else hapticLose();
     const diff = game.difficulty;
     setCareer((prev) => {
       const bucket = prev[diff] || { wins: 0, losses: 0, bestStreak: 0 };

@@ -30,6 +30,7 @@ import {
   type State
 } from "@/lib/engine";
 import type { HostAccess } from "@/lib/host-access";
+import { hapticReveal, hapticWin } from "./solo/haptics";
 
 /* ============================================================================
    HOODWINKED — Fool the room. Win the night.
@@ -3926,6 +3927,12 @@ function Phone({
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
             maxLength={14}
+            autoCapitalize="words"
+            autoComplete="nickname"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="go"
+            aria-label="Your display name"
             className="body"
             style={inputStyle}
             onKeyDown={(e) => {
@@ -4446,6 +4453,12 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
                 placeholder="CODE"
                 inputMode="text"
                 autoCapitalize="characters"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                enterKeyHint="go"
+                aria-label="Room code"
+                maxLength={6}
                 className="disp"
                 style={{
                   ...inputStyle,
@@ -4506,6 +4519,14 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
             Use demo mode
           </Link>
           <div style={{ color: C.line, fontSize: 11, fontWeight: 800, letterSpacing: 1.6, marginTop: 10 }}>
+            <Link href="/about" style={{ color: C.line, textDecoration: "none", borderBottom: `1px dotted ${C.line}` }}>
+              About
+            </Link>
+            <span style={{ margin: "0 8px" }}>·</span>
+            <Link href="/privacy" style={{ color: C.line, textDecoration: "none", borderBottom: `1px dotted ${C.line}` }}>
+              Privacy
+            </Link>
+            <span style={{ margin: "0 8px" }}>·</span>
             v{APP_VERSION}
           </div>
         </div>
@@ -4539,9 +4560,9 @@ function LocalParlor() {
     const prev = prevPhase.current;
     prevPhase.current = state.phase;
     if (prev === state.phase) return;
-    if (state.phase === "voting") playLockSound();
-    else if (state.phase === "reveal") playRevealSound();
-    else if (state.phase === "gameover") playWinSound();
+    if (state.phase === "voting") { playLockSound(); hapticReveal(); }
+    else if (state.phase === "reveal") { playRevealSound(); hapticReveal(); }
+    else if (state.phase === "gameover") { playWinSound(); hapticWin(); }
   }, [state.phase]);
 
   const addPhone = () => {
@@ -4943,6 +4964,7 @@ function MultiplayerParlor({
 }) {
   const [state, setState] = useState<State | null>(null);
   const [connected, setConnected] = useState(false);
+  const [showDisconnectOverlay, setShowDisconnectOverlay] = useState(false);
   const [deviceId] = useState(() => getDeviceId());
   const [muted, setMuted] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -4969,6 +4991,102 @@ function MultiplayerParlor({
       // ignore
     }
   }, [muted]);
+
+  /* eslint-disable react-hooks/set-state-in-effect -- syncs overlay visibility to socket connection state */
+  useEffect(() => {
+    if (connected) {
+      setShowDisconnectOverlay(false);
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setShowDisconnectOverlay(true), 10000);
+    return () => window.clearTimeout(timer);
+  }, [connected]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const retryConnection = () => {
+    if (typeof window !== "undefined") window.location.reload();
+  };
+  const leaveRoom = () => {
+    if (typeof window !== "undefined") window.location.href = "/";
+  };
+
+  const disconnectOverlay = showDisconnectOverlay && !connected ? (
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="disconnect-overlay-title"
+      aria-describedby="disconnect-overlay-desc"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        background: "rgba(8,14,11,.82)",
+        backdropFilter: "blur(4px)",
+        display: "grid",
+        placeItems: "center",
+        padding: 18
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 380,
+          width: "100%",
+          background: `linear-gradient(180deg, ${C.surface}, ${C.bgDeep})`,
+          border: `1px solid ${C.line}`,
+          borderRadius: 14,
+          padding: "22px 22px 18px",
+          textAlign: "center",
+          boxShadow: "0 24px 60px rgba(0,0,0,.6)"
+        }}
+      >
+        <div style={{ color: C.coral, fontSize: 11, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>
+          Connection lost
+        </div>
+        <div id="disconnect-overlay-title" className="disp" style={{ color: C.cream, fontSize: 22, fontWeight: 800, lineHeight: 1.2, marginBottom: 8 }}>
+          We can&apos;t reach room {room.toUpperCase()}
+        </div>
+        <div id="disconnect-overlay-desc" className="body" style={{ color: C.creamDim, fontSize: 13, lineHeight: 1.5, marginBottom: 16 }}>
+          You&apos;ve been disconnected for a few seconds. Check your connection, then try again — or leave the room.
+        </div>
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={retryConnection}
+            className="disp"
+            style={{
+              border: `1px solid ${C.gold}`,
+              background: `linear-gradient(180deg, ${C.gold}, ${C.goldDim})`,
+              color: C.bgDeep,
+              borderRadius: 8,
+              padding: "10px 18px",
+              fontWeight: 900,
+              fontSize: 14,
+              cursor: "pointer"
+            }}
+          >
+            Try again
+          </button>
+          <button
+            type="button"
+            onClick={leaveRoom}
+            className="body"
+            style={{
+              border: `1px solid ${C.line}`,
+              background: "rgba(9,19,14,.5)",
+              color: C.cream,
+              borderRadius: 8,
+              padding: "10px 16px",
+              fontWeight: 800,
+              fontSize: 13,
+              cursor: "pointer"
+            }}
+          >
+            Leave room
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   const partyHost =
     process.env.NEXT_PUBLIC_PARTYKIT_HOST ??
@@ -5080,9 +5198,9 @@ function MultiplayerParlor({
     const prev = prevPhase.current;
     prevPhase.current = state.phase;
     if (prev === null || prev === state.phase) return;
-    if (state.phase === "voting") playLockSound();
-    else if (state.phase === "reveal") playRevealSound();
-    else if (state.phase === "gameover") playWinSound();
+    if (state.phase === "voting") { playLockSound(); hapticReveal(); }
+    else if (state.phase === "reveal") { playRevealSound(); hapticReveal(); }
+    else if (state.phase === "gameover") { playWinSound(); hapticWin(); }
   }, [state]);
 
   if (!state) {
@@ -5106,6 +5224,7 @@ function MultiplayerParlor({
             {connected ? "Loading room…" : `Connecting to ${room}…`}
           </div>
         </div>
+        {disconnectOverlay}
       </div>
     );
   }
@@ -5116,6 +5235,7 @@ function MultiplayerParlor({
       style={{ background: C.bg, minHeight: "100vh", padding: "20px 16px 40px" }}
     >
       <style>{FONT_CSS}</style>
+      {disconnectOverlay}
       <div style={{ maxWidth: role === "play" ? 880 : 1320, margin: "0 auto" }}>
         {role !== "play" && (
           <Board state={state} dispatch={dispatch} muted={muted} onToggleMute={() => setMuted((m) => !m)} />

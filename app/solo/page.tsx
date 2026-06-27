@@ -1,5 +1,7 @@
 import Link from "next/link";
 import PlayerNameBadge from "./PlayerNameBadge";
+import SoloCardBadge from "./SoloCardBadge";
+import SoloProgressBanner from "./SoloProgressBanner";
 import { SOLO_GAMES } from "./games";
 
 export default function SoloGamesPage() {
@@ -76,6 +78,8 @@ export default function SoloGamesPage() {
           />
         </header>
 
+        <SoloProgressBanner />
+
         <section
           style={{
             display: "grid",
@@ -143,6 +147,11 @@ export default function SoloGamesPage() {
                   {game.name}
                 </div>
                 <p style={{ position: "relative", color: "#d9d2bd", fontSize: 12, lineHeight: 1.4, margin: 0 }}>{game.note}</p>
+                {playable && (
+                  <div style={{ position: "relative" }}>
+                    <SoloCardBadge slug={game.slug} />
+                  </div>
+                )}
               </article>
             );
 

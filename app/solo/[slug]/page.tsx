@@ -13,6 +13,7 @@ import Stakeout from "../Stakeout";
 import TheLookout from "../TheLookout";
 import TheSweep from "../TheSweep";
 import VaultRunner from "../VaultRunner";
+import SoloErrorBoundary from "../SoloErrorBoundary";
 import { findSoloGame, SOLO_GAMES } from "../games";
 
 type ComponentMap = Record<string, React.ComponentType>;
@@ -100,7 +101,9 @@ export default async function SoloGamePage({
             />
           </Link>
         </nav>
-        <Game />
+        <SoloErrorBoundary gameName={game.name}>
+          <Game />
+        </SoloErrorBoundary>
       </div>
     </main>
   );

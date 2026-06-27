@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
+import { hapticReveal } from "./haptics";
 
 const DIFFICULTIES = {
   easy: { label: "Easy", time: 75, hitBonusSec: 10, missPenaltySec: 2, multiplier: 1 },
@@ -200,6 +201,7 @@ export default function AlibiGrid() {
     advanceTimerRef.current = null;
     setPhase((current) => {
       if (current !== "play") return current;
+      hapticReveal();
       setScore((finalScore) => {
         setPeakStreak((finalPeak) => {
           setBest((prev) => {

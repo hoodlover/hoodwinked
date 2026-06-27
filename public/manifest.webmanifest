@@ -1,23 +1,30 @@
 {
+  "id": "/",
   "name": "Hoodwinked",
   "short_name": "Hoodwinked",
-  "description": "Fool the room. Win the night.",
+  "description": "A party game for the room. Fool the others, vote sharp, and win the night across 6 multiplayer modes and 12 solo cases.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#13201a",
   "theme_color": "#1f3320",
   "orientation": "portrait",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["games", "entertainment"],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/maskable-192x192.png",
@@ -30,6 +37,21 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Solo cases",
+      "short_name": "Solo",
+      "description": "Pick a solo case to play on one device.",
+      "url": "/solo",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "About",
+      "short_name": "About",
+      "url": "/about",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

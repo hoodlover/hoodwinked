@@ -1,0 +1,23 @@
+[
+  {
+    "_NOTES": [
+      "This is the TEMPLATE for Android Trusted Web Activity (TWA) Digital Asset Links.",
+      "Rename this file to 'assetlinks.json' (drop the .example) when you ship to production.",
+      "Before renaming:",
+      "  1. Set 'package_name' to the Play Console package id you registered (typically reverse-DNS, e.g. com.playhoodwinked.twa).",
+      "  2. Replace the sha256_cert_fingerprints entry with the value from Play Console:",
+      "       Play Console > Setup > App integrity > App signing > 'App signing key certificate' > SHA-256 fingerprint.",
+      "  3. Copy the colon-separated hex string EXACTLY as Play Console shows it (uppercase, colons every two chars).",
+      "  4. If you also use upload signing keys with separate fingerprints, add each one to the array.",
+      "Verify live: https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://playhoodwinked.com&relation=delegate_permission/common.handle_all_urls"
+    ],
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.playhoodwinked.twa",
+      "sha256_cert_fingerprints": [
+        "REPLACE:WITH:THE:SHA256:FINGERPRINT:FROM:PLAY:CONSOLE:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99"
+      ]
+    }
+  }
+]

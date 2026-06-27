@@ -4,9 +4,34 @@ body {
   padding: 0;
   background: #1f3320;
   overflow-x: hidden;
+  /* Tap responsiveness on iOS — kills the 300ms click delay. */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  /* Disable selection on UI chrome; individual text elements can opt back in. */
+  -webkit-tap-highlight-color: transparent;
 }
+
+body {
+  /* Reserve space for notches / display cutouts. Inner elements get their
+     padding via clamp(); this keeps content out of the unsafe corners. */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* Allow selection inside text inputs and content-editable surfaces. */
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
 }

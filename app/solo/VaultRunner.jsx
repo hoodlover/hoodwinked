@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
+import { hapticReveal } from "./haptics";
 
 const DIFFICULTIES = {
   easy: { label: "Easy", time: 75, lives: 5, tipHonesty: 0.9, safeBonusSec: 2, decoyPenaltySec: 3, multiplier: 1 },
@@ -147,6 +148,7 @@ export default function VaultRunner() {
     advanceTimerRef.current = null;
     setPhase((current) => {
       if (current !== "play") return current;
+      hapticReveal();
       setScore((finalScore) => {
         setDepth((finalDepth) => {
           setBest((prev) => {

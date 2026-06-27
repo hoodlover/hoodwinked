@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
+import { hapticReveal } from "./haptics";
 
 const DIFFICULTIES = {
   easy: { label: "Easy", time: 75, bonusSec: 3, penaltySec: 0, multiplier: 1 },
@@ -161,6 +162,7 @@ export default function CaseFileBlitz() {
     advanceTimerRef.current = null;
     setPhase((current) => {
       if (current !== "play") return current;
+      hapticReveal();
       setScore((finalScore) => {
         setCorrectCount((correctTally) => {
           setBest((prev) => {

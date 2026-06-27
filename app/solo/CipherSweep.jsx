@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
+import { hapticReveal } from "./haptics";
 
 const DIFFICULTIES = {
   easy: { label: "Easy", time: 60, minLen: 3, maxLen: 4, maxShift: 6, hitBonus: 2, missPenalty: 2, multiplier: 1 },
@@ -123,6 +124,7 @@ export default function CipherSweep() {
     tickRef.current = null;
     setPhase((current) => {
       if (current !== "play") return current;
+      hapticReveal();
       setScore((finalScore) => {
         setBest((prev) => {
           const prior = prev[difficulty] || 0;

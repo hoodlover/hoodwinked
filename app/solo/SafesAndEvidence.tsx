@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { readScore, writeScore } from "./scoreStore";
+import { hapticLose, hapticWin } from "./haptics";
 
 const SCORE_SLUG = "alibis-informants";
 const SCORE_FALLBACK = { wins: 0, losses: 0, currentStreak: 0, bestStreak: 0 };
@@ -423,6 +424,8 @@ export default function SafesAndEvidence() {
     if (recordedRef.current === key) return;
     recordedRef.current = key;
     const youWon = game.status === "won";
+    if (youWon) hapticWin();
+    else hapticLose();
     setCareer((prev) => {
       const streak = youWon ? prev.currentStreak + 1 : 0;
       const next = {

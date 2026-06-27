@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PlayerNameBadge from "./PlayerNameBadge";
 import { readPlayerName, readScore, writeScore } from "./scoreStore";
+import { hapticReveal } from "./haptics";
 import { ITEM_LIBRARY, SIZE_HIT_RADIUS, SIZE_RENDER_PCT } from "./stakeout-items";
 
 const DIFFICULTIES = {
@@ -332,6 +333,7 @@ export default function Stakeout() {
     tickRef.current = null;
     setPhase((current) => {
       if (current !== "play") return current;
+      hapticReveal();
       setScore((finalScore) => {
         setScenesCleared((finalCleared) => {
           setBest((prev) => {

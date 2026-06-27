@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { readScore, writeScore } from "./scoreStore";
+import { hapticDanger, hapticReveal, hapticWin } from "./haptics";
 
 const SCORE_SLUG = "final-offer";
 const SCORE_FALLBACK = { easy: 0, medium: 0, hard: 0, biggest: 0 };
@@ -304,6 +305,9 @@ export default function FinalOffer() {
     const key = `${game.difficulty}:${payout}`;
     if (recordedRef.current === key) return;
     recordedRef.current = key;
+    if (payout === 0) hapticDanger();
+    else if (payout >= 100000) hapticWin();
+    else hapticReveal();
     setCareer((prev) => {
       const prior = prev[game.difficulty] || 0;
       if (payout <= prior && payout <= prev.biggest) return prev;
