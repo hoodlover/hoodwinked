@@ -126,6 +126,7 @@ export const COLORS = [
   "#C89B5A", "#7FA16B", "#B46A4C", "#6F8F87",
   "#A88B55", "#8B6F47", "#7D8F5B", "#A76D64"
 ];
+export const DEFAULT_PLAYER_AVATAR = "01-victoria";
 
 /* ---- CONTENT: TRIVIA ----------------------------------------------------- */
 export type TriviaQuestion = {
@@ -1040,7 +1041,7 @@ export type QuipPrompt = {
 export type Player = {
   id: string;
   name: string;
-  avatar?: string;
+  avatar: string;
   color: string;
   score: number;
 };
@@ -1414,7 +1415,7 @@ export function reducer(state: State, action: Action): State {
       if (state.phase === "gameover") return state;
       const existing = state.players[action.id];
       const trimmedName = action.name.trim() || "Player";
-      const trimmedAvatar = action.avatar?.trim().slice(0, 32);
+      const trimmedAvatar = action.avatar?.trim().slice(0, 32) || existing?.avatar || DEFAULT_PLAYER_AVATAR;
       if (existing) {
         // Re-JOIN with the same device — let the player update their name and
         // avatar while preserving color and score. Without this, an avatar

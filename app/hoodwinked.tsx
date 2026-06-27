@@ -4507,7 +4507,7 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
   const join = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!cleanJoinCode) return;
-    window.location.href = `/${cleanJoinCode}`;
+    window.location.href = `/join/${cleanJoinCode}`;
   };
   return (
     <div
@@ -5000,16 +5000,17 @@ function LocalParlor() {
   );
 }
 
-function HostJoinCard({ room, connected }: { room: string; connected: boolean }) {
+function HostJoinCard({ room, connected, hostToken }: { room: string; connected: boolean; hostToken: string | null }) {
   const [origin] = useState(() =>
     typeof window === "undefined" ? "" : window.location.origin
   );
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [copiedBoard, setCopiedBoard] = useState(false);
-  const joinUrl = origin ? `${origin}/${room}` : "";
+  const hostQuery = hostToken ? `?host=${encodeURIComponent(hostToken)}` : "";
+  const joinUrl = origin ? `${origin}/play/${room}` : "";
   const phoneUrl = origin ? `${origin}/join/${room}` : "";
-  const boardUrl = origin ? `${origin}/room/${room}` : "";
+  const boardUrl = origin ? `${origin}/room/${room}${hostQuery}` : "";
   const qrTarget = phoneUrl || joinUrl;
   const copyJoinUrl = () => {
     if (!joinUrl || typeof navigator === "undefined" || !navigator.clipboard) return;
@@ -5103,7 +5104,7 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
           Remote players can open this on a computer and enter <b style={{ color: C.cream, letterSpacing: 2 }}>{room}</b>
         </div>
         <code style={{ color: C.cream, fontSize: 11, wordBreak: "break-all" }}>
-          {joinUrl || `/${room}`}
+          {joinUrl || `/play/${room}`}
         </code>
         <div className="body" style={{ color: C.creamDim, fontSize: 12, marginTop: 10 }}>
           Phone-only controller:
@@ -5115,7 +5116,7 @@ function HostJoinCard({ room, connected }: { room: string; connected: boolean })
           Board screen for another computer:
         </div>
         <code style={{ color: C.cream, fontSize: 11, wordBreak: "break-all" }}>
-          {boardUrl || `/room/${room}`}
+          {boardUrl || `/room/${room}${hostQuery}`}
         </code>
         <div className="flex flex-wrap" style={{ gap: 8, marginTop: 10 }}>
           <button onClick={copyJoinUrl} className="body" style={devBtn} disabled={!joinUrl}>
@@ -5547,7 +5548,7 @@ function MultiplayerParlor({
             </div>
           </>
         )}
-        {role === "host" && <HostJoinCard room={room} connected={connected} />}
+        {role === "host" && <HostJoinCard room={room} connected={connected} hostToken={effectiveHostToken} />}
       </div>
     </div>
   );

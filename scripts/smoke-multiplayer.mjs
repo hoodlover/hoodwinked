@@ -25,7 +25,7 @@ function makeClient(label) {
   });
   return {
     label,
-    send: (action) => ws.send(JSON.stringify({ type: "ACTION", action })),
+    send: (action, hostToken) => ws.send(JSON.stringify({ type: "ACTION", action, hostToken })),
     close: () => ws.close(),
     next: (predicate, timeoutMs = 1500) =>
       new Promise((resolve, reject) => {
@@ -66,6 +66,7 @@ async function sleep(ms) {
 const stateMsg = (m) => m.type === "STATE";
 
 async function main() {
+  const hostToken = `host-${Math.random().toString(36).slice(2)}`;
   const a = makeClient("A");
   const b = makeClient("B");
 
@@ -78,15 +79,27 @@ async function main() {
   assertEq("B sees lobby phase", initB.state.phase, "lobby");
 
   console.log("\n▸ JOIN flow");
-  a.send({ type: "JOIN", id: "alice", name: "Alice" });
+  a.send({ type: "JOIN", id: "alice", name: "Alice", avatar: "03-bram" });
   const aliceJoined = await b.next((m) => stateMsg(m) && m.state.players.alice);
   assertEq("B receives alice joined", aliceJoined.state.players.alice.name, "Alice");
-  b.send({ type: "JOIN", id: "bob", name: "Bob" });
+  assertEq("B receives alice avatar", aliceJoined.state.players.alice.avatar, "03-bram");
+  b.send({ type: "JOIN", id: "bob", name: "Bob", avatar: "10-agatha" });
   const bothJoined = await a.next((m) => stateMsg(m) && m.state.players.bob);
   assertEq("A receives bob joined", Object.keys(bothJoined.state.players).sort(), ["alice", "bob"]);
+  assertEq("A receives bob avatar", bothJoined.state.players.bob.avatar, "10-agatha");
 
   console.log("\n▸ START_GAME");
-  a.send({ type: "START_GAME" });
+  a.send({ type: "SET_MODE", mode: "classic" }, hostToken);
+  const modeSelected = await b.next((m) => stateMsg(m) && m.state.modeSelected);
+  assertEq("B sees selected classic mode", modeSelected.state.mode, "classic");
+  b.send({ type: "START_GAME" });
+  try {
+    await b.next((m) => stateMsg(m) && m.state.phase === "writing", 150);
+    assertEq("Unauthenticated start is ignored", "writing", "lobby");
+  } catch {
+    assertEq("Unauthenticated start is ignored", "lobby", "lobby");
+  }
+  a.send({ type: "START_GAME" }, hostToken);
   const started = await b.next((m) => stateMsg(m) && m.state.phase === "writing");
   assertEq("B sees writing phase", started.state.phase, "writing");
   assertEq("B sees round 1", started.state.round, 1);
@@ -116,6 +129,7 @@ async function main() {
   a.close();
   b.close();
   await sleep(150);
+  process.exit(process.exitCode ?? 0);
 }
 
 main().catch((e) => {
