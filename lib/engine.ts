@@ -127,6 +127,16 @@ export const COLORS = [
   "#A88B55", "#8B6F47", "#7D8F5B", "#A76D64"
 ];
 export const DEFAULT_PLAYER_AVATAR = "01-victoria";
+export function normalizeAvatarId(avatar?: string | null): string {
+  const cleaned = avatar
+    ?.trim()
+    .replace(/\\/g, "/")
+    .split("/")
+    .pop()
+    ?.replace(/\.(webp|png|jpg|jpeg)$/i, "")
+    .slice(0, 32);
+  return cleaned || DEFAULT_PLAYER_AVATAR;
+}
 
 /* ---- CONTENT: TRIVIA ----------------------------------------------------- */
 export type TriviaQuestion = {
@@ -1307,7 +1317,7 @@ export function makeInitialState(): State {
     giveUps: {},
     nextReady: {},
     mode: "classic",
-    modeSelected: false,
+    modeSelected: true,
     quipPrompts: [],
     quipIndex: 0,
     quipVotes: {},
@@ -1415,7 +1425,7 @@ export function reducer(state: State, action: Action): State {
       if (state.phase === "gameover") return state;
       const existing = state.players[action.id];
       const trimmedName = action.name.trim() || "Player";
-      const trimmedAvatar = action.avatar?.trim().slice(0, 32) || existing?.avatar || DEFAULT_PLAYER_AVATAR;
+      const trimmedAvatar = normalizeAvatarId(action.avatar || existing?.avatar);
       if (existing) {
         // Re-JOIN with the same device — let the player update their name and
         // avatar while preserving color and score. Without this, an avatar
@@ -1462,7 +1472,6 @@ export function reducer(state: State, action: Action): State {
 
     case "START_GAME": {
       const ids = joinedIds(state);
-      if (!state.modeSelected) return state;
       if (ids.length < minPlayers(state.mode)) return state;
       return startRound(state, 1);
     }

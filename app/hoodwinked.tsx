@@ -19,6 +19,7 @@ import {
   makeInitialState,
   makeRoomCode,
   matchesAnswer,
+  normalizeAvatarId,
   reducer,
   wheelCanGuessLetter,
   wheelLettersSpent,
@@ -307,14 +308,14 @@ function readSavedAvatars(): Record<string, string> {
 }
 
 function readSavedAvatar(deviceId: string): string {
-  return readSavedAvatars()[deviceId] ?? AVATAR_OPTIONS[0].id;
+  return normalizeAvatarId(readSavedAvatars()[deviceId]);
 }
 
 function saveAvatar(deviceId: string, avatar: string) {
   if (typeof window === "undefined") return;
   try {
     const all = readSavedAvatars();
-    all[deviceId] = avatar;
+    all[deviceId] = normalizeAvatarId(avatar);
     localStorage.setItem(AVATARS_KEY, JSON.stringify(all));
   } catch {
     // localStorage unavailable - silently ignore
@@ -645,7 +646,8 @@ function AvatarBadge({
   size?: number;
   selected?: boolean;
 }) {
-  const option = AVATAR_OPTIONS.find((a) => a.id === avatar) ?? AVATAR_OPTIONS[0];
+  const avatarId = normalizeAvatarId(avatar);
+  const option = AVATAR_OPTIONS.find((a) => a.id === avatarId) ?? AVATAR_OPTIONS[0];
   return (
     <span
       aria-hidden
@@ -1744,7 +1746,7 @@ function Board({
             >
               {ALL_MODES.map((m) => {
                 const info = MODE_INFO[m];
-                const active = state.modeSelected && state.mode === m;
+                const active = state.mode === m;
                 return (
                   <button
                     key={m}
@@ -1808,7 +1810,7 @@ function Board({
             </div>
             {(() => {
               const min = MODE_INFO[state.mode].min;
-              const enabled = state.modeSelected && players.length >= min;
+              const enabled = players.length >= min;
               return (
                 <button
                   onClick={() => dispatch({ type: "START_GAME" })}
@@ -1816,7 +1818,7 @@ function Board({
                   className="disp"
                   style={hostBtn(enabled)}
                 >
-                  {!state.modeSelected ? "Choose a game" : enabled ? "Start the show" : `Need ${min}+ players`}
+                  {enabled ? "Start the show" : `Need ${min}+ players`}
                 </button>
               );
             })()}
@@ -3955,6 +3957,21 @@ function Phone({
   useEffect(() => {
     setAvatarDeal(dealAvatars(avatarRef.current));
   }, []);
+
+  useEffect(() => {
+    if (!player || !connected || state.phase === "gameover") return;
+    const selectedAvatar = normalizeAvatarId(avatarRef.current);
+    const roomAvatar = normalizeAvatarId(player.avatar);
+    if (roomAvatar === selectedAvatar) return;
+    if (selectedAvatar === AVATAR_OPTIONS[0].id && roomAvatar !== AVATAR_OPTIONS[0].id) {
+      avatarRef.current = roomAvatar;
+      setAvatar(roomAvatar);
+      saveAvatar(deviceId, roomAvatar);
+      return;
+    }
+    saveAvatar(deviceId, selectedAvatar);
+    dispatch({ type: "JOIN", id: deviceId, name: player.name, avatar: selectedAvatar });
+  }, [connected, deviceId, dispatch, player, state.phase]);
 
   const joinWithName = (raw: string) => {
     const trimmed = raw.trim();
