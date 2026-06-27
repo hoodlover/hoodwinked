@@ -1412,7 +1412,26 @@ export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "JOIN": {
       if (state.phase === "gameover") return state;
-      if (state.players[action.id]) return state;
+      const existing = state.players[action.id];
+      const trimmedName = action.name.trim() || "Player";
+      const trimmedAvatar = action.avatar?.trim().slice(0, 32);
+      if (existing) {
+        // Re-JOIN with the same device — let the player update their name and
+        // avatar while preserving color and score. Without this, an avatar
+        // picked AFTER the first JOIN never propagates to the room.
+        if (existing.name === trimmedName && existing.avatar === trimmedAvatar) return state;
+        return {
+          ...state,
+          players: {
+            ...state.players,
+            [action.id]: {
+              ...existing,
+              name: trimmedName,
+              avatar: trimmedAvatar
+            }
+          }
+        };
+      }
       const color = COLORS[Object.keys(state.players).length % COLORS.length];
       return {
         ...state,
@@ -1420,8 +1439,8 @@ export function reducer(state: State, action: Action): State {
           ...state.players,
           [action.id]: {
             id: action.id,
-            name: action.name.trim() || "Player",
-            avatar: action.avatar?.trim().slice(0, 32),
+            name: trimmedName,
+            avatar: trimmedAvatar,
             color,
             score: 0
           }

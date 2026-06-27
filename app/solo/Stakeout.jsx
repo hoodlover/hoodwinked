@@ -428,6 +428,10 @@ export default function Stakeout() {
   const runHitTest = (xPct, yPct, rect) => {
     if (phase !== "play") return;
     if (!rect) return;
+    // Scene already cleared and we're animating to the next one — swallow taps
+    // so the user can't lose time to a phantom miss penalty during the 1.6s
+    // transition window between this scene and the next.
+    if (foundIds.length >= activeItems.length) return;
     // Find which (unfound) item we hit, if any
     const aspect = rect.width / rect.height;
     let hitItem = null;

@@ -505,6 +505,7 @@ export default function FinalOffer() {
           .fo-root .fo-case-tile { min-height: 92px !important; padding: 4px !important; }
           .fo-root .fo-case-tile img { max-height: 74px !important; }
           .fo-root .fo-case-tile span:last-child { font-size: 8px !important; letter-spacing: .6px !important; }
+          .fo-root .fo-bankrupt-banner { font-size: clamp(32px, 11vw, 48px) !important; letter-spacing: 2px !important; padding: 8px 14px !important; border-width: 2px !important; max-width: 86% !important; }
         }
       `}</style>
       <div className="fo-header" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 14 }}>
@@ -704,15 +705,17 @@ export default function FinalOffer() {
             }}
           >
             <div
+              className="fo-bankrupt-banner"
               style={{
                 transform: "rotate(-20deg)",
                 color: "#ffd5cf",
-                fontSize: "clamp(64px, 14vw, 168px)",
+                fontSize: "clamp(40px, 12vw, 168px)",
                 fontWeight: 900,
                 lineHeight: 1,
-                letterSpacing: "clamp(4px, 1.2vw, 14px)",
+                letterSpacing: "clamp(2px, 1vw, 14px)",
                 whiteSpace: "nowrap",
-                padding: "10px 28px",
+                padding: "10px 22px",
+                maxWidth: "92%",
                 background: "linear-gradient(180deg, rgba(123,28,34,.92), rgba(54,16,21,.92))",
                 border: "3px solid #ffd5cf",
                 borderRadius: 14,

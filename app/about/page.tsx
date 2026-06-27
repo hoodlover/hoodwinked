@@ -13,7 +13,8 @@ const C = {
   coral: "#cf4f45"
 };
 
-const APP_VERSION = "0.3.21";
+// Surfaced from package.json via next.config.ts -> env.NEXT_PUBLIC_APP_VERSION.
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0";
 
 const FIXED_KEYS = ["parlor:names", "parlor:avatars", "parlor:muted", "parlor:deviceId"];
 const KEY_PREFIXES = ["hoodwinked:host:", "hoodwinked.solo."];
@@ -134,6 +135,11 @@ export default function AboutPage() {
               "With friends: the host taps Host a room, shares the 5-letter room code, and everyone else enters it at playhoodwinked.com from their own device."
             ]}
           />
+          <p style={{ marginTop: 10 }}>
+            <Link href="/?welcome=1" style={{ color: C.gold }}>
+              Show the welcome tour again →
+            </Link>
+          </p>
         </Section>
 
         <Section title="Privacy and your data">

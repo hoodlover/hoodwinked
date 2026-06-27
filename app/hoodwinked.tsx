@@ -31,6 +31,7 @@ import {
 } from "@/lib/engine";
 import type { HostAccess } from "@/lib/host-access";
 import { hapticReveal, hapticWin } from "./solo/haptics";
+import WelcomeIntro from "./WelcomeIntro";
 
 /* ============================================================================
    HOODWINKED — Fool the room. Win the night.
@@ -69,7 +70,9 @@ const C = {
 const HEAVY_TEXT_SHADOW = "0 8px 18px rgba(0,0,0,.72), 0 14px 34px rgba(0,0,0,.58), 0 0 10px rgba(0,0,0,.68)";
 
 const PLAY_URL = "playhoodwinked.com";
-const APP_VERSION = "0.3.21";
+// Surfaced from package.json via next.config.ts -> env.NEXT_PUBLIC_APP_VERSION.
+// Fallback "0.0.0" only protects SSR if the env var is missing at build time.
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0";
 
 const AVATAR_FILES = [
   "01-victoria.webp",
@@ -321,6 +324,7 @@ function saveAvatar(deviceId: string, avatar: string) {
 /* ---- AUDIO --------------------------------------------------------------- */
 let audioCtx: AudioContext | null = null;
 let audioMuted = false;
+let audioVolume = 1; // 0..1 scalar applied on top of per-sound gain
 let currentVoiceAudio: HTMLAudioElement | null = null;
 const VOICE_FETCH_TIMEOUT_MS = 12_000;
 const VOICE_FALLBACK_TIMEOUT_MS = 8_000;
@@ -337,6 +341,11 @@ function stopFeudVoice() {
 const setAudioMuted = (v: boolean) => {
   audioMuted = v;
 };
+
+const setAudioVolume = (v: number) => {
+  audioVolume = Math.max(0, Math.min(1, Number.isFinite(v) ? v : 1));
+  if (currentVoiceAudio) currentVoiceAudio.volume = audioVolume;
+};
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (!audioCtx) {
@@ -350,7 +359,7 @@ function getCtx(): AudioContext | null {
 }
 
 function playTone(freq: number, start: number, dur: number, type: OscillatorType = "sine", gain = 0.16) {
-  if (audioMuted) return;
+  if (audioMuted || audioVolume <= 0) return;
   const ctx = getCtx();
   if (!ctx) return;
   const t0 = ctx.currentTime + start;
@@ -358,8 +367,9 @@ function playTone(freq: number, start: number, dur: number, type: OscillatorType
   const env = ctx.createGain();
   osc.type = type;
   osc.frequency.setValueAtTime(freq, t0);
+  const peak = gain * audioVolume;
   env.gain.setValueAtTime(0, t0);
-  env.gain.linearRampToValueAtTime(gain, t0 + 0.01);
+  env.gain.linearRampToValueAtTime(peak, t0 + 0.01);
   env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   osc.connect(env).connect(ctx.destination);
   osc.start(t0);
@@ -392,7 +402,7 @@ function speakBrowserVoice(text: string, onDone: () => void) {
     };
   })();
 
-  if (audioMuted || typeof window === "undefined" || !("speechSynthesis" in window)) {
+  if (audioMuted || audioVolume <= 0 || typeof window === "undefined" || !("speechSynthesis" in window)) {
     window.setTimeout(onDone, 650);
     return;
   }
@@ -400,7 +410,7 @@ function speakBrowserVoice(text: string, onDone: () => void) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.92;
     utterance.pitch = 0.9;
-    utterance.volume = 0.95;
+    utterance.volume = 0.95 * audioVolume;
     const fallbackTimer = window.setTimeout(finishOnce, Math.max(VOICE_FALLBACK_TIMEOUT_MS, text.length * 65));
     const finish = () => {
       window.clearTimeout(fallbackTimer);
@@ -438,6 +448,7 @@ async function speakFeudAnswer(text: string, onDone: () => void) {
     const blob = await response.blob();
     const src = URL.createObjectURL(blob);
     const audio = new Audio(src);
+    audio.volume = audioVolume;
     currentVoiceAudio = audio;
     const finishOnce = (() => {
       let done = false;
@@ -1299,17 +1310,178 @@ function BrandLogo({
   );
 }
 
+function GoogleGlyph({ size = 18 }: { size?: number }) {
+  // Official multi-color "G" mark. Inline SVG keeps the brand asset off the
+  // network and avoids cache invalidation when we redeploy.
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      role="img"
+      aria-hidden="true"
+      style={{ flex: "0 0 auto" }}
+    >
+      <path
+        fill="#FFC107"
+        d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+      />
+      <path
+        fill="#FF3D00"
+        d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+      />
+    </svg>
+  );
+}
+
+function AudioControl({
+  muted,
+  onToggleMute,
+  volume,
+  onVolumeChange,
+  className,
+  iconSize = 16
+}: {
+  muted: boolean;
+  onToggleMute: () => void;
+  volume: number;
+  onVolumeChange: (next: number) => void;
+  className?: string;
+  iconSize?: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handler = (event: MouseEvent | TouchEvent) => {
+      const node = wrapperRef.current;
+      if (!node) return;
+      if (event.target instanceof Node && !node.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, [open]);
+
+  const pct = Math.round(volume * 100);
+  const effectivelyMuted = muted || volume <= 0;
+
+  return (
+    <div
+      ref={wrapperRef}
+      className={className}
+      style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-label="Sound settings"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        title="Sound settings"
+        suppressHydrationWarning
+        style={{
+          background: "none",
+          border: "none",
+          color: effectivelyMuted ? C.creamDim : C.gold,
+          cursor: "pointer",
+          fontSize: iconSize,
+          padding: 4,
+          lineHeight: 1,
+          display: "inline-flex",
+          alignItems: "center"
+        }}
+      >
+        <span suppressHydrationWarning>{effectivelyMuted ? "🔇" : "🔊"}</span>
+      </button>
+      {open && (
+        <div
+          role="dialog"
+          aria-label="Sound settings"
+          style={{
+            position: "absolute",
+            top: "calc(100% + 6px)",
+            right: 0,
+            zIndex: 60,
+            minWidth: 220,
+            padding: 12,
+            borderRadius: 10,
+            background: `linear-gradient(180deg, ${C.surface}, ${C.bgDeep})`,
+            border: `1px solid ${C.line}`,
+            boxShadow: "0 18px 36px rgba(0,0,0,.45)"
+          }}
+        >
+          <div style={{ color: C.gold, fontWeight: 900, letterSpacing: 1.2, fontSize: 10, textTransform: "uppercase", marginBottom: 8 }}>
+            Sound
+          </div>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
+            <button
+              type="button"
+              onClick={onToggleMute}
+              aria-pressed={muted}
+              style={{
+                border: `1px solid ${muted ? C.coral : C.line}`,
+                background: muted ? "rgba(207,79,69,.2)" : "rgba(9,19,14,.5)",
+                color: muted ? "#ffd2ce" : C.cream,
+                borderRadius: 8,
+                padding: "6px 10px",
+                fontWeight: 900,
+                fontSize: 12,
+                letterSpacing: 1,
+                cursor: "pointer"
+              }}
+            >
+              {muted ? "Muted" : "Mute"}
+            </button>
+            <div style={{ color: C.creamDim, fontSize: 11, fontWeight: 800, letterSpacing: 1, marginLeft: "auto" }}>
+              {pct}%
+            </div>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={pct}
+            onChange={(event) => onVolumeChange(Math.max(0, Math.min(100, Number(event.target.value))) / 100)}
+            aria-label="Volume"
+            style={{ width: "100%", accentColor: C.gold }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---- THE BOARD (the TV / shared screen) ---------------------------------- */
 function Board({
   state,
   dispatch,
   muted,
-  onToggleMute
+  onToggleMute,
+  volume,
+  onVolumeChange
 }: {
   state: State;
   dispatch: React.Dispatch<Action>;
   muted: boolean;
   onToggleMute: () => void;
+  volume: number;
+  onVolumeChange: (next: number) => void;
 }) {
   const players = Object.values(state.players);
   const submittedCount = Object.keys(state.answers).length;
@@ -1403,26 +1575,14 @@ function Board({
                 Fool the room. Win the night.
               </div>
             </div>
-            <button
-              onClick={onToggleMute}
-              aria-label={muted ? "Unmute sound" : "Mute sound"}
-              title={muted ? "Unmute" : "Mute"}
-              suppressHydrationWarning
+            <AudioControl
+              muted={muted}
+              onToggleMute={onToggleMute}
+              volume={volume}
+              onVolumeChange={onVolumeChange}
               className="header-mute-mobile"
-              style={{
-                background: "none",
-                border: "none",
-                color: muted ? C.creamDim : C.gold,
-                cursor: "pointer",
-                fontSize: 18,
-                padding: 4,
-                lineHeight: 1,
-                alignItems: "center",
-                marginLeft: 4
-              }}
-            >
-              <span suppressHydrationWarning>{muted ? "🔇" : "🔊"}</span>
-            </button>
+              iconSize={18}
+            />
           </div>
           {state.phase !== "lobby" && state.phase !== "gameover" && (
             <div
@@ -1459,24 +1619,14 @@ function Board({
             </div>
           )}
           <div className="flex items-center header-room-block" style={{ gap: 10 }}>
-            <button
-              onClick={onToggleMute}
-              aria-label={muted ? "Unmute sound" : "Mute sound"}
-              title={muted ? "Unmute" : "Mute"}
-              suppressHydrationWarning
+            <AudioControl
+              muted={muted}
+              onToggleMute={onToggleMute}
+              volume={volume}
+              onVolumeChange={onVolumeChange}
               className="header-mute-desktop"
-              style={{
-                background: "none",
-                border: "none",
-                color: muted ? C.creamDim : C.gold,
-                cursor: "pointer",
-                fontSize: 16,
-                padding: 4,
-                lineHeight: 1
-              }}
-            >
-              <span suppressHydrationWarning>{muted ? "🔇" : "🔊"}</span>
-            </button>
+              iconSize={16}
+            />
             {state.phase !== "lobby" && state.phase !== "gameover" && (
               <button
                 onClick={() => {
@@ -3971,7 +4121,6 @@ function Phone({
                   onClick={() => {
                     setAvatar(option.id);
                     avatarRef.current = option.id;
-                    setAvatarDeal(dealAvatars(option.id));
                   }}
                   aria-label={`Choose ${option.label} avatar`}
                   title={option.label}
@@ -4422,18 +4571,51 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
                 Host access pending approval.
               </div>
             )}
-            <button onClick={start} className="disp" style={{ ...hostBtn(true), width: "100%" }}>
-              {code
-                ? `Opening ${code}...`
-                : !hostAccess.signedIn
-                  ? "Sign in to host"
+            {!hostAccess.signedIn ? (
+              <Link
+                href="/api/auth/signin?callbackUrl=/"
+                aria-label="Sign in with Google to host"
+                className="body"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                  width: "100%",
+                  minHeight: 44,
+                  padding: "10px 18px",
+                  background: "#ffffff",
+                  color: "#1f1f1f",
+                  border: "1px solid #dadce0",
+                  borderRadius: 8,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: 0.2,
+                  textDecoration: "none",
+                  boxShadow: "0 6px 18px rgba(0,0,0,.32)",
+                  fontFamily: "Roboto, Inter, system-ui, sans-serif"
+                }}
+              >
+                <GoogleGlyph />
+                <span>Sign in with Google</span>
+              </Link>
+            ) : (
+              <button onClick={start} className="disp" style={{ ...hostBtn(true), width: "100%" }}>
+                {code
+                  ? `Opening ${code}...`
                   : hostAccess.approved
                     ? "Start room"
                     : "Host access pending"}
-            </button>
+              </button>
+            )}
             {hostAccess.signedIn && (
               <div className="body" style={{ color: C.creamDim, fontSize: 11, marginTop: 10 }}>
                 {hostAccess.email}
+              </div>
+            )}
+            {!hostAccess.signedIn && (
+              <div className="body" style={{ color: C.creamDim, fontSize: 11, lineHeight: 1.4, marginTop: 10 }}>
+                Only hosts sign in. Players join with a room code — no account needed.
               </div>
             )}
           </section>
@@ -4531,6 +4713,7 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
           </div>
         </div>
       </div>
+      <WelcomeIntro />
     </div>
   );
 }
@@ -4547,6 +4730,26 @@ function LocalParlor() {
       return false;
     }
   });
+  const [volume, setVolume] = useState(() => {
+    if (typeof window === "undefined") return 1;
+    try {
+      const raw = localStorage.getItem("parlor:volume");
+      if (raw == null) return 1;
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed)) return 1;
+      return Math.max(0, Math.min(1, parsed));
+    } catch {
+      return 1;
+    }
+  });
+  useEffect(() => {
+    setAudioVolume(volume);
+    try {
+      localStorage.setItem("parlor:volume", String(volume));
+    } catch {
+      // ignore
+    }
+  }, [volume]);
   useEffect(() => {
     setAudioMuted(muted);
     try {
@@ -4698,7 +4901,14 @@ function LocalParlor() {
     >
       <style>{FONT_CSS}</style>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <Board state={state} dispatch={dispatch} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
+        <Board
+          state={state}
+          dispatch={dispatch}
+          muted={muted}
+          onToggleMute={() => setMuted((m) => !m)}
+          volume={volume}
+          onVolumeChange={setVolume}
+        />
 
         {state.phase === "lobby" && (
           <div
@@ -4974,6 +5184,26 @@ function MultiplayerParlor({
       return false;
     }
   });
+  const [volume, setVolume] = useState(() => {
+    if (typeof window === "undefined") return 1;
+    try {
+      const raw = localStorage.getItem("parlor:volume");
+      if (raw == null) return 1;
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed)) return 1;
+      return Math.max(0, Math.min(1, parsed));
+    } catch {
+      return 1;
+    }
+  });
+  useEffect(() => {
+    setAudioVolume(volume);
+    try {
+      localStorage.setItem("parlor:volume", String(volume));
+    } catch {
+      // ignore
+    }
+  }, [volume]);
   const [effectiveHostToken] = useState(() => {
     if (hostToken) return hostToken;
     if (typeof window === "undefined" || role !== "host") return null;
@@ -5238,7 +5468,14 @@ function MultiplayerParlor({
       {disconnectOverlay}
       <div style={{ maxWidth: role === "play" ? 880 : 1320, margin: "0 auto" }}>
         {role !== "play" && (
-          <Board state={state} dispatch={dispatch} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
+          <Board
+            state={state}
+            dispatch={dispatch}
+            muted={muted}
+            onToggleMute={() => setMuted((m) => !m)}
+            volume={volume}
+            onVolumeChange={setVolume}
+          />
         )}
         {role !== "play" && testMode && (
           <div
