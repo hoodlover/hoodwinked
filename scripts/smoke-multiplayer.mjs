@@ -7,12 +7,14 @@
 
 const HOST = process.env.PARTY_HOST ?? "localhost:1999";
 const ROOM = `smoke${Math.random().toString(36).slice(2, 6)}`;
-const URL = `ws://${HOST}/parties/main/${ROOM}`;
+function roomUrl(room) {
+  return `ws://${HOST}/parties/main/${room}`;
+}
 
-console.log(`▸ Room ${ROOM.toUpperCase()} at ${URL}`);
+console.log(`▸ Room ${ROOM.toUpperCase()} at ${roomUrl(ROOM)}`);
 
-function makeClient(label) {
-  const ws = new WebSocket(URL);
+function makeClient(label, room = ROOM) {
+  const ws = new WebSocket(roomUrl(room));
   const incoming = [];
   const waiters = [];
   ws.addEventListener("open", () => console.log(`  [${label}] connected`));
@@ -65,7 +67,44 @@ async function sleep(ms) {
 
 const stateMsg = (m) => m.type === "STATE";
 
+async function testSinglePlayerHostStart() {
+  const room = `solo${Math.random().toString(36).slice(2, 6)}`;
+  const hostToken = `host-${Math.random().toString(36).slice(2)}`;
+  const client = makeClient("Solo", room);
+
+  console.log("\n▸ Single-player host start");
+  const init = await client.next(stateMsg);
+  assertEq("Solo room starts in lobby", init.state.phase, "lobby");
+  client.send({ type: "JOIN", id: "solo", name: "Solo", avatar: "06-felix" });
+  const joined = await client.next((m) => stateMsg(m) && m.state.players.solo);
+  assertEq("Solo player joined", joined.state.players.solo.name, "Solo");
+
+  client.send({ type: "SET_MODE", mode: "trivia" }, hostToken);
+  const triviaMode = await client.next((m) => stateMsg(m) && m.state.mode === "trivia");
+  assertEq("Host can choose trivia", triviaMode.state.mode, "trivia");
+
+  client.send({ type: "START_GAME", allowSinglePlayer: true });
+  try {
+    await client.next((m) => stateMsg(m) && m.state.phase === "writing", 150);
+    assertEq("Unauthenticated single-player start is ignored", "writing", "lobby");
+  } catch {
+    assertEq("Unauthenticated single-player start is ignored", "lobby", "lobby");
+  }
+
+  client.send({ type: "START_GAME", allowSinglePlayer: true }, hostToken);
+  const started = await client.next((m) => stateMsg(m) && m.state.phase === "writing");
+  assertEq(
+    "Host can start one-player trivia",
+    [started.state.phase, started.state.mode, Object.keys(started.state.players).length],
+    ["writing", "trivia", 1]
+  );
+  client.close();
+  await sleep(100);
+}
+
 async function main() {
+  await testSinglePlayerHostStart();
+
   const hostToken = `host-${Math.random().toString(36).slice(2)}`;
   const a = makeClient("A");
   const b = makeClient("B");
@@ -83,6 +122,9 @@ async function main() {
   const aliceJoined = await b.next((m) => stateMsg(m) && m.state.players.alice);
   assertEq("B receives alice joined", aliceJoined.state.players.alice.name, "Alice");
   assertEq("B receives alice avatar", aliceJoined.state.players.alice.avatar, "03-bram");
+  a.send({ type: "JOIN", id: "alice", name: "Alice", avatar: "06-felix" });
+  const aliceAvatarChanged = await b.next((m) => stateMsg(m) && m.state.players.alice?.avatar === "06-felix");
+  assertEq("B receives alice changed avatar", aliceAvatarChanged.state.players.alice.avatar, "06-felix");
   b.send({ type: "JOIN", id: "bob", name: "Bob", avatar: "10-agatha" });
   const bothJoined = await a.next((m) => stateMsg(m) && m.state.players.bob);
   assertEq("A receives bob joined", Object.keys(bothJoined.state.players).sort(), ["alice", "bob"]);

@@ -21,6 +21,7 @@ import {
   matchesAnswer,
   normalizeAvatarId,
   reducer,
+  requiredPlayersForMode,
   wheelCanGuessLetter,
   wheelLettersSpent,
   type Action,
@@ -1476,7 +1477,8 @@ function Board({
   muted,
   onToggleMute,
   volume,
-  onVolumeChange
+  onVolumeChange,
+  allowSinglePlayerStart = false
 }: {
   state: State;
   dispatch: React.Dispatch<Action>;
@@ -1484,6 +1486,7 @@ function Board({
   onToggleMute: () => void;
   volume: number;
   onVolumeChange: (next: number) => void;
+  allowSinglePlayerStart?: boolean;
 }) {
   const players = Object.values(state.players);
   const submittedCount = Object.keys(state.answers).length;
@@ -1812,16 +1815,18 @@ function Board({
               <ModeBlurb text={MODE_INFO[state.mode].blurb} />
             </div>
             {(() => {
-              const min = MODE_INFO[state.mode].min;
+              const normalMin = MODE_INFO[state.mode].min;
+              const min = requiredPlayersForMode(state.mode, allowSinglePlayerStart);
               const enabled = players.length >= min;
+              const soloTest = allowSinglePlayerStart && players.length === 1 && min === 1 && normalMin > 1;
               return (
                 <button
-                  onClick={() => dispatch({ type: "START_GAME" })}
+                  onClick={() => dispatch({ type: "START_GAME", allowSinglePlayer: soloTest })}
                   disabled={!enabled}
                   className="disp"
                   style={hostBtn(enabled)}
                 >
-                  {enabled ? "Start the show" : `Need ${min}+ players`}
+                  {enabled ? (soloTest ? "Start solo test" : "Start the show") : `Need ${min}+ players`}
                 </button>
               );
             })()}
@@ -3968,6 +3973,13 @@ function Phone({
 
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  useEffect(() => {
+    if (!player || !connected) return;
+    const selectedAvatar = normalizeAvatarId(avatarRef.current || avatar);
+    if (player.avatar === selectedAvatar) return;
+    dispatch({ type: "JOIN", id: deviceId, name: player.name, avatar: selectedAvatar });
+  }, [avatar, connected, deviceId, dispatch, player]);
+
   const joinWithName = (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed || !connected) return;
@@ -5554,6 +5566,7 @@ function MultiplayerParlor({
             onToggleMute={() => setMuted((m) => !m)}
             volume={volume}
             onVolumeChange={setVolume}
+            allowSinglePlayerStart={!!effectiveHostToken}
           />
         )}
         {role !== "play" && testMode && (

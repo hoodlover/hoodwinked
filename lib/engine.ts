@@ -1122,7 +1122,7 @@ export type State = {
 
 export type Action =
   | { type: "JOIN"; id: string; name: string; avatar?: string }
-  | { type: "START_GAME" }
+  | { type: "START_GAME"; allowSinglePlayer?: boolean }
   | { type: "SUBMIT_ANSWER"; playerId: string; text: string }
   | { type: "FORCE_VOTING" }
   | { type: "VOTE"; voterId: string; ownerId: string }
@@ -1332,6 +1332,14 @@ function minPlayers(mode: Mode): number {
   return mode === "quiplash" ? 3 : 2;
 }
 
+function canStartWithOnePlayer(mode: Mode): boolean {
+  return mode !== "quiplash";
+}
+
+export function requiredPlayersForMode(mode: Mode, allowSinglePlayer = false): number {
+  return allowSinglePlayer && canStartWithOnePlayer(mode) ? 1 : minPlayers(mode);
+}
+
 // Build the writing-phase state for a fresh round of any mode.
 function startRound(state: State, roundNum: number): State {
   const ids = joinedIds(state);
@@ -1472,7 +1480,7 @@ export function reducer(state: State, action: Action): State {
 
     case "START_GAME": {
       const ids = joinedIds(state);
-      if (ids.length < minPlayers(state.mode)) return state;
+      if (ids.length < requiredPlayersForMode(state.mode, action.allowSinglePlayer)) return state;
       return startRound(state, 1);
     }
 
