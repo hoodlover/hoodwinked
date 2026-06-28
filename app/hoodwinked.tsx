@@ -3980,21 +3980,27 @@ function Phone({
     dispatch({ type: "JOIN", id: deviceId, name: player.name, avatar: selectedAvatar });
   }, [avatar, connected, deviceId, dispatch, player]);
 
+  const commitAvatar = (id: string) => {
+    const selected = normalizeAvatarId(id);
+    avatarRef.current = selected;
+    setAvatar(selected);
+    saveAvatar(deviceId, selected);
+    return selected;
+  };
+
   const joinWithName = (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed || !connected) return;
-    const selectedAvatar = avatarRef.current;
+    const selectedAvatar = normalizeAvatarId(avatarRef.current || avatar);
     saveName(deviceId, trimmed);
     saveAvatar(deviceId, selectedAvatar);
     dispatch({ type: "JOIN", id: deviceId, name: trimmed, avatar: selectedAvatar });
   };
 
   const pickAvatar = (id: string) => {
-    setAvatar(id);
-    avatarRef.current = id;
-    saveAvatar(deviceId, id);
+    const selectedAvatar = commitAvatar(id);
     if (player && connected) {
-      dispatch({ type: "JOIN", id: deviceId, name: player.name, avatar: id });
+      dispatch({ type: "JOIN", id: deviceId, name: player.name, avatar: selectedAvatar });
     }
   };
 
@@ -4151,6 +4157,7 @@ function Phone({
                 <button
                   key={option.id}
                   type="button"
+                  onPointerDown={() => commitAvatar(option.id)}
                   onClick={() => pickAvatar(option.id)}
                   aria-label={`Choose ${option.label} avatar`}
                   title={option.label}
@@ -4244,6 +4251,7 @@ function Phone({
                     <button
                       key={option.id}
                       type="button"
+                      onPointerDown={() => commitAvatar(option.id)}
                       onClick={() => {
                         pickAvatar(option.id);
                         setPickerOpen(false);
