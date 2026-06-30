@@ -1091,6 +1091,18 @@ export type FeudState = {
   guesses: Record<string, FeudGuessEntry[]>; // playerId -> all attempts this round
 };
 
+export type ContentDeck = {
+  prompts?: string[];
+  triviaIds?: string[];
+  pictureIds?: string[];
+  wheelIds?: string[];
+  feudIds?: string[];
+  trivia?: TriviaQuestion[];
+  picture?: PictureItem[];
+  wheel?: WheelPuzzle[];
+  feud?: FeudQuestion[];
+};
+
 export type State = {
   phase: Phase;
   roomCode: string;
@@ -1117,12 +1129,13 @@ export type State = {
   picture: PictureState;
   wheel: WheelState;
   feud: FeudState;
+  contentDeck: ContentDeck;
   _counts?: Record<string, number>;
 };
 
 export type Action =
   | { type: "JOIN"; id: string; name: string; avatar?: string }
-  | { type: "START_GAME"; allowSinglePlayer?: boolean }
+  | { type: "START_GAME"; allowSinglePlayer?: boolean; contentDeck?: ContentDeck }
   | { type: "SUBMIT_ANSWER"; playerId: string; text: string }
   | { type: "FORCE_VOTING" }
   | { type: "VOTE"; voterId: string; ownerId: string }
@@ -1177,6 +1190,12 @@ export function buildQuipPrompts(playerIds: string[], used: string[]): QuipPromp
   const n = playerIds.length;
   if (n < 3) return [];
   const texts = pickPrompts(used, n);
+  return buildQuipPromptsFromTexts(playerIds, texts);
+}
+
+export function buildQuipPromptsFromTexts(playerIds: string[], texts: string[]): QuipPrompt[] {
+  const n = playerIds.length;
+  if (n < 3) return [];
   return texts.map((text, i) => {
     const a = playerIds[i % n];
     const b = playerIds[(i + 1) % n];
@@ -1203,6 +1222,16 @@ function shuffled<T>(items: T[]): T[] {
 
 export function pickN<T extends { id: string }>(pool: T[], n: number): T[] {
   return shuffled(pool).slice(0, Math.min(n, pool.length));
+}
+
+function pickByIds<T extends { id: string }>(pool: T[], ids: string[] | undefined, n: number): T[] {
+  if (!ids?.length) return pickN(pool, n);
+  const byId = new Map(pool.map((item) => [item.id, item]));
+  const picked = ids
+    .map((id) => byId.get(id))
+    .filter((item): item is T => !!item)
+    .slice(0, n);
+  return picked.length >= Math.min(n, pool.length) ? picked : pickN(pool, n);
 }
 
 export function normalizeGuess(s: string): string {
@@ -1324,7 +1353,8 @@ export function makeInitialState(): State {
     trivia: emptyTrivia(),
     picture: emptyPicture(),
     wheel: emptyWheel(),
-    feud: emptyFeud()
+    feud: emptyFeud(),
+    contentDeck: {}
   };
 }
 
@@ -1358,7 +1388,7 @@ function startRound(state: State, roundNum: number): State {
   };
   switch (state.mode) {
     case "classic": {
-      const prompt = pickPrompt(state.usedPrompts);
+      const prompt = state.contentDeck.prompts?.[roundNum - 1] ?? pickPrompt(state.usedPrompts);
       return {
         ...base,
         prompt,
@@ -1367,7 +1397,11 @@ function startRound(state: State, roundNum: number): State {
       };
     }
     case "quiplash": {
-      const quipPrompts = buildQuipPrompts(ids, state.usedPrompts);
+      const deckStart = state.usedPrompts.length;
+      const deckTexts = state.contentDeck.prompts?.slice(deckStart, deckStart + ids.length) ?? [];
+      const quipPrompts = deckTexts.length >= ids.length
+        ? buildQuipPromptsFromTexts(ids, deckTexts)
+        : buildQuipPrompts(ids, state.usedPrompts);
       return {
         ...base,
         prompt: null,
@@ -1381,7 +1415,7 @@ function startRound(state: State, roundNum: number): State {
     case "trivia": {
       // Pre-pick all questions on round 1; reuse the existing list on later rounds.
       const questions = roundNum === 1
-        ? pickN(TRIVIA_QUESTIONS, state.totalRounds)
+        ? state.contentDeck.trivia?.slice(0, state.totalRounds) ?? pickByIds(TRIVIA_QUESTIONS, state.contentDeck.triviaIds, state.totalRounds)
         : state.trivia.questions;
       return {
         ...base,
@@ -1392,18 +1426,19 @@ function startRound(state: State, roundNum: number): State {
     }
     case "picture": {
       const items = roundNum === 1
-        ? pickN(PICTURE_ITEMS, state.totalRounds)
+        ? state.contentDeck.picture?.slice(0, state.totalRounds) ?? pickByIds(PICTURE_ITEMS, state.contentDeck.pictureIds, state.totalRounds)
         : state.picture.items;
+      const item = items[roundNum - 1];
       return {
         ...base,
         prompt: null,
-        phaseDeadline: null,
+        phaseDeadline: item?.src ? deadline(PICTURE_GUESS_SECONDS) : null,
         picture: { items, guesses: {} }
       };
     }
     case "wheel": {
       const puzzles = roundNum === 1
-        ? pickN(WHEEL_PUZZLES, state.totalRounds)
+        ? state.contentDeck.wheel?.slice(0, state.totalRounds) ?? pickByIds(WHEEL_PUZZLES, state.contentDeck.wheelIds, state.totalRounds)
         : state.wheel.puzzles;
       return {
         ...base,
@@ -1414,7 +1449,7 @@ function startRound(state: State, roundNum: number): State {
     }
     case "feud": {
       const questions = roundNum === 1
-        ? pickN(FEUD_QUESTIONS, state.totalRounds)
+        ? state.contentDeck.feud?.slice(0, state.totalRounds) ?? pickByIds(FEUD_QUESTIONS, state.contentDeck.feudIds, state.totalRounds)
         : state.feud.questions;
       return {
         ...base,
@@ -1481,7 +1516,7 @@ export function reducer(state: State, action: Action): State {
     case "START_GAME": {
       const ids = joinedIds(state);
       if (ids.length < requiredPlayersForMode(state.mode, action.allowSinglePlayer)) return state;
-      return startRound(state, 1);
+      return startRound({ ...state, contentDeck: action.contentDeck ?? {} }, 1);
     }
 
     case "START_FEUD_COUNTDOWN": {
@@ -1726,6 +1761,10 @@ export function reducer(state: State, action: Action): State {
       const index = state.round - 1;
       const item = state.picture.items[index];
       if (!item || item.id !== action.itemId) return state;
+      if (item.src) return {
+        ...state,
+        phaseDeadline: state.phaseDeadline ?? deadline(PICTURE_GUESS_SECONDS)
+      };
       if (item.generatedSrc || item.imageStatus === "generating" || item.imageStatus === "ready") return state;
       const items = state.picture.items.map((pic, i) =>
         i === index ? { ...pic, imageStatus: "generating" as const, imageError: undefined } : pic

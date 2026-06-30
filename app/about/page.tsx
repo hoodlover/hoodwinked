@@ -16,8 +16,8 @@ const C = {
 // Surfaced from package.json via next.config.ts -> env.NEXT_PUBLIC_APP_VERSION.
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0";
 
-const FIXED_KEYS = ["parlor:names", "parlor:avatars", "parlor:muted", "parlor:deviceId"];
-const KEY_PREFIXES = ["hoodwinked:host:", "hoodwinked.solo."];
+const FIXED_KEYS = ["parlor:names", "parlor:avatars", "parlor:muted", "parlor:deviceId", "parlor:custom-content-library", "parlor:active-custom-content-deck"];
+const KEY_PREFIXES = ["hoodwinked:host:", "hoodwinked.solo.", "parlor:content-bag:"];
 
 function clearLocalData(): number {
   if (typeof window === "undefined") return 0;

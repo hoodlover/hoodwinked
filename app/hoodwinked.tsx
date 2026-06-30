@@ -7,12 +7,17 @@ import { usePartySocket } from "partysocket/react";
 import {
   ALL_MODES,
   FEUD_GUESS_SECONDS,
+  FEUD_QUESTIONS,
+  PICTURE_ITEMS,
   PICTURE_GUESS_SECONDS,
   POINTS_PER_VOTE,
+  PROMPTS,
+  TRIVIA_QUESTIONS,
   TRIVIA_ANSWER_SECONDS,
   VOTING_SECONDS,
   WHEEL_GUESS_SECONDS,
   WHEEL_LETTER_BUDGET,
+  WHEEL_PUZZLES,
   feudAnswerPoints,
   WRITING_SECONDS,
   joinedIds,
@@ -24,6 +29,7 @@ import {
   requiredPlayersForMode,
   wheelCanGuessLetter,
   wheelLettersSpent,
+  type ContentDeck,
   type Action,
   type FeudAnswer,
   type Mode,
@@ -32,6 +38,7 @@ import {
   type State
 } from "@/lib/engine";
 import type { HostAccess } from "@/lib/host-access";
+import { loadActiveCustomContentDeck, type CustomContentDeck } from "@/lib/custom-content";
 import { hapticReveal, hapticWin } from "./solo/haptics";
 import WelcomeIntro from "./WelcomeIntro";
 
@@ -268,6 +275,7 @@ const MODE_INFO: Record<Mode, { label: string; code: string; blurb: string; min:
 /* ---- PERSISTED NAMES ----------------------------------------------------- */
 const NAMES_KEY = "parlor:names";
 const AVATARS_KEY = "parlor:avatars";
+const CONTENT_BAG_PREFIX = "parlor:content-bag:";
 
 function readSavedNames(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -320,6 +328,103 @@ function saveAvatar(deviceId: string, avatar: string) {
     localStorage.setItem(AVATARS_KEY, JSON.stringify(all));
   } catch {
     // localStorage unavailable - silently ignore
+  }
+}
+
+function shuffledValues<T>(items: readonly T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function readContentBag(key: string, validValues: readonly string[]): string[] {
+  if (typeof window === "undefined") return [];
+  const valid = new Set(validValues);
+  try {
+    const raw = localStorage.getItem(`${CONTENT_BAG_PREFIX}${key}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const seen = new Set<string>();
+    return parsed.filter((value): value is string => {
+      if (typeof value !== "string" || !valid.has(value) || seen.has(value)) return false;
+      seen.add(value);
+      return true;
+    });
+  } catch {
+    return [];
+  }
+}
+
+function saveContentBag(key: string, bag: string[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`${CONTENT_BAG_PREFIX}${key}`, JSON.stringify(bag));
+  } catch {
+    // localStorage unavailable - silently ignore
+  }
+}
+
+function takeContentValues(key: string, values: readonly string[], count: number): string[] {
+  if (count <= 0 || values.length === 0) return [];
+  const picked: string[] = [];
+  let bag = readContentBag(key, values);
+
+  while (picked.length < count) {
+    if (bag.length === 0) bag = shuffledValues(values);
+    const next = bag.shift();
+    if (!next) break;
+    picked.push(next);
+  }
+
+  saveContentBag(key, bag);
+  return picked;
+}
+
+function takeContentItems<T extends { id: string }>(key: string, values: readonly T[], count: number): T[] {
+  const ids = takeContentValues(key, values.map((item) => item.id), count);
+  const byId = new Map(values.map((item) => [item.id, item]));
+  return ids.map((id) => byId.get(id)).filter((item): item is T => !!item);
+}
+
+function buildCustomContentDeckForGame(mode: Mode, totalRounds: number, playerCount: number, deck: CustomContentDeck): ContentDeck | null {
+  const keyPrefix = `custom:${deck.id}`;
+  switch (mode) {
+    case "classic":
+      return deck.prompts.length ? { prompts: takeContentValues(`${keyPrefix}:prompts`, deck.prompts, totalRounds) } : null;
+    case "quiplash":
+      return deck.prompts.length ? { prompts: takeContentValues(`${keyPrefix}:prompts`, deck.prompts, totalRounds * Math.max(3, playerCount)) } : null;
+    case "trivia":
+      return deck.trivia.length ? { trivia: takeContentItems(`${keyPrefix}:trivia`, deck.trivia, totalRounds) } : null;
+    case "picture":
+      return deck.picture.length ? { picture: takeContentItems(`${keyPrefix}:picture`, deck.picture, totalRounds) } : null;
+    case "wheel":
+      return deck.wheel.length ? { wheel: takeContentItems(`${keyPrefix}:wheel`, deck.wheel, totalRounds) } : null;
+    case "feud":
+      return deck.feud.length ? { feud: takeContentItems(`${keyPrefix}:feud`, deck.feud, totalRounds) } : null;
+  }
+}
+
+function buildContentDeckForGame(mode: Mode, totalRounds: number, playerCount: number, customDeck: CustomContentDeck | null): ContentDeck {
+  const customContentDeck = customDeck ? buildCustomContentDeckForGame(mode, totalRounds, playerCount, customDeck) : null;
+  if (customContentDeck) return customContentDeck;
+
+  switch (mode) {
+    case "classic":
+      return { prompts: takeContentValues("prompts", PROMPTS, totalRounds) };
+    case "quiplash":
+      return { prompts: takeContentValues("prompts", PROMPTS, totalRounds * Math.max(3, playerCount)) };
+    case "trivia":
+      return { triviaIds: takeContentValues("trivia", TRIVIA_QUESTIONS.map((q) => q.id), totalRounds) };
+    case "picture":
+      return { pictureIds: takeContentValues("picture", PICTURE_ITEMS.map((item) => item.id), totalRounds) };
+    case "wheel":
+      return { wheelIds: takeContentValues("wheel", WHEEL_PUZZLES.map((puzzle) => puzzle.id), totalRounds) };
+    case "feud":
+      return { feudIds: takeContentValues("feud", FEUD_QUESTIONS.map((q) => q.id), totalRounds) };
   }
 }
 
@@ -1527,6 +1632,19 @@ function Board({
   const remainingPct = phaseTotal ? (remaining / (phaseTotal * 1000)) * 100 : 0;
   const remainingSec = Math.ceil(remaining / 1000);
   const lowTime = remaining > 0 && remaining < 10_000;
+  const [activeCustomDeck, setActiveCustomDeck] = useState<CustomContentDeck | null>(null);
+
+  useEffect(() => {
+    if (state.phase !== "lobby") return;
+    const refresh = () => setActiveCustomDeck(loadActiveCustomContentDeck());
+    refresh();
+    window.addEventListener("storage", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [state.phase]);
 
   const [introRound, setIntroRound] = useState<number | null>(null);
   const feudIntroKey = useRef<string | null>(null);
@@ -1740,6 +1858,27 @@ function Board({
               ))}
             </div>
             <div
+              className="body"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 10,
+                flexWrap: "wrap",
+                color: C.creamDim,
+                fontSize: 12,
+                fontWeight: 900,
+                letterSpacing: 1,
+                margin: "-8px auto 18px",
+                textShadow: HEAVY_TEXT_SHADOW
+              }}
+            >
+              <span>{activeCustomDeck ? `Custom deck: ${activeCustomDeck.name}` : "Using built-in content"}</span>
+              <Link href="/content" style={{ color: C.gold, textDecoration: "none", borderBottom: `1px dotted ${C.gold}` }}>
+                Content Studio
+              </Link>
+            </div>
+            <div
               className="lobby-mode-grid"
               style={{
                 display: "grid",
@@ -1819,9 +1958,16 @@ function Board({
               const min = requiredPlayersForMode(state.mode, allowSinglePlayerStart);
               const enabled = players.length >= min;
               const soloTest = allowSinglePlayerStart && players.length === 1 && min === 1 && normalMin > 1;
+              const startGame = () => {
+                dispatch({
+                  type: "START_GAME",
+                  allowSinglePlayer: soloTest,
+                  contentDeck: buildContentDeckForGame(state.mode, state.totalRounds, players.length, activeCustomDeck)
+                });
+              };
               return (
                 <button
-                  onClick={() => dispatch({ type: "START_GAME", allowSinglePlayer: soloTest })}
+                  onClick={startGame}
                   disabled={!enabled}
                   className="disp"
                   style={hostBtn(enabled)}
@@ -3324,6 +3470,7 @@ function PictureWritingCard({
   const requestedImage = useRef<string | null>(null);
   useEffect(() => {
     if (!item) return;
+    if (item.src) return;
     if (item.generatedSrc || item.imageStatus === "generating" || item.imageStatus === "ready") return;
     if (requestedImage.current === item.id) return;
     requestedImage.current = item.id;
