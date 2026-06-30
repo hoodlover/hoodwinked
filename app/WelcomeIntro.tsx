@@ -99,7 +99,8 @@ export default function WelcomeIntro() {
           borderRadius: 16,
           padding: "22px clamp(16px, 4vw, 26px) 18px",
           boxShadow: "0 24px 60px rgba(0,0,0,.6)",
-          color: C.cream
+          color: C.cream,
+          fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
         }}
       >
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
@@ -118,7 +119,7 @@ export default function WelcomeIntro() {
             </div>
             <h2
               id="welcome-intro-title"
-              style={{ margin: 0, color: C.gold, fontSize: "clamp(22px, 5vw, 30px)", lineHeight: 1.15, letterSpacing: 0.5 }}
+              style={{ margin: 0, color: C.gold, fontSize: "clamp(22px, 5vw, 30px)", lineHeight: 1.15, letterSpacing: 0.5, fontFamily: "'Bricolage Grotesque', Inter, system-ui, sans-serif" }}
             >
               Three ways to play.
             </h2>
@@ -131,7 +132,7 @@ export default function WelcomeIntro() {
         <div style={{ display: "grid", gap: 10, marginBottom: 16 }}>
           <Step number={1} title="Solo" body="Twelve solo cases — twelve different ways to test your nerve on one device. Best for trying out a mechanic before the room gets here." />
           <Step number={2} title="Host a room" body="Open a room on the biggest screen you've got. The room shows a 5-letter code; players join from their own devices. Hosting needs a quick Google sign-in." />
-          <Step number={3} title="Join a room" body="Heading to a friend's house? Go to playhoodwinked.com on your phone and type the code from their TV. No sign-in needed." />
+          <Step number={3} title="Join a room" body="Heading to a friend's house? Go to playhoodwinked.com on your phone and type the code from the screen, your friend's computer, or the large TV. No sign-in needed." />
         </div>
 
         <p style={{ color: C.muted, fontSize: 12, lineHeight: 1.5, margin: "0 0 14px" }}>

@@ -12,6 +12,7 @@ body {
 }
 
 body {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   /* Reserve space for notches / display cutouts. Inner elements get their
      padding via clamp(); this keeps content out of the unsafe corners. */
   padding-top: env(safe-area-inset-top, 0px);

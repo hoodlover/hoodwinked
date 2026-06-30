@@ -4871,7 +4871,7 @@ function ParlorLanding({ hostAccess }: { hostAccess: HostAccess }) {
               Join a game
             </div>
             <div className="body" style={{ color: C.creamDim, fontSize: 12, lineHeight: 1.5, marginBottom: 12 }}>
-              Go to {PLAY_URL} and enter the code on the TV.
+              Go to {PLAY_URL} and enter the code on the screen, your friend&apos;s computer, or the large TV.
             </div>
             <div className="flex" style={{ gap: 8 }}>
               <input
