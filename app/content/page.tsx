@@ -401,10 +401,10 @@ export default function ContentStudioPage() {
             <h1 style={{ margin: "12px 0 5px", color: C.gold, fontSize: "clamp(30px, 6vw, 58px)", lineHeight: 1, fontVariant: "small-caps" }}>
               Content Studio
             </h1>
-            <p style={{ margin: 0, color: C.creamDim, fontWeight: 800, maxWidth: 720 }}>
+            <p style={{ margin: 0, color: C.creamDim, fontWeight: 800, maxWidth: 720, whiteSpace: "nowrap", overflowX: "auto" }}>
               Build custom teaching decks for group games, save them on this device, and use them when hosting.
             </p>
-            <p style={{ margin: "8px 0 0", color: C.muted, fontWeight: 800, maxWidth: 760, fontSize: 13, lineHeight: 1.45 }}>
+            <p style={{ margin: "8px 0 0", color: C.muted, fontWeight: 800, maxWidth: 760, fontSize: 13, lineHeight: 1.45, whiteSpace: "nowrap", overflowX: "auto" }}>
               Spreadsheet option: download the Excel template, fill in any tabs you need, save it, then use Open from File to turn it into a deck.
             </p>
           </div>

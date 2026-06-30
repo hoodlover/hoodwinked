@@ -13,6 +13,7 @@ export type CustomContentDeck = {
 
 const CUSTOM_CONTENT_LIBRARY_KEY = "parlor:custom-content-library";
 export const ACTIVE_CUSTOM_CONTENT_DECK_KEY = "parlor:active-custom-content-deck";
+const CONTENT_SOURCE_KEY = "parlor:content-source";
 
 export function emptyCustomContentDeck(name = "Untitled Deck"): CustomContentDeck {
   return {
@@ -169,6 +170,12 @@ export function saveCustomContentDecks(decks: CustomContentDeck[]) {
 
 export function loadActiveCustomContentDeck(): CustomContentDeck | null {
   if (typeof window === "undefined") return null;
+  if (window.localStorage.getItem(CONTENT_SOURCE_KEY) === "built-in") return null;
+  return loadSelectedCustomContentDeck();
+}
+
+export function loadSelectedCustomContentDeck(): CustomContentDeck | null {
+  if (typeof window === "undefined") return null;
   const activeId = window.localStorage.getItem(ACTIVE_CUSTOM_CONTENT_DECK_KEY);
   if (!activeId) return null;
   return loadCustomContentDecks().find((deck) => deck.id === activeId) ?? null;
@@ -176,6 +183,15 @@ export function loadActiveCustomContentDeck(): CustomContentDeck | null {
 
 export function setActiveCustomContentDeck(id: string | null) {
   if (typeof window === "undefined") return;
-  if (id) window.localStorage.setItem(ACTIVE_CUSTOM_CONTENT_DECK_KEY, id);
-  else window.localStorage.removeItem(ACTIVE_CUSTOM_CONTENT_DECK_KEY);
+  if (id) {
+    window.localStorage.setItem(ACTIVE_CUSTOM_CONTENT_DECK_KEY, id);
+    window.localStorage.setItem(CONTENT_SOURCE_KEY, "custom");
+  } else {
+    window.localStorage.setItem(CONTENT_SOURCE_KEY, "built-in");
+  }
+}
+
+export function setBuiltInContentDeck() {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(CONTENT_SOURCE_KEY, "built-in");
 }

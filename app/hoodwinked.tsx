@@ -38,7 +38,7 @@ import {
   type State
 } from "@/lib/engine";
 import type { HostAccess } from "@/lib/host-access";
-import { loadActiveCustomContentDeck, type CustomContentDeck } from "@/lib/custom-content";
+import { loadActiveCustomContentDeck, loadSelectedCustomContentDeck, setActiveCustomContentDeck, setBuiltInContentDeck, type CustomContentDeck } from "@/lib/custom-content";
 import { hapticReveal, hapticWin } from "./solo/haptics";
 import WelcomeIntro from "./WelcomeIntro";
 
@@ -1633,10 +1633,14 @@ function Board({
   const remainingSec = Math.ceil(remaining / 1000);
   const lowTime = remaining > 0 && remaining < 10_000;
   const [activeCustomDeck, setActiveCustomDeck] = useState<CustomContentDeck | null>(null);
+  const [selectedCustomDeck, setSelectedCustomDeck] = useState<CustomContentDeck | null>(null);
 
   useEffect(() => {
     if (state.phase !== "lobby") return;
-    const refresh = () => setActiveCustomDeck(loadActiveCustomContentDeck());
+    const refresh = () => {
+      setActiveCustomDeck(loadActiveCustomContentDeck());
+      setSelectedCustomDeck(loadSelectedCustomContentDeck());
+    };
     refresh();
     window.addEventListener("storage", refresh);
     window.addEventListener("focus", refresh);
@@ -1645,6 +1649,17 @@ function Board({
       window.removeEventListener("focus", refresh);
     };
   }, [state.phase]);
+
+  const useBuiltInContent = () => {
+    setBuiltInContentDeck();
+    setActiveCustomDeck(null);
+  };
+
+  const useCustomContent = () => {
+    if (!selectedCustomDeck) return;
+    setActiveCustomContentDeck(selectedCustomDeck.id);
+    setActiveCustomDeck(selectedCustomDeck);
+  };
 
   const [introRound, setIntroRound] = useState<number | null>(null);
   const feudIntroKey = useRef<string | null>(null);
@@ -1873,7 +1888,39 @@ function Board({
                 textShadow: HEAVY_TEXT_SHADOW
               }}
             >
-              <span>{activeCustomDeck ? `Custom deck: ${activeCustomDeck.name}` : "Using built-in content"}</span>
+              <button
+                type="button"
+                onClick={useBuiltInContent}
+                style={{
+                  border: `1px solid ${activeCustomDeck ? C.line : C.gold}`,
+                  background: activeCustomDeck ? "rgba(9,19,14,.5)" : `linear-gradient(180deg, ${C.gold}, ${C.goldDim})`,
+                  color: activeCustomDeck ? C.cream : C.bgDeep,
+                  borderRadius: 8,
+                  padding: "7px 10px",
+                  fontWeight: 900,
+                  cursor: "pointer"
+                }}
+              >
+                Built-in party content
+              </button>
+              <button
+                type="button"
+                onClick={useCustomContent}
+                disabled={!selectedCustomDeck}
+                title={selectedCustomDeck ? selectedCustomDeck.name : "Choose a custom deck in Content Studio"}
+                style={{
+                  border: `1px solid ${activeCustomDeck ? C.gold : C.line}`,
+                  background: activeCustomDeck ? `linear-gradient(180deg, ${C.gold}, ${C.goldDim})` : "rgba(9,19,14,.5)",
+                  color: activeCustomDeck ? C.bgDeep : C.cream,
+                  borderRadius: 8,
+                  padding: "7px 10px",
+                  fontWeight: 900,
+                  cursor: selectedCustomDeck ? "pointer" : "not-allowed",
+                  opacity: selectedCustomDeck ? 1 : 0.5
+                }}
+              >
+                {selectedCustomDeck ? `Custom: ${selectedCustomDeck.name}` : "Custom deck"}
+              </button>
               <Link href="/content" style={{ color: C.gold, textDecoration: "none", borderBottom: `1px dotted ${C.gold}` }}>
                 Content Studio
               </Link>
